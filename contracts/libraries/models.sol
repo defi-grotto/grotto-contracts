@@ -22,6 +22,7 @@ struct Lotto {
     uint256 numberOfPlayers;
     uint256 betAmount;
     WinningType winningType;
+    bool finished;
 }
 
 struct Pot {
@@ -29,11 +30,4 @@ struct Pot {
     uint256 potAmount;
     uint256[] winningNumbers;
     PotGuessType potGuessType;
-}
-
-struct FinishedLotto {
-    string id;
-    address creator;
-    address[] winners;
-    uint256[] wins;
 }

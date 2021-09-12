@@ -211,23 +211,16 @@ describe("Grotto: Create Pot Tests", () => {
     }
   });  
 
-  // it("should get running lottos", async () => {
-  //   try {
-  //     const runningLottos = await grotto.getRunningLottos();
-  //     expect(runningLottos).to.be.an('array');
-  //     expect(runningLottos[0]).to.be.an('array');
-  //     expect(runningLottos[1]).to.be.an('array');
-  //     expect(runningLottos[0]).to.have.property("id");
-  //     expect(runningLottos[0].id.toNumber()).to.be.eq(1);
-  //     expect(runningLottos[1]).to.have.property("id");
-  //     expect(runningLottos[1].id.toNumber()).to.be.eq(2);
-  //     expect(runningLottos[0]).to.have.property("creator");
-  //     expect(runningLottos[0].creator).to.be.eq(accounts[1].address);
-  //     expect(runningLottos[1]).to.have.property("creator");
-  //     expect(runningLottos[1].creator).to.be.eq(accounts[1].address);
-  //   } catch (error) {
-  //     console.log(error);
-  //     expect(error).to.equal(undefined);
-  //   }
-  // });
+  it("should get pots ids", async () => {
+    try {
+      const potIds = await grotto.getPots();
+
+      expect(potIds).to.be.an('array');
+      expect(potIds[0]).to.be.eq(1);
+      expect(potIds[1]).to.be.eq(2);
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  });
 });

@@ -5,12 +5,11 @@ import "./storage.interface.sol";
 import "hardhat/console.sol";
 
 contract Storage is StorageInterface {
-    Lotto[] private runningLottos;
     mapping(uint256 => Lotto) private lottoIdMap;
-    Pot[] private runningPots;
+    uint256[] private lottoIds;
+
     mapping(uint256 => Pot) private potIdMap;
-    FinishedLotto[] private finishedLottos;
-    mapping(uint256 => FinishedLotto) private finishedLottoIdMap;
+    uint256[] private potIds;
 
     address private grotto = address(0);
     address private grottoCaller = address(0);
@@ -70,7 +69,7 @@ contract Storage is StorageInterface {
         returns (bool)
     {
         lottoIdMap[_lotto.id] = _lotto;
-        runningLottos.push(_lotto);
+        lottoIds.push(_lotto.id);
 
         return true;
     }
@@ -84,21 +83,29 @@ contract Storage is StorageInterface {
         returns (bool)
     {
         potIdMap[_pot.lotto.id] = _pot;
-        runningPots.push(_pot);
+        potIds.push(_pot.lotto.id);
 
         return true;
     }
 
-    function getRunningPots() external view override returns (Pot[] memory) {
-        return runningPots;
+    function getPots() external view override returns (uint256[] memory) {
+        return potIds;
     }
 
-    function getRunningLottos()
+    function getLottos()
         external
         view
         override
-        returns (Lotto[] memory)
+        returns (uint256[] memory)
     {
-        return runningLottos;
+        return lottoIds;
     }
+
+    function getLottoById(uint256 _lottoId) external view override returns (Lotto memory) {
+        return lottoIdMap[_lottoId];
+    }
+
+    function getPotById(uint256 _potId) external view override returns (Pot memory) {
+        return potIdMap[_potId];
+    }    
 }

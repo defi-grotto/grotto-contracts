@@ -59,7 +59,11 @@ contract Grotto is GrottoInterface {
 
     }
 
-    function getRunningLottos() external view returns (Lotto[] memory) {
-        return store.getRunningLottos();
+    function getLottos() external view returns (uint256[] memory) {
+        return store.getLottos();
     }
+
+    function getPots() external view returns (uint256[] memory) {
+        return store.getPots();
+    }    
 }

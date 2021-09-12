@@ -17,6 +17,9 @@ import "./libraries/grotto.interface.sol";
     ERROR_8: number of players must be greater than 0 for NUMBER_OF_PLAYERS winning type
     ERROR_9: result from saveLotto must be true
     ERROR_10: end time muxt be in the future
+    ERROR_11: pot amount must be greater than 0
+    ERROR_12: pot winning numbers must be at least 1
+    ERROR_9: result from savePot must be true
  */
 
 contract Grotto is GrottoInterface {
@@ -41,8 +44,11 @@ contract Grotto is GrottoInterface {
         emit LottoCreated(lotto);
     }
 
-    function createPot() external payable {
-        
+    function createPot(Pot memory pot) external payable {
+        pot.potAmount = msg.value;
+        bool result = store.savePot(pot);
+        require(result, "ERROR_13");
+        emit PotCreated(pot);
     }    
 
     function play() external payable {

@@ -25,7 +25,7 @@ struct Lotto {
 }
 
 struct Pot {
-    Lotto base;
+    Lotto lotto;
     uint256 potAmount;
     uint256[] winningNumbers;
     PotGuessType potGuessType;

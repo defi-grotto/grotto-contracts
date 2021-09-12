@@ -4,4 +4,5 @@ import "./models.sol";
 
 interface GrottoInterface {
     event LottoCreated(Lotto lotto);
+    event PotCreated(Pot pot);
 }

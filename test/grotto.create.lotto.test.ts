@@ -22,7 +22,7 @@ describe("Grotto: Create Lotto Tests", () => {
       winnersShares: [100],
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
-      betAmount: 0,
+      betAmount: BigNumber.from(0),
       numberOfPlayers: 10,
       winningType: WinningType.NUMBER_OF_PLAYERS,
     };
@@ -160,11 +160,11 @@ describe("Grotto: Create Lotto Tests", () => {
 
       lotto.id = 2;
       lotto.winningType = WinningType.TIME_BASED;
-      (lotto.endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000)), // + 24 hours;
-        await expect(grotto.createLotto(lotto, overrides)).to.emit(
-          grotto,
-          "LottoCreated"
-        );
+      lotto.endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours;
+      await expect(grotto.createLotto(lotto, overrides)).to.emit(
+        grotto,
+        "LottoCreated"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -174,9 +174,9 @@ describe("Grotto: Create Lotto Tests", () => {
   it("should get running lottos", async () => {
     try {
       const runningLottos = await grotto.getRunningLottos();
-      expect(runningLottos).to.be.an('array');
-      expect(runningLottos[0]).to.be.an('array');
-      expect(runningLottos[1]).to.be.an('array');
+      expect(runningLottos).to.be.an("array");
+      expect(runningLottos[0]).to.be.an("array");
+      expect(runningLottos[1]).to.be.an("array");
       expect(runningLottos[0]).to.have.property("id");
       expect(runningLottos[0].id.toNumber()).to.be.eq(1);
       expect(runningLottos[1]).to.have.property("id");

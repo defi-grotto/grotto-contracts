@@ -5,6 +5,13 @@ export enum WinningType {
   NUMBER_OF_PLAYERS,
 }
 
+export enum PotGuessType {
+  NUMBERS,
+  ORDER,
+  BOTH
+}
+
+
 export interface Lotto {
   id: number;
   creator: string;
@@ -13,6 +20,13 @@ export interface Lotto {
   startTime: number;
   endTime: number;
   numberOfPlayers: number;
-  betAmount: number;
+  betAmount: BigNumber;
   winningType: WinningType;
+}
+
+export interface Pot {
+  lotto: Lotto;
+  potAmount: BigNumber;
+  winningNumbers: number[];
+  potGuessType: PotGuessType;
 }

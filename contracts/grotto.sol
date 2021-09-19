@@ -19,8 +19,16 @@ import "./libraries/grotto.interface.sol";
     ERROR_10: end time muxt be in the future
     ERROR_11: pot amount must be greater than 0
     ERROR_12: pot winning numbers must be at least 1
-    ERROR_9: result from savePot must be true
- */
+    ERROR_13: result from savePot must be true
+    ERROR_14: Lotto is not started
+    ERROR_15: Lotto has ended
+    ERROR_16: Max Number of Players reached
+    ERROR_17: Lotto is finished
+    ERROR_18: betPlaced is too low
+    ERROR_19: Lotto does not exist
+    ERROR_20: result from playLotto is false
+    ERROR_21: creator can not play
+ **/
 
 contract Grotto is GrottoInterface {
     address private caller;
@@ -39,31 +47,37 @@ contract Grotto is GrottoInterface {
 
     function createLotto(Lotto memory lotto) external payable {
         lotto.betAmount = msg.value;        
-        bool result = store.saveLotto(lotto);
+        bool result = store.addNewLotto(lotto);
         require(result, "ERROR_9");
         emit LottoCreated(lotto);
     }
 
     function createPot(Pot memory pot) external payable {
         pot.potAmount = msg.value;
-        bool result = store.savePot(pot);
+        bool result = store.addNewPot(pot);
         require(result, "ERROR_13");
         emit PotCreated(pot);
-    }    
-
-    function play() external payable {
-        
     }
+
+    function playLotto(uint256 lottoId) external payable {
+        bool result = store.playLotto(lottoId, msg.value, msg.sender);
+        require(result, "ERROR_20");
+        emit BetPlaced(lottoId, msg.value, msg.sender);
+    }     
+
+    function playPot() external payable {
+        
+    }    
 
     function claim() external payable {
 
     }
 
-    function getLottos() external view returns (uint256[] memory) {
-        return store.getLottos();
+    function getLottoById(uint256 lottoId) external view returns (Lotto memory) {
+        return store.getLottoById(lottoId);
     }
 
-    function getPots() external view returns (uint256[] memory) {
-        return store.getPots();
+    function getPotById(uint256 potId) external view returns (Pot memory) {
+        return store.getPotById(potId);
     }    
 }

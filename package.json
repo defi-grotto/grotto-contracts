@@ -31,5 +31,8 @@
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "yargs-parser": "^20.2.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.1"
   }
 }

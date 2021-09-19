@@ -19,10 +19,14 @@ struct Lotto {
     uint256[] winnersShares;
     uint256 startTime;
     uint256 endTime;
-    uint256 numberOfPlayers;
+    uint256 maxNumberOfPlayers;
     uint256 betAmount;
     WinningType winningType;
-    bool finished;
+
+    bool isFinished;
+    uint256 stakes;
+    address[] players;
+    address winner;
 }
 
 struct Pot {

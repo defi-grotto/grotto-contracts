@@ -23,8 +23,12 @@ describe("Grotto: Create Pot Tests", () => {
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
-      numberOfPlayers: 10,
+      maxNumberOfPlayers: 10,
       winningType: WinningType.NUMBER_OF_PLAYERS,
+      isFinished: false,
+      players: [],
+      stakes: BigNumber.from(0),
+      winner: address0      
     };
 
     pot = {
@@ -86,7 +90,7 @@ describe("Grotto: Create Pot Tests", () => {
       };
 
       pot.lotto.id = 2;
-      pot.lotto.numberOfPlayers = 0;
+      pot.lotto.maxNumberOfPlayers = 0;
       await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
         "ERROR_8"
       );
@@ -99,7 +103,7 @@ describe("Grotto: Create Pot Tests", () => {
   it("should not create a pot if pot amount is not greater than 0", async () => {
     try {
       pot.lotto.id = 2;
-      pot.lotto.numberOfPlayers = 100;
+      pot.lotto.maxNumberOfPlayers = 100;
       pot.lotto.betAmount = ethers.utils.parseEther("0.01");
       await expect(grotto.createPot(pot)).to.be.revertedWith("ERROR_11");
     } catch (error) {
@@ -111,7 +115,7 @@ describe("Grotto: Create Pot Tests", () => {
   it("should not create a pot if get amount is not greater than 0", async () => {
     try {
       pot.lotto.id = 2;
-      pot.lotto.numberOfPlayers = 100;
+      pot.lotto.maxNumberOfPlayers = 100;
       pot.lotto.betAmount = BigNumber.from(0);
       const overrides = {
         value: ethers.utils.parseEther("1"),
@@ -211,13 +215,15 @@ describe("Grotto: Create Pot Tests", () => {
     }
   });  
 
-  it("should get pots ids", async () => {
+  it("should get pot by id", async () => {
     try {
-      const potIds = await grotto.getPots();
-
-      expect(potIds).to.be.an('array');
-      expect(potIds[0]).to.be.eq(1);
-      expect(potIds[1]).to.be.eq(2);
+      const pot = await grotto.getPotById(1);
+      expect(pot.lotto.id.toNumber()).to.be.eq(1);
+      expect(pot.lotto.creator).to.be.eq(accounts[1].address);
+      expect(pot.winningNumbers).to.be.an("array");
+      expect(pot.winningNumbers[0]).to.eq(33);
+      expect(pot.winningNumbers[1]).to.eq(12);
+      expect(pot.winningNumbers[2]).to.eq(99);
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

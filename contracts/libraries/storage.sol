@@ -3,16 +3,33 @@ pragma solidity 0.8.3;
 import "./models.sol";
 import "./storage.interface.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract Storage is StorageInterface {
-    mapping(uint256 => Lotto) private lottoIdMap;
-    uint256[] private lottoIds;
-
-    mapping(uint256 => Pot) private potIdMap;
-    uint256[] private potIds;
+    using SafeMath for uint256;    
 
     address private grotto = address(0);
     address private grottoCaller = address(0);
+
+    // Lotto Data Structure 
+    mapping (uint256 => uint256) lottoId;
+    mapping (uint256 => address) creator;
+    mapping (uint256 => uint256) numberOfWinners;
+    mapping (uint256 => uint256[]) winnersShares;
+    mapping (uint256 => uint256) startTime;
+    mapping (uint256 => uint256) endTime;
+    mapping (uint256 => uint256) maxNumberOfPlayers;
+    mapping (uint256 => uint256) betAmount;
+    mapping (uint256 => WinningType) winningType;
+    mapping (uint256 => bool) isFinished;
+    mapping (uint256 => uint256) stakes;
+    mapping (uint256 => address[]) players;
+    mapping (uint256 => address) winner;
+
+    // Pot Data Structure
+    mapping (uint256 => uint256) potAmount;
+    mapping (uint256 => uint256[]) winningNumbers;
+    mapping (uint256 => PotGuessType) potGuessType;    
 
     modifier is_authorized() {
         require(msg.sender == grotto, "ERROR_3");
@@ -21,8 +38,8 @@ contract Storage is StorageInterface {
 
     modifier is_valid_lotto(Lotto memory _lotto) {
         require(_lotto.betAmount > 0, "ERROR_7");
-        Lotto memory savedLotto = lottoIdMap[_lotto.id];
-        require(savedLotto.creator != _lotto.creator, "ERROR_4");
+        
+        require(creator[_lotto.id] != _lotto.creator, "ERROR_4");
         require(
             _lotto.numberOfWinners == _lotto.winnersShares.length,
             "ERROR_5"
@@ -34,16 +51,32 @@ contract Storage is StorageInterface {
         }
 
         if (_lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
-            require(_lotto.numberOfPlayers > 0, "ERROR_8");
+            require(_lotto.maxNumberOfPlayers > 0, "ERROR_8");
         }
         _;
     }
 
-    modifier is_valid_pot(Pot memory _pot) {
-        Pot memory savedPot = potIdMap[_pot.lotto.id];
-        require(savedPot.lotto.creator != _pot.lotto.creator, "ERROR_4");        
+    modifier is_valid_pot(Pot memory _pot) {        
+        require(creator[_pot.lotto.id] != _pot.lotto.creator, "ERROR_4");
         require(_pot.potAmount > 0, "ERROR_11");
         require(_pot.winningNumbers.length > 0, "ERROR_12");
+        _;
+    }
+
+    modifier can_play_lotto(uint256 _lottoId, uint256 _betPlaced, address _player) {
+        require(creator[_lottoId] != address(0), "ERROR_19");
+        require(!isFinished[_lottoId], "ERROR_17");
+        require(_betPlaced >= betAmount[_lottoId], "ERROR_18");
+        require(_player != creator[_lottoId], "ERROR_21");
+        if (winningType[_lottoId] == WinningType.TIME_BASED) {
+            require(startTime[_lottoId] <= block.timestamp, "ERROR_14");
+            require(endTime[_lottoId] > block.timestamp, "ERROR_15");
+        } else if (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS) {
+            require(
+                players[_lottoId].length < maxNumberOfPlayers[_lottoId],
+                "ERROR_16"
+            );
+        }
         _;
     }
 
@@ -61,20 +94,30 @@ contract Storage is StorageInterface {
         }
     }
 
-    function saveLotto(Lotto memory _lotto)
+    function addNewLotto(Lotto memory _lotto)
         external
         override
         is_authorized
         is_valid_lotto(_lotto)
         returns (bool)
     {
-        lottoIdMap[_lotto.id] = _lotto;
-        lottoIds.push(_lotto.id);
-
+        lottoId[_lotto.id] = _lotto.id;
+        creator[_lotto.id] = _lotto.creator;
+        numberOfWinners[_lotto.id] = _lotto.numberOfWinners;
+        winnersShares[_lotto.id] = _lotto.winnersShares;
+        startTime[_lotto.id] = _lotto.startTime;
+        endTime[_lotto.id] = _lotto.endTime;
+        maxNumberOfPlayers[_lotto.id] = _lotto.maxNumberOfPlayers;
+        betAmount[_lotto.id] = _lotto.betAmount;
+        winningType[_lotto.id] = _lotto.winningType;
+        isFinished[_lotto.id] = _lotto.isFinished;
+        stakes[_lotto.id] = _lotto.stakes;
+        players[_lotto.id] = _lotto.players;
+        winner[_lotto.id] = _lotto.winner;
         return true;
     }
 
-    function savePot(Pot memory _pot)
+    function addNewPot(Pot memory _pot)
         external
         override
         is_authorized
@@ -82,30 +125,87 @@ contract Storage is StorageInterface {
         is_valid_pot(_pot)
         returns (bool)
     {
-        potIdMap[_pot.lotto.id] = _pot;
-        potIds.push(_pot.lotto.id);
-
+        lottoId[_pot.lotto.id] = _pot.lotto.id;
+        creator[_pot.lotto.id] = _pot.lotto.creator;
+        numberOfWinners[_pot.lotto.id] = _pot.lotto.numberOfWinners;
+        winnersShares[_pot.lotto.id] = _pot.lotto.winnersShares;
+        startTime[_pot.lotto.id] = _pot.lotto.startTime;
+        endTime[_pot.lotto.id] = _pot.lotto.endTime;
+        maxNumberOfPlayers[_pot.lotto.id] = _pot.lotto.maxNumberOfPlayers;
+        betAmount[_pot.lotto.id] = _pot.lotto.betAmount;
+        winningType[_pot.lotto.id] = _pot.lotto.winningType;
+        isFinished[_pot.lotto.id] = _pot.lotto.isFinished;
+        stakes[_pot.lotto.id] = _pot.lotto.stakes;
+        players[_pot.lotto.id] = _pot.lotto.players;
+        winner[_pot.lotto.id] = _pot.lotto.winner;
+        potAmount[_pot.lotto.id] = _pot.potAmount;
+        winningNumbers[_pot.lotto.id] = _pot.winningNumbers;
+        potGuessType[_pot.lotto.id] = _pot.potGuessType;
         return true;
     }
 
-    function getPots() external view override returns (uint256[] memory) {
-        return potIds;
-    }
-
-    function getLottos()
+    function getLottoById(uint256 _lottoId)
         external
         view
         override
-        returns (uint256[] memory)
+        returns (Lotto memory)
+    {     
+        return Lotto({
+            id: lottoId[_lottoId],
+            creator: creator[_lottoId],
+            numberOfWinners: numberOfWinners[_lottoId],
+            winnersShares: winnersShares[_lottoId],
+            startTime: startTime[_lottoId],
+            endTime: endTime[_lottoId],
+            maxNumberOfPlayers: maxNumberOfPlayers[_lottoId],
+            betAmount: betAmount[_lottoId],
+            winningType: winningType[_lottoId],
+            isFinished: isFinished[_lottoId],
+            stakes: stakes[_lottoId],
+            players: players[_lottoId],
+            winner: winner[_lottoId]
+        });
+    }
+
+    function getPotById(uint256 _potId)
+        external
+        view
+        override
+        returns (Pot memory)
     {
-        return lottoIds;
+        Lotto memory lotto = Lotto({
+            id: lottoId[_potId],
+            creator: creator[_potId],
+            numberOfWinners: numberOfWinners[_potId],
+            winnersShares: winnersShares[_potId],
+            startTime: startTime[_potId],
+            endTime: endTime[_potId],
+            maxNumberOfPlayers: maxNumberOfPlayers[_potId],
+            betAmount: betAmount[_potId],
+            winningType: winningType[_potId],
+            isFinished: isFinished[_potId],
+            stakes: stakes[_potId],
+            players: players[_potId],
+            winner: winner[_potId]
+        });
+
+        Pot memory pot = Pot({
+            lotto: lotto,
+            potAmount: potAmount[_potId],
+            winningNumbers: winningNumbers[_potId],
+            potGuessType: potGuessType[_potId]
+        });
+
+        return pot;
     }
 
-    function getLottoById(uint256 _lottoId) external view override returns (Lotto memory) {
-        return lottoIdMap[_lottoId];
+    function playLotto(
+        uint256 _lottoId,
+        uint256 _betPlaced,
+        address _player
+    ) external override can_play_lotto(_lottoId, _betPlaced, _player) returns (bool) {        
+        stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
+        players[_lottoId].push(_player);
+        return true;
     }
-
-    function getPotById(uint256 _potId) external view override returns (Pot memory) {
-        return potIdMap[_potId];
-    }    
 }

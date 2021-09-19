@@ -19,9 +19,13 @@ export interface Lotto {
   winnersShares: number[];
   startTime: number;
   endTime: number;
-  numberOfPlayers: number;
+  maxNumberOfPlayers: number;
   betAmount: BigNumber;
   winningType: WinningType;
+  isFinished: boolean;
+  stakes: BigNumber;
+  players: string[];
+  winner: string;  
 }
 
 export interface Pot {

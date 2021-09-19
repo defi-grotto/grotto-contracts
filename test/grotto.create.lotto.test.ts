@@ -23,8 +23,12 @@ describe("Grotto: Create Lotto Tests", () => {
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
-      numberOfPlayers: 10,
+      maxNumberOfPlayers: 10,
       winningType: WinningType.NUMBER_OF_PLAYERS,
+      isFinished: false,
+      players: [],
+      stakes: BigNumber.from(0),
+      winner: address0
     };
   });
 
@@ -78,7 +82,7 @@ describe("Grotto: Create Lotto Tests", () => {
       };
 
       lotto.id = 2;
-      lotto.numberOfPlayers = 0;
+      lotto.maxNumberOfPlayers = 0;
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
         "ERROR_8"
       );
@@ -91,7 +95,7 @@ describe("Grotto: Create Lotto Tests", () => {
   it("should not create a lotto if bet amount is not greater than 0", async () => {
     try {
       lotto.id = 2;
-      lotto.numberOfPlayers = 100;
+      lotto.maxNumberOfPlayers = 100;
       await expect(grotto.createLotto(lotto)).to.be.revertedWith("ERROR_7");
     } catch (error) {
       console.log(error);
@@ -173,11 +177,9 @@ describe("Grotto: Create Lotto Tests", () => {
 
   it("should get running lottos", async () => {
     try {
-      const lottoIds = await grotto.getLottos();
-
-      expect(lottoIds).to.be.an('array');
-      expect(lottoIds[0]).to.be.eq(1);
-      expect(lottoIds[1]).to.be.eq(2);
+      const lotto = await grotto.getLottoById(1);
+      expect(lotto.id.toNumber()).to.be.eq(1);
+      expect(lotto.creator).to.be.eq(accounts[1].address);
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

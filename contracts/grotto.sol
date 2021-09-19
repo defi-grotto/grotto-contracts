@@ -28,6 +28,8 @@ import "./libraries/grotto.interface.sol";
     ERROR_19: Lotto does not exist
     ERROR_20: result from playLotto is false
     ERROR_21: creator can not play
+    ERROR_22: Lotto is not finished
+    ERROR_23: Lotto is already claimed
  **/
 
 contract Grotto is GrottoInterface {
@@ -69,8 +71,15 @@ contract Grotto is GrottoInterface {
         
     }    
 
-    function claim() external payable {
+    function claim(uint256 lottoId) external payable {
+        require(store.claimLottoWinnings(lottoId));
 
+        Lotto memory lotto = store.getLottoById(lottoId);
+        address payable winner = payable(lotto.winner);
+
+        winner.transfer(lotto.betAmount);
+        
+        emit Claimed(lottoId);
     }
 
     function getLottoById(uint256 lottoId) external view returns (Lotto memory) {
@@ -79,5 +88,5 @@ contract Grotto is GrottoInterface {
 
     function getPotById(uint256 potId) external view returns (Pot memory) {
         return store.getPotById(potId);
-    }    
+    }
 }

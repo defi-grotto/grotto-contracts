@@ -14,4 +14,6 @@ interface StorageInterface {
     function getPotById(uint256 lottoId) external view returns (Pot memory);
 
     function playLotto(uint256 lottoId, uint256 betPlaced, address player) external returns (bool);
+
+    function claimLottoWinnings(uint256 _lottoId) external returns (bool);
 }

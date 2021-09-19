@@ -84,10 +84,120 @@ describe("Grotto: Play Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };      
       const player1 = await grotto.connect(accounts[2]);
-      await expect(player1.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");
+      await expect(player1.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
   });
+
+  it("should not play lotto by creator", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const player1 = await grotto.connect(accounts[1]);
+      await expect(player1.playLotto(nopLotto.id, overrides)).to.be.revertedWith("ERROR_21");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });
+
+  it("should not play lotto with non-existent lotto id", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const player1 = await grotto.connect(accounts[1]);
+      await expect(player1.playLotto(nopLotto.id + 1001, overrides)).to.be.revertedWith("ERROR_19");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });  
+
+  it("should not play lotto if bet amount is lower that what is set by creator", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.001"),
+      };      
+      const player1 = await grotto.connect(accounts[1]);
+      await expect(player1.playLotto(nopLotto.id, overrides)).to.be.revertedWith("ERROR_18");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });  
+  
+  it('should not claim winnings before lotto is finished', async () => {
+    await expect(grotto.claim(nopLotto.id)).to.be.revertedWith("ERROR_22");
+  });    
+
+  it("should not play lotto if max number of players reached", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const player2 = await grotto.connect(accounts[3]);
+      await expect(player2.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+
+      const player3 = await grotto.connect(accounts[4]);
+      await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
+
+      const player4 = await grotto.connect(accounts[5]);
+      await expect(player4.playLotto(nopLotto.id, overrides)).to.be.revertedWith("ERROR_17");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });
+  
+  it('should find winner after max number of players reached', async() => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };
+
+      // create lotto
+      nopLotto.id = 20;
+      await expect(grotto.createLotto(nopLotto, overrides)).to.emit(grotto, "LottoCreated");
+
+      // player 1
+      const player1 = await grotto.connect(accounts[2]);
+      await expect(player1.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+
+      let lotto = await grotto.getLottoById(20);
+      expect(lotto.winner).to.be.eq(address0);
+
+      // player 2
+      const player2 = await grotto.connect(accounts[3]);
+      await expect(player2.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+      lotto = await grotto.getLottoById(nopLotto.id );
+      expect(lotto.winner).to.be.eq(address0);
+
+      // player 3
+      const player3 = await grotto.connect(accounts[4]);
+      await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
+      lotto = await grotto.getLottoById(nopLotto.id);
+      expect(lotto.winner).to.be.oneOf([accounts[2].address, accounts[3].address, accounts[4].address]);
+
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  });
+
+  it('should claim winnings', async () => {
+    const lotto = await grotto.getLottoById(nopLotto.id);
+    const winner = lotto.winner;
+    const balanceBefore = await ethers.provider.getBalance(winner);    
+    await expect(grotto.claim(nopLotto.id)).to.emit(grotto, "Claimed");
+    const balanceAfter = await ethers.provider.getBalance(winner);    
+    expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
+  });
+
+  it('should not claim winnings twice', async () => {
+    await expect(grotto.claim(nopLotto.id)).to.be.revertedWith("ERROR_23");
+  });  
 });

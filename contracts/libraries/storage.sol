@@ -22,6 +22,7 @@ contract Storage is StorageInterface {
     mapping (uint256 => uint256) betAmount;
     mapping (uint256 => WinningType) winningType;
     mapping (uint256 => bool) isFinished;
+    mapping (uint256 => bool) isClaimed;
     mapping (uint256 => uint256) stakes;
     mapping (uint256 => address[]) players;
     mapping (uint256 => address) winner;
@@ -63,11 +64,7 @@ contract Storage is StorageInterface {
         _;
     }
 
-    modifier can_play_lotto(uint256 _lottoId, uint256 _betPlaced, address _player) {
-        require(creator[_lottoId] != address(0), "ERROR_19");
-        require(!isFinished[_lottoId], "ERROR_17");
-        require(_betPlaced >= betAmount[_lottoId], "ERROR_18");
-        require(_player != creator[_lottoId], "ERROR_21");
+    modifier still_running(uint256 _lottoId) {
         if (winningType[_lottoId] == WinningType.TIME_BASED) {
             require(startTime[_lottoId] <= block.timestamp, "ERROR_14");
             require(endTime[_lottoId] > block.timestamp, "ERROR_15");
@@ -76,7 +73,15 @@ contract Storage is StorageInterface {
                 players[_lottoId].length < maxNumberOfPlayers[_lottoId],
                 "ERROR_16"
             );
-        }
+        }        
+        _;
+    }
+
+    modifier can_play_lotto(uint256 _lottoId, uint256 _betPlaced, address _player) {
+        require(creator[_lottoId] != address(0), "ERROR_19");
+        require(!isFinished[_lottoId], "ERROR_17");
+        require(_betPlaced >= betAmount[_lottoId], "ERROR_18");
+        require(_player != creator[_lottoId], "ERROR_21");
         _;
     }
 
@@ -149,7 +154,7 @@ contract Storage is StorageInterface {
         view
         override
         returns (Lotto memory)
-    {     
+    {                     
         return Lotto({
             id: lottoId[_lottoId],
             creator: creator[_lottoId],
@@ -172,7 +177,7 @@ contract Storage is StorageInterface {
         view
         override
         returns (Pot memory)
-    {
+    {        
         Lotto memory lotto = Lotto({
             id: lottoId[_potId],
             creator: creator[_potId],
@@ -203,9 +208,36 @@ contract Storage is StorageInterface {
         uint256 _lottoId,
         uint256 _betPlaced,
         address _player
-    ) external override can_play_lotto(_lottoId, _betPlaced, _player) returns (bool) {        
+    ) external override can_play_lotto(_lottoId, _betPlaced, _player) still_running(_lottoId) returns (bool) {        
         stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
-        players[_lottoId].push(_player);
+        players[_lottoId].push(_player);        
+        findLottoWinner(_lottoId);
+        return true;
+    }
+
+    function findLottoWinner(uint256 _lottoId) private {
+        if (winningType[_lottoId] == WinningType.TIME_BASED) {
+        } else if (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS && players[_lottoId].length == maxNumberOfPlayers[_lottoId]) {        
+            uint256 totalStaked = stakes[_lottoId];
+
+            uint256 mid = players[_lottoId].length / 2;
+            uint256 end = players[_lottoId].length - 1;
+            bytes32 randBase = keccak256(abi.encodePacked(players[0]));
+            randBase = keccak256(abi.encodePacked(randBase, players[mid]));
+            randBase = keccak256(abi.encodePacked(randBase, players[end]));
+
+            uint256 winnerIndex = uint256(keccak256(abi.encodePacked(totalStaked, randBase))) % (players[_lottoId].length);        
+
+            address lottoWinner = players[_lottoId][winnerIndex];
+            winner[_lottoId] = lottoWinner;
+            isFinished[_lottoId] = true;        
+        }
+    }
+
+    function claimLottoWinnings(uint256 _lottoId) external override returns (bool) {
+        require(isFinished[_lottoId], "ERROR_22");
+        require(!isClaimed[_lottoId], "ERROR_23");
+        isClaimed[_lottoId] = true;
         return true;
     }
 }

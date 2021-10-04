@@ -28,14 +28,15 @@ describe("Grotto: Create Pot Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winner: address0      
+      winners: [],
+      winnings: []    
     };
 
     pot = {
       lotto: lotto,
       potAmount: BigNumber.from(0),
       winningNumbers: [33, 12, 99],
-      potGuessType: PotGuessType.BOTH,
+      potGuessType: PotGuessType.ORDER,
     };
   });
 

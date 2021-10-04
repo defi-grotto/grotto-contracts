@@ -11,9 +11,13 @@ interface StorageInterface {
 
     function getLottoById(uint256 lottoId) external view returns (Lotto memory);
 
+    function findClaimer(uint256 lottoId, address claimer) external view returns (address, uint256);
+
     function getPotById(uint256 lottoId) external view returns (Pot memory);
 
     function playLotto(uint256 lottoId, uint256 betPlaced, address player) external returns (bool);
+
+    function playPot(uint256 potId, uint256 betPlaced, address player) external returns (bool);
 
     function claimLottoWinnings(uint256 _lottoId) external returns (bool);
 }

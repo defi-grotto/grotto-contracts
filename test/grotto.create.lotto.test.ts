@@ -28,7 +28,8 @@ describe("Grotto: Create Lotto Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winner: address0
+      winners: [],
+      winnings: []
     };
   });
 

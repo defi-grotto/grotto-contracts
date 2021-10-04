@@ -12,24 +12,56 @@ contract Storage is StorageInterface {
     address private grottoCaller = address(0);
 
     // Lotto Data Structure 
+    // id of the lotto/pot
     mapping (uint256 => uint256) lottoId;
     mapping (uint256 => address) creator;
+    // how many people can win the lotto/pot
     mapping (uint256 => uint256) numberOfWinners;
+    // Depending on numberOfWinners, an array of each winners shares. Must add up to 100
     mapping (uint256 => uint256[]) winnersShares;
     mapping (uint256 => uint256) startTime;
     mapping (uint256 => uint256) endTime;
+    // for a no of players based lotto/pot, how many players before winner is calculated and lotto stopped
     mapping (uint256 => uint256) maxNumberOfPlayers;
+    // how much a person must bet
     mapping (uint256 => uint256) betAmount;
+    /*
+        Type of Winning
+            * Time Based: 
+                * For lotto: it is finished after X time, the winner is randomly selected
+                * For pot: if a winner is not found after X time, pot creator gets all the stakes
+                            if a winner (or winners) are found, they get the potAmount + stakes
+            * Number of players: 
+                For lotto: it is finished after X number of people played, the winner is randomly selected
+                For pot: if a winner is not found after X number of players have played, pot creator gets all the stakes
+                        if a winner (or winners) are found, they get the potAmount + stakes
+    */    
     mapping (uint256 => WinningType) winningType;
     mapping (uint256 => bool) isFinished;
     mapping (uint256 => bool) isClaimed;
+    // all the money staked on the lotto/pot so far
     mapping (uint256 => uint256) stakes;
+    // all the players in the lotto/pot
     mapping (uint256 => address[]) players;
-    mapping (uint256 => address) winner;
+    // list of winners    
+    mapping (uint256 => address[]) winners;
+    // a map of winners for easy access without for loop
+    mapping (uint256 => mapping(address => address)) winnersMap;
+    // each winner's winning
+    mapping (uint256 =>uint256[]) winnings;
+    // a map of winnings for easy access without for loop
+    mapping (uint256 => mapping(address => uint256)) winningsMap;    
 
     // Pot Data Structure
+    // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
     mapping (uint256 => uint256) potAmount;
+    // The numbers the players must guess
     mapping (uint256 => uint256[]) winningNumbers;
+    /* 
+        The Type of Guess
+            * Numbers: The player must guess just the numbers
+            * Order: The player must guess both the number and the order
+    */
     mapping (uint256 => PotGuessType) potGuessType;    
 
     modifier is_authorized() {
@@ -45,6 +77,16 @@ contract Storage is StorageInterface {
             _lotto.numberOfWinners == _lotto.winnersShares.length,
             "ERROR_5"
         );
+
+        require(_lotto.numberOfWinners < 10, "ERROR_25");
+
+        uint256 sum = 0;
+
+        for(uint256 i = 0; i < _lotto.numberOfWinners; i = i.add(1)) {
+            sum = sum.add(_lotto.winnersShares[i]);
+        }
+
+        require(sum == 100, "ERROR_26");
 
         if (_lotto.winningType == WinningType.TIME_BASED) {
             require(_lotto.startTime < _lotto.endTime, "ERROR_6");
@@ -118,7 +160,6 @@ contract Storage is StorageInterface {
         isFinished[_lotto.id] = _lotto.isFinished;
         stakes[_lotto.id] = _lotto.stakes;
         players[_lotto.id] = _lotto.players;
-        winner[_lotto.id] = _lotto.winner;
         return true;
     }
 
@@ -142,11 +183,14 @@ contract Storage is StorageInterface {
         isFinished[_pot.lotto.id] = _pot.lotto.isFinished;
         stakes[_pot.lotto.id] = _pot.lotto.stakes;
         players[_pot.lotto.id] = _pot.lotto.players;
-        winner[_pot.lotto.id] = _pot.lotto.winner;
         potAmount[_pot.lotto.id] = _pot.potAmount;
         winningNumbers[_pot.lotto.id] = _pot.winningNumbers;
         potGuessType[_pot.lotto.id] = _pot.potGuessType;
         return true;
+    }
+
+    function findClaimer(uint256 _lottoId, address _claimer) external view override returns (address, uint256) {
+        return (winnersMap[_lottoId][_claimer], winningsMap[_lottoId][_claimer]);
     }
 
     function getLottoById(uint256 _lottoId)
@@ -168,7 +212,8 @@ contract Storage is StorageInterface {
             isFinished: isFinished[_lottoId],
             stakes: stakes[_lottoId],
             players: players[_lottoId],
-            winner: winner[_lottoId]
+            winners: winners[_lottoId],
+            winnings: winnings[_lottoId]
         });
     }
 
@@ -191,7 +236,8 @@ contract Storage is StorageInterface {
             isFinished: isFinished[_potId],
             stakes: stakes[_potId],
             players: players[_potId],
-            winner: winner[_potId]
+            winners: winners[_potId],
+            winnings: winnings[_potId]
         });
 
         Pot memory pot = Pot({
@@ -203,7 +249,7 @@ contract Storage is StorageInterface {
 
         return pot;
     }
-
+    
     function playLotto(
         uint256 _lottoId,
         uint256 _betPlaced,
@@ -215,21 +261,37 @@ contract Storage is StorageInterface {
         return true;
     }
 
+    function playPot(        
+        uint256 _potId,
+        uint256 _betPlaced,
+        address _player) external override can_play_lotto(_potId, _betPlaced, _player) still_running(_potId) returns (bool) {        
+        stakes[_potId] = stakes[_potId].add(_betPlaced);
+        players[_potId].push(_player);        
+        findLottoWinner(_potId);
+        return true;
+    }
+
     function findLottoWinner(uint256 _lottoId) private {
         if (winningType[_lottoId] == WinningType.TIME_BASED) {
         } else if (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS && players[_lottoId].length == maxNumberOfPlayers[_lottoId]) {        
-            uint256 totalStaked = stakes[_lottoId];
+            uint256 totalStaked = stakes[_lottoId];            
 
-            uint256 mid = players[_lottoId].length / 2;
-            uint256 end = players[_lottoId].length - 1;
-            bytes32 randBase = keccak256(abi.encodePacked(players[0]));
-            randBase = keccak256(abi.encodePacked(randBase, players[mid]));
-            randBase = keccak256(abi.encodePacked(randBase, players[end]));
+            for(uint256 i = 0; i < numberOfWinners[_lottoId]; i = i.add(1)) {                
+                uint256 mid = players[_lottoId].length.div(2);
+                uint256 end = players[_lottoId].length.sub(1);
+                bytes32 randBase = keccak256(abi.encodePacked(players[i]));
+                randBase = keccak256(abi.encodePacked(randBase, players[mid]));
+                randBase = keccak256(abi.encodePacked(randBase, players[end]));
 
-            uint256 winnerIndex = uint256(keccak256(abi.encodePacked(totalStaked, randBase))) % (players[_lottoId].length);        
+                uint256 winnerIndex = uint256(keccak256(abi.encodePacked(totalStaked, randBase))) % (players[_lottoId].length);        
 
-            address lottoWinner = players[_lottoId][winnerIndex];
-            winner[_lottoId] = lottoWinner;
+                address lottoWinner = players[_lottoId][winnerIndex];
+                uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(100);
+                winners[_lottoId].push(lottoWinner);
+                winnersMap[_lottoId][lottoWinner] = lottoWinner;
+                winnings[_lottoId].push(eachShare);
+                winningsMap[_lottoId][lottoWinner] = eachShare;
+            }            
             isFinished[_lottoId] = true;        
         }
     }

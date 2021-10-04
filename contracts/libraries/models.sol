@@ -8,8 +8,7 @@ enum WinningType {
 
 enum PotGuessType {
     NUMBERS,
-    ORDER,
-    BOTH
+    ORDER
 }
 
 struct Lotto {
@@ -22,11 +21,12 @@ struct Lotto {
     uint256 maxNumberOfPlayers;
     uint256 betAmount;
     WinningType winningType;
+    uint256[] winnings;
 
     bool isFinished;
     uint256 stakes;
     address[] players;
-    address winner;
+    address[] winners;
 }
 
 struct Pot {

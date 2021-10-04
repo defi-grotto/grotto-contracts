@@ -7,8 +7,7 @@ export enum WinningType {
 
 export enum PotGuessType {
   NUMBERS,
-  ORDER,
-  BOTH
+  ORDER
 }
 
 
@@ -25,7 +24,8 @@ export interface Lotto {
   isFinished: boolean;
   stakes: BigNumber;
   players: string[];
-  winner: string;  
+  winners: string[];  
+  winnings: number[]
 }
 
 export interface Pot {

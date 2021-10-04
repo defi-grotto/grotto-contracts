@@ -30,6 +30,11 @@ import "./libraries/grotto.interface.sol";
     ERROR_21: creator can not play
     ERROR_22: Lotto is not finished
     ERROR_23: Lotto is already claimed
+    ERROR_24: result from playPot is false
+    ERROR_25: Not more than 10 winners per lotto/pot
+    ERROR_26: Sum of winningShares array elements must be 100 (100%)
+    ERROR_27: Claimer is not a winner
+    ERROR_28: Winning is zero
  **/
 
 contract Grotto is GrottoInterface {
@@ -67,17 +72,22 @@ contract Grotto is GrottoInterface {
         emit BetPlaced(lottoId, msg.value, msg.sender);
     }     
 
-    function playPot() external payable {
-        
+    function playPot(uint256 potId) external payable {
+        bool result = store.playPot(potId, msg.value, msg.sender);
+        require(result, "ERROR_24");
+        emit BetPlaced(potId, msg.value, msg.sender);        
     }    
 
     function claim(uint256 lottoId) external payable {
+        address claimer = msg.sender;
         require(store.claimLottoWinnings(lottoId));
 
-        Lotto memory lotto = store.getLottoById(lottoId);
-        address payable winner = payable(lotto.winner);
+        (address winner, uint256 winning) = store.findClaimer(lottoId, claimer);
 
-        winner.transfer(lotto.betAmount);
+        require(winner != address(0), "ERROR_27");
+        require(winning != 0, "ERROR_28");        
+
+        payable(winner).transfer(winning);
         
         emit Claimed(lottoId);
     }

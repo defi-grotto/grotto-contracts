@@ -204,4 +204,118 @@ describe("Grotto: Play Lotto Tests", () => {
   it('should not claim winnings twice', async () => {
     await expect(grotto.claim(nopLotto.id)).to.be.revertedWith("ERROR_23");
   });  
+
+  // TODO: Tests for time based lotto
+
+  it("should create a time based lotto winning type", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };
+
+      await expect(grotto.createLotto(tbLotto, overrides)).to.emit(
+        grotto,
+        "LottoCreated"
+      );
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  }); 
+  
+  it("should play time based lotto", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const player1 = await grotto.connect(accounts[2]);
+      await expect(player1.playLotto(tbLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  });
+  
+  it('should not claim winnings before lotto is finished', async () => {
+    await expect(grotto.claim(tbLotto.id)).to.be.revertedWith("ERROR_22");
+  });
+  
+  it("should not play time based lotto if end time has reached", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+
+      const creator = await grotto.connect(accounts[0]);
+      await creator.forceEndLotto(tbLotto.id);
+      const player4 = await grotto.connect(accounts[5]);
+      await expect(player4.playLotto(tbLotto.id, overrides)).to.be.revertedWith("ERROR_15");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });  
+
+  it("should not play time based lotto if start time has not reached", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      }; 
+      
+      const futureLotto = {
+        ...tbLotto
+      };
+
+      futureLotto.startTime = futureLotto.endTime;
+      futureLotto.id = 100110;
+      futureLotto.startTime -= 10;
+
+      await expect(grotto.createLotto(futureLotto, overrides)).to.emit(
+        grotto,
+        "LottoCreated"
+      );
+
+      const player4 = await grotto.connect(accounts[5]);
+      await expect(player4.playLotto(futureLotto.id, overrides)).to.be.revertedWith("ERROR_14");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });  
+
+
+  it('should find winner after end time has reached reached', async() => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };
+
+      // create lotto
+      nopLotto.id = 20;
+      await expect(grotto.createLotto(nopLotto, overrides)).to.emit(grotto, "LottoCreated");
+
+      // player 1
+      const player1 = await grotto.connect(accounts[2]);
+      await expect(player1.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+
+      let lotto = await grotto.getLottoById(20);
+      expect(lotto.winners).to.be.an("array");
+
+      // player 2
+      const player2 = await grotto.connect(accounts[3]);
+      await expect(player2.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+      lotto = await grotto.getLottoById(nopLotto.id );
+      expect(lotto.winners).to.be.an("array");
+
+      // player 3
+      const player3 = await grotto.connect(accounts[4]);
+      await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
+      lotto = await grotto.getLottoById(nopLotto.id);
+      expect(lotto.winners[0]).to.be.oneOf([accounts[2].address, accounts[3].address, accounts[4].address]);
+
+    } catch (error) {
+      console.log("Errored: ", error);
+      expect(error).to.equal(undefined);
+    }
+  });  
 });

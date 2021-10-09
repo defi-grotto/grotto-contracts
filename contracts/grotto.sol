@@ -35,21 +35,23 @@ import "./libraries/grotto.interface.sol";
     ERROR_26: Sum of winningShares array elements must be 100 (100%)
     ERROR_27: Claimer is not a winner
     ERROR_28: Winning is zero
+    ERROR_29: Can not force end lotto
+    ERROR_30: Only creator can force end time based lotto
  **/
 
 contract Grotto is GrottoInterface {
-    address private caller;
+    address private creator;
 
     address private storeAddress = address(0);
 
     StorageInterface private store;
 
     constructor(address _storeAddress) {
-        caller = msg.sender;
+        creator = msg.sender;
         storeAddress = _storeAddress;
         store = StorageInterface(storeAddress);
 
-        store.setGrotto(address(this), caller);
+        store.setGrotto(address(this), creator);
     }
 
     function createLotto(Lotto memory lotto) external payable {
@@ -78,6 +80,10 @@ contract Grotto is GrottoInterface {
         emit BetPlaced(potId, msg.value, msg.sender);        
     }    
 
+    function findWinners(uint256 lottoId) external {
+        
+    }
+
     function claim(uint256 lottoId) external payable {
         address claimer = msg.sender;
         require(store.claimLottoWinnings(lottoId));
@@ -98,5 +104,14 @@ contract Grotto is GrottoInterface {
 
     function getPotById(uint256 potId) external view returns (Pot memory) {
         return store.getPotById(potId);
+    }
+
+    function forceEndLotto(uint256 lottoId) external {
+        require(msg.sender == creator, "ERROR_30");
+        require(store.forceEndLotto(lottoId), "ERROR_29");    
+    }
+
+    function getTime() external view returns (uint256) {
+        return block.timestamp;
     }
 }

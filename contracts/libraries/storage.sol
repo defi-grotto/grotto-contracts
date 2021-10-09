@@ -272,34 +272,44 @@ contract Storage is StorageInterface {
     }
 
     function findLottoWinner(uint256 _lottoId) private {
-        if (winningType[_lottoId] == WinningType.TIME_BASED) {
-        } else if (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS && players[_lottoId].length == maxNumberOfPlayers[_lottoId]) {        
-            uint256 totalStaked = stakes[_lottoId];            
-
-            for(uint256 i = 0; i < numberOfWinners[_lottoId]; i = i.add(1)) {                
-                uint256 mid = players[_lottoId].length.div(2);
-                uint256 end = players[_lottoId].length.sub(1);
-                bytes32 randBase = keccak256(abi.encodePacked(players[i]));
-                randBase = keccak256(abi.encodePacked(randBase, players[mid]));
-                randBase = keccak256(abi.encodePacked(randBase, players[end]));
-
-                uint256 winnerIndex = uint256(keccak256(abi.encodePacked(totalStaked, randBase))) % (players[_lottoId].length);        
-
-                address lottoWinner = players[_lottoId][winnerIndex];
-                uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(100);
-                winners[_lottoId].push(lottoWinner);
-                winnersMap[_lottoId][lottoWinner] = lottoWinner;
-                winnings[_lottoId].push(eachShare);
-                winningsMap[_lottoId][lottoWinner] = eachShare;
-            }            
-            isFinished[_lottoId] = true;        
+        uint256 current = block.timestamp;
+        
+        if (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS && players[_lottoId].length == maxNumberOfPlayers[_lottoId]) {        
+            _findLottoWinner(_lottoId);
         }
+    }
+
+    function _findLottoWinner(uint256 _lottoId) private {
+        uint256 totalStaked = stakes[_lottoId];            
+
+        for(uint256 i = 0; i < numberOfWinners[_lottoId]; i = i.add(1)) {                
+            uint256 mid = players[_lottoId].length.div(2);
+            uint256 end = players[_lottoId].length.sub(1);
+            bytes32 randBase = keccak256(abi.encodePacked(players[i]));
+            randBase = keccak256(abi.encodePacked(randBase, players[mid]));
+            randBase = keccak256(abi.encodePacked(randBase, players[end]));
+
+            uint256 winnerIndex = uint256(keccak256(abi.encodePacked(totalStaked, randBase))) % (players[_lottoId].length);        
+
+            address lottoWinner = players[_lottoId][winnerIndex];
+            uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(100);
+            winners[_lottoId].push(lottoWinner);
+            winnersMap[_lottoId][lottoWinner] = lottoWinner;
+            winnings[_lottoId].push(eachShare);
+            winningsMap[_lottoId][lottoWinner] = eachShare;
+        }            
+        isFinished[_lottoId] = true;                
     }
 
     function claimLottoWinnings(uint256 _lottoId) external override returns (bool) {
         require(isFinished[_lottoId], "ERROR_22");
         require(!isClaimed[_lottoId], "ERROR_23");
         isClaimed[_lottoId] = true;
+        return true;
+    }
+
+    function forceEndLotto(uint256 _lottoId) external override returns (bool) {
+        endTime[_lottoId] = block.timestamp;
         return true;
     }
 }

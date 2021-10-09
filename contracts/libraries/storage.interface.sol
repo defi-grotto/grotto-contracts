@@ -19,5 +19,7 @@ interface StorageInterface {
 
     function playPot(uint256 potId, uint256 betPlaced, address player) external returns (bool);
 
-    function claimLottoWinnings(uint256 _lottoId) external returns (bool);
+    function claimLottoWinnings(uint256 lottoId) external returns (bool);
+
+    function forceEndLotto(uint256 lottoId) external returns (bool);
 }

@@ -76,7 +76,7 @@ describe("Grotto: Create Pot Tests", () => {
         value: ethers.utils.parseEther("1"),
       };
       await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
-        "ERROR_4"
+        "Lotto with same ID and Creator already exists"
       );
     } catch (error) {
       console.log(error);
@@ -93,7 +93,7 @@ describe("Grotto: Create Pot Tests", () => {
       pot.lotto.id = 2;
       pot.lotto.maxNumberOfPlayers = 0;
       await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
-        "ERROR_8"
+        "Number of players must be greater than 0"
       );
     } catch (error) {
       console.log(error);
@@ -101,27 +101,29 @@ describe("Grotto: Create Pot Tests", () => {
     }
   });
 
-  it("should not create a pot if pot amount is not greater than 0", async () => {
+  it("should not create a pot if lotto bet amount is not greater than 0", async () => {
     try {
       pot.lotto.id = 2;
       pot.lotto.maxNumberOfPlayers = 100;
-      pot.lotto.betAmount = ethers.utils.parseEther("0.01");
-      await expect(grotto.createPot(pot)).to.be.revertedWith("ERROR_11");
+      pot.potAmount = ethers.utils.parseEther("0.01");
+      pot.lotto.betAmount = BigNumber.from(0);
+      await expect(grotto.createPot(pot)).to.be.revertedWith("Can not create a lotto with 0 bet amount");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
   });
 
-  it("should not create a pot if get amount is not greater than 0", async () => {
+  it("should not create a pot if bet amount is not greater than 0", async () => {
     try {
       pot.lotto.id = 2;
       pot.lotto.maxNumberOfPlayers = 100;
-      pot.lotto.betAmount = BigNumber.from(0);
+      pot.potAmount = BigNumber.from(0);
+      pot.lotto.betAmount = ethers.utils.parseEther("0.01");
       const overrides = {
         value: ethers.utils.parseEther("1"),
       };
-      await expect(grotto.createPot(pot)).to.be.revertedWith("ERROR_7");
+      await expect(grotto.createPot(pot)).to.be.revertedWith("Pot betAmount must be greater than 0");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -138,7 +140,7 @@ describe("Grotto: Create Pot Tests", () => {
       pot.lotto.numberOfWinners = 2;
       pot.lotto.betAmount = ethers.utils.parseEther("0.01");
       await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
-        "ERROR_5"
+        "Winnershares length does not match number of winners"
       );
     } catch (error) {
       console.log(error);
@@ -156,7 +158,7 @@ describe("Grotto: Create Pot Tests", () => {
       pot.lotto.numberOfWinners = 1;
       pot.lotto.winningType = WinningType.TIME_BASED;
       await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
-        "ERROR_6"
+        "Start time must be less than end time"
       );
     } catch (error) {
       console.log(error);
@@ -174,7 +176,7 @@ describe("Grotto: Create Pot Tests", () => {
       pot.lotto.winningType = WinningType.TIME_BASED;
       pot.lotto.endTime = 1;
       await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
-        "ERROR_10"
+        "End time must be in the future"
       );
     } catch (error) {
       console.log(error);
@@ -209,7 +211,7 @@ describe("Grotto: Create Pot Tests", () => {
         value: ethers.utils.parseEther("0.001"),
       };
       
-      await expect(grotto.createPot(pot, overrides)).to.be.revertedWith("ERROR_12");
+      await expect(grotto.createPot(pot, overrides)).to.be.revertedWith("Pot winning numbers must be at least 1");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

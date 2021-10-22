@@ -68,7 +68,7 @@ describe("Grotto: Create Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
-        "ERROR_4"
+        "Lotto with same ID and Creator already exists"
       );
     } catch (error) {
       console.log(error);
@@ -85,7 +85,7 @@ describe("Grotto: Create Lotto Tests", () => {
       lotto.id = 2;
       lotto.maxNumberOfPlayers = 0;
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
-        "ERROR_8"
+        "Number of players must be greater than 0"
       );
     } catch (error) {
       console.log(error);
@@ -97,7 +97,7 @@ describe("Grotto: Create Lotto Tests", () => {
     try {
       lotto.id = 2;
       lotto.maxNumberOfPlayers = 100;
-      await expect(grotto.createLotto(lotto)).to.be.revertedWith("ERROR_7");
+      await expect(grotto.createLotto(lotto)).to.be.revertedWith("Can not create a lotto with 0 bet amount");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -113,7 +113,7 @@ describe("Grotto: Create Lotto Tests", () => {
       lotto.id = 2;
       lotto.numberOfWinners = 2;
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
-        "ERROR_5"
+        "Winnershares length does not match number of winners"
       );
     } catch (error) {
       console.log(error);
@@ -131,7 +131,7 @@ describe("Grotto: Create Lotto Tests", () => {
       lotto.numberOfWinners = 1;
       lotto.winningType = WinningType.TIME_BASED;
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
-        "ERROR_6"
+        "Start time must be less than end time"
       );
     } catch (error) {
       console.log(error);
@@ -149,7 +149,7 @@ describe("Grotto: Create Lotto Tests", () => {
       lotto.winningType = WinningType.TIME_BASED;
       lotto.endTime = 1;
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
-        "ERROR_10"
+        "End time must be in the future"
       );
     } catch (error) {
       console.log(error);

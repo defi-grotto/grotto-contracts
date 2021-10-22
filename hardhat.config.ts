@@ -1,6 +1,8 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
+import "hardhat-contract-sizer";
+
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   console.log(hre.config.solidity);
@@ -21,4 +23,9 @@ module.exports = {
       }
     }
   },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
+    strict: true
+  }
 };

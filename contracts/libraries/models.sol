@@ -19,6 +19,7 @@ struct Lotto {
     uint256 startTime;
     uint256 endTime;
     uint256 maxNumberOfPlayers;
+    // how much each player has to bet
     uint256 betAmount;
     WinningType winningType;
     uint256[] winnings;
@@ -31,6 +32,7 @@ struct Lotto {
 
 struct Pot {
     Lotto lotto;
+    // how much the winner will win if they guessed the number right
     uint256 potAmount;
     uint256[] winningNumbers;
     PotGuessType potGuessType;

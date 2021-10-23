@@ -18,6 +18,7 @@ describe("Grotto: Create Pot Tests", () => {
     const lotto: Lotto = {
       id: 1,
       creator: accounts[1].address,
+      creatorShares: BigNumber.from(0),
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),

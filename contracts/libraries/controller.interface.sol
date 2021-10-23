@@ -14,7 +14,7 @@ interface ControllerInterface {
 
     function getLottoById(uint256 lottoId) external view returns (Lotto memory);
 
-    function findClaimer(uint256 lottoId, address claimer) external view returns (address, uint256);
+    function getClaim(uint256 lottoId, address claimer) external view returns (Claim memory);
 
     function getPotById(uint256 lottoId) external view returns (Pot memory);
 

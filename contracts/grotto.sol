@@ -26,7 +26,8 @@ contract Grotto is GrottoInterface {
 
     function createLotto(Lotto memory lotto) external payable {
         lotto.betAmount = msg.value;   
-        lotto.creator = msg.sender;     
+        lotto.stakes = msg.value;
+        lotto.creator = msg.sender;             
         bool result = controller.addNewLotto(lotto);
         require(result, ERROR_9);
         emit LottoCreated(lotto);
@@ -60,12 +61,15 @@ contract Grotto is GrottoInterface {
         address claimer = msg.sender;
         require(controller.claimWinnings(lottoId));
 
-        (address winner, uint256 winning) = controller.findClaimer(lottoId, claimer);
+        Claim memory _claim = controller.getClaim(lottoId, claimer);
 
-        require(winner != address(0), ERROR_27);
-        require(winning != 0, ERROR_28);        
+        require(_claim.winner != address(0), ERROR_27);
+        require(_claim.winning != 0, ERROR_28);        
+        require(_claim.creator != address(0), ERROR_34);
+        require(_claim.creatorShares != 0, ERROR_35);                
 
-        payable(winner).transfer(winning);
+        payable(_claim.winner).transfer(_claim.winning);
+        payable(_claim.creator).transfer(_claim.creatorShares);
         
         emit Claimed(lottoId);
     }

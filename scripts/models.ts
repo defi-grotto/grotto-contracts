@@ -14,6 +14,7 @@ export enum PotGuessType {
 export interface Lotto {
   id: number;
   creator: string;
+  creatorShares: BigNumber;
   startTime: number;
   endTime: number;
   maxNumberOfPlayers: number;

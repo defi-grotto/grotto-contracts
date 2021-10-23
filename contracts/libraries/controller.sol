@@ -14,10 +14,10 @@ contract Controller is ControllerInterface {
     address private platformOwner = address(0);
     uint256 private platformShare;
     mapping(uint256 => uint256) private platformShares;
-    mapping(uint256 => uint256) private ownersShares;
+    mapping(uint256 => uint256) private creatorShares;
 
     uint256 private platformSharePercentage = 10;
-    uint256 private ownerSharePercentage = 20;
+    uint256 private creatorSharesPercentage = 20;
 
     uint256 private maxWinningNumbers = 10;
     uint256 private maxWinners = 10;
@@ -170,7 +170,7 @@ contract Controller is ControllerInterface {
         isFinished[_lotto.id] = _lotto.isFinished;
         stakes[_lotto.id] = _lotto.stakes;
         players[_lotto.id] = _lotto.players;
-        isPot[_lotto.id] = false;
+        isPot[_lotto.id] = false;        
         return true;
     }
 
@@ -202,19 +202,19 @@ contract Controller is ControllerInterface {
         return true;
     }
 
-    function findClaimer(uint256 _lottoId, address _claimer)
+    function getClaim(uint256 _lottoId, address _claimer)
         external
         view
         override
-        returns (address, uint256)
+        returns (Claim memory)
     {
-        if (winner[_lottoId] == _claimer) {
-            return (winner[_lottoId], winning[_lottoId]);
-        } else if (creator[_lottoId] == _claimer) {
-            return (creator[_lottoId], ownersShares[_lottoId]);
-        } else {
-            return (address(0), 0);
-        }
+        require(winner[_lottoId] == _claimer || creator[_lottoId] == _claimer || platformOwner == _claimer, ERROR_25);
+        return Claim ({
+            winner: winner[_lottoId],
+            creator: creator[_lottoId],
+            winning: winning[_lottoId],
+            creatorShares: creatorShares[_lottoId]
+        });
     }
 
     function getLottoById(uint256 _lottoId)
@@ -228,6 +228,7 @@ contract Controller is ControllerInterface {
             Lotto({
                 id: lottoId[_lottoId],
                 creator: creator[_lottoId],
+                creatorShares: creatorShares[_lottoId],
                 startTime: startTime[_lottoId],
                 endTime: endTime[_lottoId],
                 maxNumberOfPlayers: maxNumberOfPlayers[_lottoId],
@@ -251,6 +252,7 @@ contract Controller is ControllerInterface {
         Lotto memory lotto = Lotto({
             id: lottoId[_potId],
             creator: creator[_potId],
+            creatorShares: creatorShares[_potId],
             startTime: startTime[_potId],
             endTime: endTime[_potId],
             maxNumberOfPlayers: maxNumberOfPlayers[_potId],
@@ -380,11 +382,11 @@ contract Controller is ControllerInterface {
             uint256 _platformShare = totalStaked
                 .mul(platformSharePercentage)
                 .div(100);
-            uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(
+            uint256 _creatorShares = totalStaked.mul(creatorSharesPercentage).div(
                 100
             );
 
-            totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
+            totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
 
             winner[_potId] = _player;
             winning[_potId] = totalStaked;
@@ -392,7 +394,7 @@ contract Controller is ControllerInterface {
 
             platformShare = platformShare.add(_platformShare);
             platformShares[_potId] = _platformShare;
-            ownersShares[_potId] = _ownerShare;
+            creatorShares[_potId] = _creatorShares;
 
             // TODO: Reward both winner and creator with grotto tokens
         }
@@ -405,9 +407,9 @@ contract Controller is ControllerInterface {
         uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(
             100
         );
-        uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(100);
+        uint256 _creatorShares = totalStaked.mul(creatorSharesPercentage).div(100);
 
-        totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
+        totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
 
         bytes32 randBase = keccak256(abi.encode(players[0]));
         randBase = keccak256(
@@ -428,7 +430,7 @@ contract Controller is ControllerInterface {
 
         platformShare = platformShare.add(_platformShare);
         platformShares[_lottoId] = _platformShare;
-        ownersShares[_lottoId] = _ownerShare;
+        creatorShares[_lottoId] = _creatorShares;
 
         // TODO: Reward both winner and creator with grotto tokens
     }

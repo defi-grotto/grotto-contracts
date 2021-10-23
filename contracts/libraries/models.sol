@@ -14,6 +14,7 @@ enum PotGuessType {
 struct Lotto {
     uint256 id;
     address creator;
+    uint256 creatorShares;
     uint256 startTime;
     uint256 endTime;
     uint256 maxNumberOfPlayers;
@@ -33,4 +34,11 @@ struct Pot {
     uint256 potAmount;
     uint256[] winningNumbers;
     PotGuessType potGuessType;
+}
+
+struct Claim {
+    address winner;
+    address creator;
+    uint256 winning;
+    uint256 creatorShares;
 }

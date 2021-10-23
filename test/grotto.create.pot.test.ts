@@ -3,7 +3,7 @@ import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { Lotto, Pot, PotGuessType, WinningType } from "../scripts/models";
+import { Lotto, platformOwner, Pot, PotGuessType, WinningType } from "../scripts/models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
@@ -29,7 +29,7 @@ describe("Grotto: Create Pot Tests", () => {
       players: [],
       stakes: BigNumber.from(0),
       winners: [],
-      winnings: []    
+      winnings: [],
     };
 
     pot = {
@@ -38,9 +38,7 @@ describe("Grotto: Create Pot Tests", () => {
       winningNumbers: [33, 12, 99],
       potGuessType: PotGuessType.ORDER,
     };
-  });
 
-  it("should create grotto contract", async () => {
     const Grotto = await ethers.getContractFactory("Grotto");
     const Storage = await ethers.getContractFactory("Storage");
 
@@ -48,8 +46,11 @@ describe("Grotto: Create Pot Tests", () => {
     console.log(`Storage Deployed to ${storage.address}`);
     expect(storage.address).to.not.eq(address0);
 
-    grotto = await (await Grotto.deploy(storage.address)).deployed();
+    grotto = await (await Grotto.deploy(storage.address, platformOwner)).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);
+  });
+
+  it("should create grotto contract", async () => {
     expect(grotto.address).to.not.eq(address0);
   });
 
@@ -107,7 +108,9 @@ describe("Grotto: Create Pot Tests", () => {
       pot.lotto.maxNumberOfPlayers = 100;
       pot.potAmount = ethers.utils.parseEther("0.01");
       pot.lotto.betAmount = BigNumber.from(0);
-      await expect(grotto.createPot(pot)).to.be.revertedWith("Can not create a lotto with 0 bet amount");
+      await expect(grotto.createPot(pot)).to.be.revertedWith(
+        "Can not create a lotto with 0 bet amount"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -123,7 +126,9 @@ describe("Grotto: Create Pot Tests", () => {
       const overrides = {
         value: ethers.utils.parseEther("1"),
       };
-      await expect(grotto.createPot(pot)).to.be.revertedWith("Pot betAmount must be greater than 0");
+      await expect(grotto.createPot(pot)).to.be.revertedWith(
+        "Pot betAmount must be greater than 0"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -210,13 +215,15 @@ describe("Grotto: Create Pot Tests", () => {
       const overrides = {
         value: ethers.utils.parseEther("0.001"),
       };
-      
-      await expect(grotto.createPot(pot, overrides)).to.be.revertedWith("Pot winning numbers must be at least 1");
+
+      await expect(grotto.createPot(pot, overrides)).to.be.revertedWith(
+        "Pot winning numbers must be at least 1"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
-  });  
+  });
 
   it("should get pot by id", async () => {
     try {

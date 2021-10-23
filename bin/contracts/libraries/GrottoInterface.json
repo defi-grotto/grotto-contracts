@@ -1,0 +1,557 @@
+{
+    "contractName": "GrottoInterface",
+    "abi": [
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "uint256",
+                    "name": "lottoId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "player",
+                    "type": "address"
+                }
+            ],
+            "name": "BetPlaced",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "uint256",
+                    "name": "lottoId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "Claimed",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256",
+                            "name": "id",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "address",
+                            "name": "creator",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "numberOfWinners",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256[]",
+                            "name": "winnersShares",
+                            "type": "uint256[]"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "startTime",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "endTime",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxNumberOfPlayers",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "betAmount",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "enum WinningType",
+                            "name": "winningType",
+                            "type": "uint8"
+                        },
+                        {
+                            "internalType": "uint256[]",
+                            "name": "winnings",
+                            "type": "uint256[]"
+                        },
+                        {
+                            "internalType": "bool",
+                            "name": "isFinished",
+                            "type": "bool"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "stakes",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "address[]",
+                            "name": "players",
+                            "type": "address[]"
+                        },
+                        {
+                            "internalType": "address[]",
+                            "name": "winners",
+                            "type": "address[]"
+                        }
+                    ],
+                    "indexed": false,
+                    "internalType": "struct Lotto",
+                    "name": "lotto",
+                    "type": "tuple"
+                }
+            ],
+            "name": "LottoCreated",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "components": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "id",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "creator",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "numberOfWinners",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256[]",
+                                    "name": "winnersShares",
+                                    "type": "uint256[]"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "startTime",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "endTime",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "maxNumberOfPlayers",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "betAmount",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "enum WinningType",
+                                    "name": "winningType",
+                                    "type": "uint8"
+                                },
+                                {
+                                    "internalType": "uint256[]",
+                                    "name": "winnings",
+                                    "type": "uint256[]"
+                                },
+                                {
+                                    "internalType": "bool",
+                                    "name": "isFinished",
+                                    "type": "bool"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "stakes",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address[]",
+                                    "name": "players",
+                                    "type": "address[]"
+                                },
+                                {
+                                    "internalType": "address[]",
+                                    "name": "winners",
+                                    "type": "address[]"
+                                }
+                            ],
+                            "internalType": "struct Lotto",
+                            "name": "lotto",
+                            "type": "tuple"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "potAmount",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256[]",
+                            "name": "winningNumbers",
+                            "type": "uint256[]"
+                        },
+                        {
+                            "internalType": "enum PotGuessType",
+                            "name": "potGuessType",
+                            "type": "uint8"
+                        }
+                    ],
+                    "indexed": false,
+                    "internalType": "struct Pot",
+                    "name": "pot",
+                    "type": "tuple"
+                }
+            ],
+            "name": "PotCreated",
+            "type": "event"
+        }
+    ],
+    "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"lottoId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"player\",\"type\":\"address\"}],\"name\":\"BetPlaced\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"lottoId\",\"type\":\"uint256\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"numberOfWinners\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"winnersShares\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumberOfPlayers\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"betAmount\",\"type\":\"uint256\"},{\"internalType\":\"enum WinningType\",\"name\":\"winningType\",\"type\":\"uint8\"},{\"internalType\":\"uint256[]\",\"name\":\"winnings\",\"type\":\"uint256[]\"},{\"internalType\":\"bool\",\"name\":\"isFinished\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"stakes\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"players\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"winners\",\"type\":\"address[]\"}],\"indexed\":false,\"internalType\":\"struct Lotto\",\"name\":\"lotto\",\"type\":\"tuple\"}],\"name\":\"LottoCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"numberOfWinners\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"winnersShares\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumberOfPlayers\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"betAmount\",\"type\":\"uint256\"},{\"internalType\":\"enum WinningType\",\"name\":\"winningType\",\"type\":\"uint8\"},{\"internalType\":\"uint256[]\",\"name\":\"winnings\",\"type\":\"uint256[]\"},{\"internalType\":\"bool\",\"name\":\"isFinished\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"stakes\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"players\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"winners\",\"type\":\"address[]\"}],\"internalType\":\"struct Lotto\",\"name\":\"lotto\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"potAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"winningNumbers\",\"type\":\"uint256[]\"},{\"internalType\":\"enum PotGuessType\",\"name\":\"potGuessType\",\"type\":\"uint8\"}],\"indexed\":false,\"internalType\":\"struct Pot\",\"name\":\"pot\",\"type\":\"tuple\"}],\"name\":\"PotCreated\",\"type\":\"event\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/aardvocate/src/idempotent/grotto/grotto-contracts/contracts/libraries/grotto.interface.sol\":\"GrottoInterface\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/aardvocate/src/idempotent/grotto/grotto-contracts/contracts/libraries/grotto.interface.sol\":{\"keccak256\":\"0x63be177a8d0df9410959cb73dad3564fb70d3f5e5f3cefbf214273b954c8e9d6\",\"license\":\"Unlicense\",\"urls\":[\"bzz-raw://0330bb9b750affad413f844484a70a0d91127a3cab798e6cb97fd7ecb5e5994a\",\"dweb:/ipfs/Qmc5n3aPdgLc3ud6ADCw1E8vL65VV272YqmQaLGafzjZL9\"]},\"/Users/aardvocate/src/idempotent/grotto/grotto-contracts/contracts/libraries/models.sol\":{\"keccak256\":\"0x0492a9e943845142124b493f390515f39b6233f1d7c799e092c4b5da5420deb1\",\"license\":\"Unlicense\",\"urls\":[\"bzz-raw://a73444a486d6876503ec552fe8d20ea53fe5335ac7035059856f01ace8b5ab4b\",\"dweb:/ipfs/QmbWK4xqFjigVP6aCuEbKmCvwympf1abWCL5wxxmqhzqNx\"]}},\"version\":1}",
+    "bytecode": "",
+    "deployedBytecode": "",
+    "sourceMap": "",
+    "deployedSourceMap": "",
+    "sourcePath": "/Users/aardvocate/src/idempotent/grotto/grotto-contracts/contracts/libraries/grotto.interface.sol",
+    "compiler": {
+        "name": "solc",
+        "version": "0.8.4+commit.c7e474f2"
+    },
+    "ast": {
+        "absolutePath": "/Users/aardvocate/src/idempotent/grotto/grotto-contracts/contracts/libraries/grotto.interface.sol",
+        "exportedSymbols": {
+            "GrottoInterface": [
+                434
+            ],
+            "Lotto": [
+                476
+            ],
+            "Pot": [
+                488
+            ],
+            "PotGuessType": [
+                442
+            ],
+            "WinningType": [
+                439
+            ]
+        },
+        "id": 435,
+        "license": "Unlicense",
+        "nodeType": "SourceUnit",
+        "nodes": [
+            {
+                "id": 410,
+                "literals": [
+                    "solidity",
+                    "0.8",
+                    ".4"
+                ],
+                "nodeType": "PragmaDirective",
+                "src": "37:22:2"
+            },
+            {
+                "absolutePath": "/Users/aardvocate/src/idempotent/grotto/grotto-contracts/contracts/libraries/models.sol",
+                "file": "./models.sol",
+                "id": 411,
+                "nameLocation": "-1:-1:-1",
+                "nodeType": "ImportDirective",
+                "scope": 435,
+                "sourceUnit": 489,
+                "src": "60:22:2",
+                "symbolAliases": [],
+                "unitAlias": ""
+            },
+            {
+                "abstract": false,
+                "baseContracts": [],
+                "contractDependencies": [],
+                "contractKind": "interface",
+                "fullyImplemented": true,
+                "id": 434,
+                "linearizedBaseContracts": [
+                    434
+                ],
+                "name": "GrottoInterface",
+                "nameLocation": "94:15:2",
+                "nodeType": "ContractDefinition",
+                "nodes": [
+                    {
+                        "anonymous": false,
+                        "id": 416,
+                        "name": "LottoCreated",
+                        "nameLocation": "122:12:2",
+                        "nodeType": "EventDefinition",
+                        "parameters": {
+                            "id": 415,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 414,
+                                    "indexed": false,
+                                    "mutability": "mutable",
+                                    "name": "lotto",
+                                    "nameLocation": "141:5:2",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 416,
+                                    "src": "135:11:2",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_Lotto_$476_memory_ptr",
+                                        "typeString": "struct Lotto"
+                                    },
+                                    "typeName": {
+                                        "id": 413,
+                                        "nodeType": "UserDefinedTypeName",
+                                        "pathNode": {
+                                            "id": 412,
+                                            "name": "Lotto",
+                                            "nodeType": "IdentifierPath",
+                                            "referencedDeclaration": 476,
+                                            "src": "135:5:2"
+                                        },
+                                        "referencedDeclaration": 476,
+                                        "src": "135:5:2",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_struct$_Lotto_$476_storage_ptr",
+                                            "typeString": "struct Lotto"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "134:13:2"
+                        },
+                        "src": "116:32:2"
+                    },
+                    {
+                        "anonymous": false,
+                        "id": 421,
+                        "name": "PotCreated",
+                        "nameLocation": "159:10:2",
+                        "nodeType": "EventDefinition",
+                        "parameters": {
+                            "id": 420,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 419,
+                                    "indexed": false,
+                                    "mutability": "mutable",
+                                    "name": "pot",
+                                    "nameLocation": "174:3:2",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 421,
+                                    "src": "170:7:2",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_struct$_Pot_$488_memory_ptr",
+                                        "typeString": "struct Pot"
+                                    },
+                                    "typeName": {
+                                        "id": 418,
+                                        "nodeType": "UserDefinedTypeName",
+                                        "pathNode": {
+                                            "id": 417,
+                                            "name": "Pot",
+                                            "nodeType": "IdentifierPath",
+                                            "referencedDeclaration": 488,
+                                            "src": "170:3:2"
+                                        },
+                                        "referencedDeclaration": 488,
+                                        "src": "170:3:2",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_struct$_Pot_$488_storage_ptr",
+                                            "typeString": "struct Pot"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "169:9:2"
+                        },
+                        "src": "153:26:2"
+                    },
+                    {
+                        "anonymous": false,
+                        "id": 429,
+                        "name": "BetPlaced",
+                        "nameLocation": "190:9:2",
+                        "nodeType": "EventDefinition",
+                        "parameters": {
+                            "id": 428,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 423,
+                                    "indexed": true,
+                                    "mutability": "mutable",
+                                    "name": "lottoId",
+                                    "nameLocation": "216:7:2",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 429,
+                                    "src": "200:23:2",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 422,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "200:7:2",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 425,
+                                    "indexed": false,
+                                    "mutability": "mutable",
+                                    "name": "amount",
+                                    "nameLocation": "233:6:2",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 429,
+                                    "src": "225:14:2",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 424,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "225:7:2",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 427,
+                                    "indexed": true,
+                                    "mutability": "mutable",
+                                    "name": "player",
+                                    "nameLocation": "257:6:2",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 429,
+                                    "src": "241:22:2",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 426,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "241:7:2",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "199:65:2"
+                        },
+                        "src": "184:81:2"
+                    },
+                    {
+                        "anonymous": false,
+                        "id": 433,
+                        "name": "Claimed",
+                        "nameLocation": "276:7:2",
+                        "nodeType": "EventDefinition",
+                        "parameters": {
+                            "id": 432,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 431,
+                                    "indexed": true,
+                                    "mutability": "mutable",
+                                    "name": "lottoId",
+                                    "nameLocation": "300:7:2",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 433,
+                                    "src": "284:23:2",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 430,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "284:7:2",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "283:25:2"
+                        },
+                        "src": "270:39:2"
+                    }
+                ],
+                "scope": 435,
+                "src": "84:227:2",
+                "usedErrors": []
+            }
+        ],
+        "src": "37:274:2"
+    },
+    "functionHashes": {},
+    "gasEstimates": null
+}

@@ -3,11 +3,11 @@ import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { Lotto, WinningType } from "../scripts/models";
+import { Lotto, platformOwner, WinningType } from "../scripts/models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe.only("Grotto: Play Lotto Tests", () => {
+describe("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];  
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -50,9 +50,7 @@ describe.only("Grotto: Play Lotto Tests", () => {
       winners: [],
       winnings: []
     };
-  });
 
-  it("should create grotto contract", async () => {
     const Grotto = await ethers.getContractFactory("Grotto");
     const Storage = await ethers.getContractFactory("Storage");
 
@@ -60,8 +58,11 @@ describe.only("Grotto: Play Lotto Tests", () => {
     console.log(`Storage Deployed to ${storage.address}`);
     expect(storage.address).to.not.eq(address0);
 
-    grotto = await (await Grotto.deploy(storage.address)).deployed();
-    console.log(`Grotto Deployed to ${grotto.address}`);
+    grotto = await (await Grotto.deploy(storage.address, platformOwner)).deployed();
+    console.log(`Grotto Deployed to ${grotto.address}`);    
+  });
+
+  it("should create grotto contract", async () => {
     expect(grotto.address).to.not.eq(address0);
   });
 
@@ -81,7 +82,7 @@ describe.only("Grotto: Play Lotto Tests", () => {
     }
   });
 
-  it("should play number of players lotto", async () => {
+  it("should play number of players lotto", async () => {    
     try {
       const overrides = {
         value: ethers.utils.parseEther("0.01"),
@@ -194,8 +195,9 @@ describe.only("Grotto: Play Lotto Tests", () => {
   it('should claim winnings', async () => {
     const lotto = await grotto.getLottoById(nopLotto.id);
     const winner = lotto.winners[0];
+    const winnerAccountIndex = accounts.map((account, index) => account.address === winner ? index : -1).filter(index => index >= 0);
     const balanceBefore = await ethers.provider.getBalance(winner);   
-    const player1 = await grotto.connect(accounts[2]); 
+    const player1 = await grotto.connect(accounts[winnerAccountIndex[0]]); 
     await expect(player1.claim(nopLotto.id)).to.emit(grotto, "Claimed");
     const balanceAfter = await ethers.provider.getBalance(winner);    
     expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));

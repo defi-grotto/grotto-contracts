@@ -3,13 +3,13 @@ import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { Lotto, WinningType } from "../scripts/models";
+import { Lotto, platformOwner, WinningType } from "../scripts/models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
 describe("Grotto: Create Lotto Tests", () => {
   let accounts: SignerWithAddress[];
-  const address0 = "0x0000000000000000000000000000000000000000";
+  const address0 = "0x0000000000000000000000000000000000000000";  
   let grotto: Contract;
   let lotto: Lotto;
 
@@ -29,11 +29,9 @@ describe("Grotto: Create Lotto Tests", () => {
       players: [],
       stakes: BigNumber.from(0),
       winners: [],
-      winnings: []
+      winnings: [],
     };
-  });
 
-  it("should create grotto contract", async () => {
     const Grotto = await ethers.getContractFactory("Grotto");
     const Storage = await ethers.getContractFactory("Storage");
 
@@ -41,8 +39,11 @@ describe("Grotto: Create Lotto Tests", () => {
     console.log(`Storage Deployed to ${storage.address}`);
     expect(storage.address).to.not.eq(address0);
 
-    grotto = await (await Grotto.deploy(storage.address)).deployed();
+    grotto = await (await Grotto.deploy(storage.address, platformOwner)).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);
+  });
+
+  it("should create grotto contract", async () => {
     expect(grotto.address).to.not.eq(address0);
   });
 
@@ -97,7 +98,9 @@ describe("Grotto: Create Lotto Tests", () => {
     try {
       lotto.id = 2;
       lotto.maxNumberOfPlayers = 100;
-      await expect(grotto.createLotto(lotto)).to.be.revertedWith("Can not create a lotto with 0 bet amount");
+      await expect(grotto.createLotto(lotto)).to.be.revertedWith(
+        "Can not create a lotto with 0 bet amount"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

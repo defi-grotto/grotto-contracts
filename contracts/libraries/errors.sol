@@ -32,3 +32,5 @@ string constant ERROR_28 = "Winning is zero";
 string constant ERROR_29 = "Can not force end lotto";
 string constant ERROR_30 = "Only creator can force end time based lotto";
 string constant ERROR_31 = "ID Supplied is not a pot id";
+string constant ERROR_32 = "ID Supplied is not a lotto id";
+string constant ERROR_33 = "Not more than 10 winning numbers per pot";

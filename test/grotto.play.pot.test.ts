@@ -3,11 +3,11 @@ import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { Lotto, Pot, PotGuessType, WinningType } from "../scripts/models";
+import { Lotto, platformOwner, Pot, PotGuessType, WinningType } from "../scripts/models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -58,17 +58,15 @@ describe("Grotto: Play Pot Tests", () => {
       potAmount: BigNumber.from(1),
       potGuessType: PotGuessType.ORDER,
       winningNumbers: [3, 6, 9, 3]
-    }
+    };
 
     tbPot = {
       lotto: tbLotto,
       potAmount: BigNumber.from(0),
       potGuessType: PotGuessType.ORDER,
       winningNumbers: [3, 6, 9, 3]      
-    }    
-  });
+    };
 
-  it("should create grotto contract", async () => {
     const Grotto = await ethers.getContractFactory("Grotto");
     const Storage = await ethers.getContractFactory("Storage");
 
@@ -76,8 +74,11 @@ describe("Grotto: Play Pot Tests", () => {
     console.log(`Storage Deployed to ${storage.address}`);
     expect(storage.address).to.not.eq(address0);
 
-    grotto = await (await Grotto.deploy(storage.address)).deployed();
+    grotto = await (await Grotto.deploy(storage.address, platformOwner)).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);
+  });
+
+  it("should create grotto contract", async () => {
     expect(grotto.address).to.not.eq(address0);
   });
 
@@ -87,6 +88,7 @@ describe("Grotto: Play Pot Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
 
+      nopPot.lotto.betAmount = ethers.utils.parseEther("0.01");
       await expect(grotto.createPot(nopPot, overrides)).to.emit(
         grotto,
         "PotCreated"
@@ -102,11 +104,59 @@ describe("Grotto: Play Pot Tests", () => {
       const overrides = {
         value: ethers.utils.parseEther("0.01"),
       };      
+
+      const guesses = [3, 6, 9, 1];
       const player1 = await grotto.connect(accounts[2]);
-      await expect(player1.playPot(nopPot.lotto.id, overrides)).to.emit(grotto, "BetPlaced");      
+      await expect(player1.playPot(nopPot.lotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");      
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
   });  
+
+  it("should not play pot by creator", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const guesses = [3, 6, 9, 1];
+      const player1 = await grotto.connect(accounts[1]);
+      await expect(player1.playPot(nopPot.lotto.id, guesses, overrides)).to.be.revertedWith("Creator can not play");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  }); 
+  
+  it("should not play pot with non-existent lotto id", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const guesses = [3, 6, 9, 1];
+      const player1 = await grotto.connect(accounts[1]);      
+      await expect(player1.playPot(nopPot.lotto.id + 1001, guesses, overrides)).to.be.revertedWith("Lotto does not exist");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  }); 
+  
+  it("should not play pot if bet amount is lower that what is set by creator", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.001"),
+      };      
+      const guesses = [3, 6, 9, 1];
+      const player1 = await grotto.connect(accounts[1]);
+      await expect(player1.playPot(nopPot.lotto.id, guesses, overrides)).to.be.revertedWith("BetPlaced is too low");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });  
+  
+  it('should not claim winnings before pot is finished', async () => {
+    await expect(grotto.claim(nopPot.lotto.id)).to.be.revertedWith("Lotto is not finished");
+  });      
 });

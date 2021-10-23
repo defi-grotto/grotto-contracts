@@ -15,12 +15,13 @@ contract Grotto is GrottoInterface {
 
     StorageInterface private store;
 
-    constructor(address _storeAddress) {
+    constructor(address _storeAddress, address _owner) {
         creator = msg.sender;
         storeAddress = _storeAddress;
         store = StorageInterface(storeAddress);
 
         store.setGrotto(address(this), creator);
+        store.setPlatformOwner(_owner, creator);
     }
 
     function createLotto(Lotto memory lotto) external payable {
@@ -43,8 +44,8 @@ contract Grotto is GrottoInterface {
         emit BetPlaced(lottoId, msg.value, msg.sender);
     }     
 
-    function playPot(uint256 potId) external payable {
-        bool result = store.playPot(potId, msg.value, msg.sender);
+    function playPot(uint256 potId, uint256[] memory guesses) external payable {
+        bool result = store.playPot(potId, msg.value, msg.sender, guesses);
         require(result, ERROR_24);
         emit BetPlaced(potId, msg.value, msg.sender);        
     }    
@@ -55,7 +56,7 @@ contract Grotto is GrottoInterface {
 
     function claim(uint256 lottoId) external payable {
         address claimer = msg.sender;
-        require(store.claimLottoWinnings(lottoId));
+        require(store.claimWinnings(lottoId));
 
         (address winner, uint256 winning) = store.findClaimer(lottoId, claimer);
 

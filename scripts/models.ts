@@ -34,3 +34,5 @@ export interface Pot {
   winningNumbers: number[];
   potGuessType: PotGuessType;
 }
+
+export const platformOwner = "0xac706cE8A9BF27Afecf080fB298d0ee13cfb978A";

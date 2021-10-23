@@ -11,61 +11,72 @@ contract Storage is StorageInterface {
 
     address private grotto = address(0);
     address private grottoCaller = address(0);
+    address private platformOwner = address(0);
+    uint256 private platformShare;
+    mapping(uint256 => uint256) private platformShares;
+    mapping(uint256 => mapping(address => uint256)) private ownersShares;
+
+    uint256 private platformSharePercentage;
+    uint256 private ownerSharePercentage;
+
+    uint256 private maxWinningNumbers = 10;
+    uint256 private maxWinners = 10;
 
     // Lotto Data Structure
     // id of the lotto/pot
-    mapping(uint256 => uint256) lottoId;
-    mapping(uint256 => address) creator;
+    mapping(uint256 => uint256) private lottoId;
+    mapping(uint256 => address) private creator;
     // how many people can win the lotto/pot
-    mapping(uint256 => uint256) numberOfWinners;
+    mapping(uint256 => uint256) private numberOfWinners;
     // Depending on numberOfWinners, an array of each winners shares. Must add up to 100
-    mapping(uint256 => uint256[]) winnersShares;
-    mapping(uint256 => uint256) startTime;
-    mapping(uint256 => uint256) endTime;
+    mapping(uint256 => uint256[]) private winnersShares;
+    mapping(uint256 => uint256) private startTime;
+    mapping(uint256 => uint256) private endTime;
     // for a no of players based lotto/pot, how many players before winner is calculated and lotto stopped
-    mapping(uint256 => uint256) maxNumberOfPlayers;
+    mapping(uint256 => uint256) private maxNumberOfPlayers;
     // how much a person must bet
-    mapping(uint256 => uint256) betAmount;
+    mapping(uint256 => uint256) private betAmount;
     /*
         Type of Winning
             * Time Based: 
                 * For lotto: it is finished after X time, the winner is randomly selected
                 * For pot: if a winner is not found after X time, pot creator gets all the stakes
-                            if a winner (or winners) are found, they get the potAmount + stakes
+                    if a winner is found, they get the potAmount + stakes...there can be no multiple winners in a pot
             * Number of players: 
                 For lotto: it is finished after X number of people played, the winner is randomly selected
                 For pot: if a winner is not found after X number of players have played, pot creator gets all the stakes
-                        if a winner (or winners) are found, they get the potAmount + stakes
+                    if a winner is found, they get the potAmount + stakes...there can be no multiple winners in a pot
     */
-    mapping(uint256 => WinningType) winningType;
-    mapping(uint256 => bool) isFinished;
-    mapping(uint256 => bool) isClaimed;
+    mapping(uint256 => WinningType) private winningType;
+    mapping(uint256 => bool) private isFinished;
+    mapping(uint256 => bool) private isClaimed;
     // all the money staked on the lotto/pot so far
-    mapping(uint256 => uint256) stakes;
+    mapping(uint256 => uint256) private stakes;
     // all the players in the lotto/pot
-    mapping(uint256 => address[]) players;
+    mapping(uint256 => address[]) private players;
     // list of winners
-    mapping(uint256 => address[]) winners;
+    mapping(uint256 => address[]) private winners;
     // a map of winners for easy access without for loop
-    mapping(uint256 => mapping(address => address)) winnersMap;
+    mapping(uint256 => mapping(address => address)) private winnersMap;
     // each winner's winning
-    mapping(uint256 => uint256[]) winnings;
+    mapping(uint256 => uint256[]) private winnings;
     // a map of winnings for easy access without for loop
-    mapping(uint256 => mapping(address => uint256)) winningsMap;
+    mapping(uint256 => mapping(address => uint256)) private winningsMap;
 
     // Pot Data Structure
     // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
-    mapping(uint256 => uint256) potAmount;
+    mapping(uint256 => uint256) private potAmount;
     // The numbers the players must guess
-    mapping(uint256 => uint256[]) winningNumbers;
+    mapping(uint256 => uint256[]) private winningNumbers;
+    mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
 
-    mapping(uint256 => bool) isPot;
+    mapping(uint256 => bool) private isPot;
     /* 
         The Type of Guess
             * Numbers: The player must guess just the numbers
             * Order: The player must guess both the number and the order
     */
-    mapping(uint256 => PotGuessType) potGuessType;
+    mapping(uint256 => PotGuessType) private potGuessType;
 
     modifier is_authorized() {
         require(msg.sender == grotto, ERROR_3);
@@ -81,7 +92,7 @@ contract Storage is StorageInterface {
             ERROR_5
         );
 
-        require(_lotto.numberOfWinners < 10, ERROR_25);
+        require(_lotto.numberOfWinners <= 10, ERROR_25);
 
         uint256 sum = 0;
 
@@ -106,6 +117,7 @@ contract Storage is StorageInterface {
         require(creator[_pot.lotto.id] != _pot.lotto.creator, ERROR_4);
         require(_pot.potAmount > 0, ERROR_11);
         require(_pot.winningNumbers.length > 0, ERROR_12);
+        require(_pot.winningNumbers.length <= 10, ERROR_33);
         _;
     }
 
@@ -128,12 +140,13 @@ contract Storage is StorageInterface {
         address _player
     ) {
         require(creator[_lottoId] != address(0), ERROR_19);
-        require(!isFinished[_lottoId], ERROR_17);
+        require(isFinished[_lottoId] == false, ERROR_17);
         require(_betPlaced >= betAmount[_lottoId], ERROR_18);
         require(_player != creator[_lottoId], ERROR_21);
         _;
     }
 
+    // TODO: This method exposes a vulnerability....should check msg.sender somewhere 
     function setGrotto(address _grotto, address _grottoCaller)
         external
         override
@@ -147,6 +160,20 @@ contract Storage is StorageInterface {
             revert(ERROR_2);
         }
     }
+
+    function setPlatformOwner(address _owner, address _grottoCaller)
+        external
+        override
+    {
+        if (grotto == address(0) && grottoCaller == address(0)) {
+            platformOwner = _owner;
+            grottoCaller = _grottoCaller;
+        } else if (grottoCaller == _grottoCaller) {
+            platformOwner = _owner;
+        } else {
+            revert(ERROR_2);
+        }
+    }    
 
     function addNewLotto(Lotto memory _lotto)
         external
@@ -193,6 +220,9 @@ contract Storage is StorageInterface {
         players[_pot.lotto.id] = _pot.lotto.players;
         potAmount[_pot.lotto.id] = _pot.potAmount;
         winningNumbers[_pot.lotto.id] = _pot.winningNumbers;
+        for(uint256 i = 0; i < _pot.winningNumbers.length; i++) {
+            winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
+        }                
         potGuessType[_pot.lotto.id] = _pot.potGuessType;
         isPot[_pot.lotto.id] = true;
         return true;
@@ -216,6 +246,7 @@ contract Storage is StorageInterface {
         override
         returns (Lotto memory)
     {
+        require(isPot[_lottoId] == false, ERROR_32);
         return
             Lotto({
                 id: lottoId[_lottoId],
@@ -282,14 +313,15 @@ contract Storage is StorageInterface {
     {
         stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
         players[_lottoId].push(_player);
-        findLottoWinner(_lottoId);
+        findLottoWinner(_lottoId, creator[_lottoId]);
         return true;
     }
 
     function playPot(
         uint256 _potId,
         uint256 _betPlaced,
-        address _player
+        address _player,
+        uint256[] memory _guesses   
     )
         external
         override
@@ -299,53 +331,120 @@ contract Storage is StorageInterface {
     {
         stakes[_potId] = stakes[_potId].add(_betPlaced);
         players[_potId].push(_player);
-        findLottoWinner(_potId);
+        findPotWinner(_potId, _player, creator[_potId], _guesses);
         return true;
     }
 
-    function findLottoWinner(uint256 _lottoId) private {
+    function findPotWinner(uint256 _potId, address _player, address _creator, uint256[] memory _guesses) private {
         uint256 current = block.timestamp;
 
-        if (
-            winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS &&
-            players[_lottoId].length == maxNumberOfPlayers[_lottoId]
-        ) {
-            _findLottoWinner(_lottoId);
-        } else if (
-            winningType[_lottoId] == WinningType.TIME_BASED &&
-            endTime[_lottoId] <= current
-        ) {
-            _findLottoWinner(_lottoId);
+        if(!isFinished[_potId]) {
+            if(isPot[_potId]) {
+                if (
+                    (winningType[_potId] == WinningType.NUMBER_OF_PLAYERS || winningType[_potId] == WinningType.TIME_BASED) &&
+                    (players[_potId].length == maxNumberOfPlayers[_potId] || endTime[_potId] <= current)
+                ) {        
+                    // TODO: no winner found, send all money to pot creator                        
+                } else {
+                    _findPotWinner(_potId, _player, _creator, _guesses);
+                }      
+            }  
         }
     }
 
-    function _findLottoWinner(uint256 _lottoId) private {
+    function findLottoWinner(uint256 _lottoId, address _creator) private {
+        uint256 current = block.timestamp;
+
+        if(!isFinished[_lottoId]) {
+            if(!isPot[_lottoId]) {
+                if (
+                    (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS && players[_lottoId].length == maxNumberOfPlayers[_lottoId])
+                    || (winningType[_lottoId] == WinningType.TIME_BASED && endTime[_lottoId] <= current)
+                ) {
+                    _findLottoWinner(_lottoId, _creator);
+                }
+            }
+        }
+    }
+
+    function _findPotWinner(uint256 _potId, address _player, address _creator, uint256[] memory _guesses) private {
+        // is there a winner?
+        bool won = true;
+        if(potGuessType[_potId] == PotGuessType.NUMBERS) {
+            // just check that all guesses exists in winning numbers
+            for(uint256 i = 0; i < _guesses.length; i++) {
+                if(winningNumbersMap[_potId][_guesses[i]] == false) {
+                    won = false;
+                    break;
+                }
+            }
+        } else if(potGuessType[_potId] == PotGuessType.ORDER) {
+            for(uint256 i = 0; i < _guesses.length; i++) {
+                if(_guesses[i] != winningNumbers[_potId][i]) {
+                    won = false;
+                    break;                    
+                }
+            }
+        }
+
+        if(won) {
+            uint256 totalStaked = stakes[_potId] + potAmount[_potId];
+
+            // take platform's share
+            uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(100);
+            uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(100);
+
+            totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
+
+            winners[_potId].push(_player);
+            winnersMap[_potId][_player] = _player;
+            winnings[_potId].push(totalStaked);
+            winningsMap[_potId][_player] = totalStaked;
+            isFinished[_potId] = true;
+
+            platformShare = platformShare.add(_platformShare);                        
+            platformShares[_potId] = _platformShare;
+            ownersShares[_potId][_creator] = _ownerShare;
+
+            // TODO: Reward both winner and creator with grotto tokens
+        }
+    }
+
+    function _findLottoWinner(uint256 _lottoId, address _creator) private {
         uint256 totalStaked = stakes[_lottoId];
+        
+        // take platform's share
+        uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(100);
+        uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(100);
+
+        totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
 
         for (uint256 i = 0; i < numberOfWinners[_lottoId]; i = i.add(1)) {
-            uint256 mid = players[_lottoId].length.div(2);
-            uint256 end = players[_lottoId].length.sub(1);
             bytes32 randBase = keccak256(abi.encodePacked(players[i]));
-            randBase = keccak256(abi.encodePacked(randBase, players[mid]));
-            randBase = keccak256(abi.encodePacked(randBase, players[end]));
+            randBase = keccak256(abi.encodePacked(randBase, players[players[_lottoId].length.div(2)]));
+            randBase = keccak256(abi.encodePacked(randBase, players[players[_lottoId].length.sub(1)]));
 
             uint256 winnerIndex = uint256(
                 keccak256(abi.encodePacked(totalStaked, randBase))
             ) % (players[_lottoId].length);
 
             address lottoWinner = players[_lottoId][winnerIndex];
-            uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(
-                100
-            );
+            uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(100);
             winners[_lottoId].push(lottoWinner);
             winnersMap[_lottoId][lottoWinner] = lottoWinner;
             winnings[_lottoId].push(eachShare);
             winningsMap[_lottoId][lottoWinner] = eachShare;
         }
-        isFinished[_lottoId] = true;
+        isFinished[_lottoId] = true;        
+
+        platformShare = platformShare.add(_platformShare);
+        platformShares[_lottoId] = _platformShare;
+        ownersShares[_lottoId][_creator] = _ownerShare;
+
+        // TODO: Reward both winner and creator with grotto tokens
     }
 
-    function claimLottoWinnings(uint256 _lottoId)
+    function claimWinnings(uint256 _lottoId)
         external
         override
         returns (bool)

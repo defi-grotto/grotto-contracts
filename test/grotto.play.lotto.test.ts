@@ -201,8 +201,6 @@ describe("Grotto: Play Lotto Tests", () => {
     await expect(grotto.claim(nopLotto.id)).to.be.revertedWith("Lotto is already claimed");
   });  
 
-  // TODO: Tests for time based lotto
-
   it("should create a time based lotto winning type", async () => {
     try {
       const overrides = {

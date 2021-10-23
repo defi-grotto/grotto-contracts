@@ -20,6 +20,9 @@ contract Grotto is GrottoInterface {
         storeAddress = _storeAddress;
         controller = ControllerInterface(storeAddress);
 
+        console.log("Caller In Constructor: ", creator);
+        console.log("MSG Sender In Constructor: ", msg.sender);
+
         controller.setGrotto(address(this), creator);
         controller.setPlatformOwner(_owner, creator);
     }
@@ -63,12 +66,14 @@ contract Grotto is GrottoInterface {
 
         Claim memory _claim = controller.getClaim(lottoId, claimer);
 
-        require(_claim.winner != address(0), ERROR_27);
-        require(_claim.winning != 0, ERROR_28);        
         require(_claim.creator != address(0), ERROR_34);
         require(_claim.creatorShares != 0, ERROR_35);                
 
-        payable(_claim.winner).transfer(_claim.winning);
+        // it's possible that there's no winner for pots
+        if(_claim.winner != address(0) && _claim.winning > 0) {
+            payable(_claim.winner).transfer(_claim.winning);
+        }   
+
         payable(_claim.creator).transfer(_claim.creatorShares);
         
         emit Claimed(lottoId);

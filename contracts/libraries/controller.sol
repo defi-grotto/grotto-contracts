@@ -325,7 +325,19 @@ contract Controller is ControllerInterface {
                     (winningType[_potId] == WinningType.TIME_BASED &&
                         endTime[_potId] <= current)
                 ) {
-                    // TODO: no winner found, send all money to pot creator
+                    uint256 totalStaked = stakes[_potId].add(potAmount[_potId]);
+
+                    // take platform's share
+                    uint256 _platformShare = totalStaked
+                        .mul(platformSharePercentage)
+                        .div(100);
+
+                    uint256 _creatorShares = totalStaked.sub(_platformShare);
+                    
+                    isFinished[_potId] = true;
+                    platformShare = platformShare.add(_platformShare);
+                    platformShares[_potId] = _platformShare;
+                    creatorShares[_potId] = _creatorShares;
                 } else {
                     _findPotWinner(_potId, _player, _guesses);
                 }

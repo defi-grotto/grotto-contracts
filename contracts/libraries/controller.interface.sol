@@ -2,7 +2,8 @@
 pragma solidity 0.8.3;
 import "./models.sol";
 
-interface StorageInterface {
+interface ControllerInterface {
+    
     function addNewLotto(Lotto memory lotto) external returns (bool);
 
     function addNewPot(Pot memory pot) external returns (bool);

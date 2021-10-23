@@ -33,13 +33,13 @@ describe("Grotto: Create Lotto Tests", () => {
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Storage = await ethers.getContractFactory("Storage");
+    const Controller = await ethers.getContractFactory("Controller");
 
-    const storage = await (await Storage.deploy()).deployed();
-    console.log(`Storage Deployed to ${storage.address}`);
-    expect(storage.address).to.not.eq(address0);
+    const controller = await (await Controller.deploy()).deployed();
+    console.log(`Storage Deployed to ${controller.address}`);
+    expect(controller.address).to.not.eq(address0);
 
-    grotto = await (await Grotto.deploy(storage.address, platformOwner)).deployed();
+    grotto = await (await Grotto.deploy(controller.address, platformOwner)).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);
   });
 

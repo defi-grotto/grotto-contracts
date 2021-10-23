@@ -40,9 +40,9 @@ describe("Grotto: Create Pot Tests", () => {
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Storage = await ethers.getContractFactory("Storage");
+    const Controller = await ethers.getContractFactory("Controller");
 
-    const storage = await (await Storage.deploy()).deployed();
+    const storage = await (await Controller.deploy()).deployed();
     console.log(`Storage Deployed to ${storage.address}`);
     expect(storage.address).to.not.eq(address0);
 

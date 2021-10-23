@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.3;
 import "./models.sol";
-import "./storage.interface.sol";
+import "./controller.interface.sol";
 import "./errors.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract Storage is StorageInterface {
+contract Controller is ControllerInterface {
     using SafeMath for uint256;
 
     address private grotto = address(0);

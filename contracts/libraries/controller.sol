@@ -14,7 +14,7 @@ contract Controller is ControllerInterface {
     address private platformOwner = address(0);
     uint256 private platformShare;
     mapping(uint256 => uint256) private platformShares;
-    mapping(uint256 => mapping(address => uint256)) private ownersShares;
+    mapping(uint256 => uint256) private ownersShares;
 
     uint256 private platformSharePercentage = 10;
     uint256 private ownerSharePercentage = 20;
@@ -26,10 +26,6 @@ contract Controller is ControllerInterface {
     // id of the lotto/pot
     mapping(uint256 => uint256) private lottoId;
     mapping(uint256 => address) private creator;
-    // how many people can win the lotto/pot
-    mapping(uint256 => uint256) private numberOfWinners;
-    // Depending on numberOfWinners, an array of each winners shares. Must add up to 100
-    mapping(uint256 => uint256[]) private winnersShares;
     mapping(uint256 => uint256) private startTime;
     mapping(uint256 => uint256) private endTime;
     // for a no of players based lotto/pot, how many players before winner is calculated and lotto stopped
@@ -55,13 +51,9 @@ contract Controller is ControllerInterface {
     // all the players in the lotto/pot
     mapping(uint256 => address[]) private players;
     // list of winners
-    mapping(uint256 => address[]) private winners;
-    // a map of winners for easy access without for loop
-    mapping(uint256 => mapping(address => address)) private winnersMap;
+    mapping(uint256 => address) private winner;
     // each winner's winning
-    mapping(uint256 => uint256[]) private winnings;
-    // a map of winnings for easy access without for loop
-    mapping(uint256 => mapping(address => uint256)) private winningsMap;
+    mapping(uint256 => uint256) private winning;
 
     // Pot Data Structure
     // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
@@ -87,17 +79,6 @@ contract Controller is ControllerInterface {
         require(_lotto.betAmount > 0, ERROR_7);
 
         require(creator[_lotto.id] != _lotto.creator, ERROR_4);
-        require(_lotto.numberOfWinners == _lotto.winnersShares.length, ERROR_5);
-
-        require(_lotto.numberOfWinners <= 10, ERROR_25);
-
-        uint256 sum = 0;
-
-        for (uint256 i = 0; i < _lotto.numberOfWinners; i = i.add(1)) {
-            sum = sum.add(_lotto.winnersShares[i]);
-        }
-
-        require(sum == 100, ERROR_26);
 
         if (_lotto.winningType == WinningType.TIME_BASED) {
             require(_lotto.startTime < _lotto.endTime, ERROR_6);
@@ -115,8 +96,6 @@ contract Controller is ControllerInterface {
         require(_pot.potAmount > 0, ERROR_11);
         require(_pot.winningNumbers.length > 0, ERROR_12);
         require(_pot.winningNumbers.length <= 10, ERROR_33);
-        require(_pot.lotto.numberOfWinners == 1, ERROR_34);
-        require(_pot.lotto.winnersShares.length == 1, ERROR_35);
         _;
     }
 
@@ -183,8 +162,6 @@ contract Controller is ControllerInterface {
     {
         lottoId[_lotto.id] = _lotto.id;
         creator[_lotto.id] = _lotto.creator;
-        numberOfWinners[_lotto.id] = _lotto.numberOfWinners;
-        winnersShares[_lotto.id] = _lotto.winnersShares;
         startTime[_lotto.id] = _lotto.startTime;
         endTime[_lotto.id] = _lotto.endTime;
         maxNumberOfPlayers[_lotto.id] = _lotto.maxNumberOfPlayers;
@@ -207,8 +184,6 @@ contract Controller is ControllerInterface {
     {
         lottoId[_pot.lotto.id] = _pot.lotto.id;
         creator[_pot.lotto.id] = _pot.lotto.creator;
-        numberOfWinners[_pot.lotto.id] = _pot.lotto.numberOfWinners;
-        winnersShares[_pot.lotto.id] = _pot.lotto.winnersShares;
         startTime[_pot.lotto.id] = _pot.lotto.startTime;
         endTime[_pot.lotto.id] = _pot.lotto.endTime;
         maxNumberOfPlayers[_pot.lotto.id] = _pot.lotto.maxNumberOfPlayers;
@@ -233,10 +208,13 @@ contract Controller is ControllerInterface {
         override
         returns (address, uint256)
     {
-        return (
-            winnersMap[_lottoId][_claimer],
-            winningsMap[_lottoId][_claimer]
-        );
+        if (winner[_lottoId] == _claimer) {
+            return (winner[_lottoId], winning[_lottoId]);
+        } else if (creator[_lottoId] == _claimer) {
+            return (creator[_lottoId], ownersShares[_lottoId]);
+        } else {
+            return (address(0), 0);
+        }
     }
 
     function getLottoById(uint256 _lottoId)
@@ -250,8 +228,6 @@ contract Controller is ControllerInterface {
             Lotto({
                 id: lottoId[_lottoId],
                 creator: creator[_lottoId],
-                numberOfWinners: numberOfWinners[_lottoId],
-                winnersShares: winnersShares[_lottoId],
                 startTime: startTime[_lottoId],
                 endTime: endTime[_lottoId],
                 maxNumberOfPlayers: maxNumberOfPlayers[_lottoId],
@@ -260,8 +236,8 @@ contract Controller is ControllerInterface {
                 isFinished: isFinished[_lottoId],
                 stakes: stakes[_lottoId],
                 players: players[_lottoId],
-                winners: winners[_lottoId],
-                winnings: winnings[_lottoId]
+                winner: winner[_lottoId],
+                winning: winning[_lottoId]
             });
     }
 
@@ -275,8 +251,6 @@ contract Controller is ControllerInterface {
         Lotto memory lotto = Lotto({
             id: lottoId[_potId],
             creator: creator[_potId],
-            numberOfWinners: numberOfWinners[_potId],
-            winnersShares: winnersShares[_potId],
             startTime: startTime[_potId],
             endTime: endTime[_potId],
             maxNumberOfPlayers: maxNumberOfPlayers[_potId],
@@ -285,8 +259,8 @@ contract Controller is ControllerInterface {
             isFinished: isFinished[_potId],
             stakes: stakes[_potId],
             players: players[_potId],
-            winners: winners[_potId],
-            winnings: winnings[_potId]
+            winner: winner[_potId],
+            winning: winning[_potId]
         });
 
         Pot memory pot = Pot({
@@ -312,7 +286,7 @@ contract Controller is ControllerInterface {
     {
         stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
         players[_lottoId].push(_player);
-        findLottoWinner(_lottoId, creator[_lottoId]);
+        findLottoWinner(_lottoId);
         return true;
     }
 
@@ -330,14 +304,13 @@ contract Controller is ControllerInterface {
     {
         stakes[_potId] = stakes[_potId].add(_betPlaced);
         players[_potId].push(_player);
-        findPotWinner(_potId, _player, creator[_potId], _guesses);
+        findPotWinner(_potId, _player, _guesses);
         return true;
     }
 
     function findPotWinner(
         uint256 _potId,
         address _player,
-        address _creator,
         uint256[] memory _guesses
     ) private {
         uint256 current = block.timestamp;
@@ -352,13 +325,13 @@ contract Controller is ControllerInterface {
                 ) {
                     // TODO: no winner found, send all money to pot creator
                 } else {
-                    _findPotWinner(_potId, _player, _creator, _guesses);
+                    _findPotWinner(_potId, _player, _guesses);
                 }
             }
         }
     }
 
-    function findLottoWinner(uint256 _lottoId, address _creator) private {
+    function findLottoWinner(uint256 _lottoId) private {
         uint256 current = block.timestamp;
 
         if (!isFinished[_lottoId]) {
@@ -370,7 +343,7 @@ contract Controller is ControllerInterface {
                     (winningType[_lottoId] == WinningType.TIME_BASED &&
                         endTime[_lottoId] <= current)
                 ) {
-                    _findLottoWinner(_lottoId, _creator);
+                    _findLottoWinner(_lottoId);
                 }
             }
         }
@@ -379,7 +352,6 @@ contract Controller is ControllerInterface {
     function _findPotWinner(
         uint256 _potId,
         address _player,
-        address _creator,
         uint256[] memory _guesses
     ) private {
         // is there a winner?
@@ -414,21 +386,19 @@ contract Controller is ControllerInterface {
 
             totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
 
-            winners[_potId].push(_player);
-            winnersMap[_potId][_player] = _player;
-            winnings[_potId].push(totalStaked);
-            winningsMap[_potId][_player] = totalStaked;
+            winner[_potId] = _player;
+            winning[_potId] = totalStaked;
             isFinished[_potId] = true;
 
             platformShare = platformShare.add(_platformShare);
             platformShares[_potId] = _platformShare;
-            ownersShares[_potId][_creator] = _ownerShare;
+            ownersShares[_potId] = _ownerShare;
 
             // TODO: Reward both winner and creator with grotto tokens
         }
     }
 
-    function _findLottoWinner(uint256 _lottoId, address _creator) private {
+    function _findLottoWinner(uint256 _lottoId) private {
         uint256 totalStaked = stakes[_lottoId];
 
         // take platform's share
@@ -439,39 +409,26 @@ contract Controller is ControllerInterface {
 
         totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
 
-        for (uint256 i = 0; i < numberOfWinners[_lottoId]; i = i.add(1)) {
-            bytes32 randBase = keccak256(abi.encodePacked(players[i]));
-            randBase = keccak256(
-                abi.encodePacked(
-                    randBase,
-                    players[players[_lottoId].length.div(2)]
-                )
-            );
-            randBase = keccak256(
-                abi.encodePacked(
-                    randBase,
-                    players[players[_lottoId].length.sub(1)]
-                )
-            );
+        bytes32 randBase = keccak256(abi.encode(players[0]));
+        randBase = keccak256(
+            abi.encode(randBase, players[players[_lottoId].length.div(2)])
+        );
+        randBase = keccak256(
+            abi.encode(randBase, players[players[_lottoId].length.sub(1)])
+        );
 
-            uint256 winnerIndex = uint256(
-                keccak256(abi.encodePacked(totalStaked, randBase))
-            ) % (players[_lottoId].length);
+        uint256 winnerIndex = uint256(
+            keccak256(abi.encode(totalStaked, randBase))
+        ) % (players[_lottoId].length);
 
-            address lottoWinner = players[_lottoId][winnerIndex];
-            uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(
-                100
-            );
-            winners[_lottoId].push(lottoWinner);
-            winnersMap[_lottoId][lottoWinner] = lottoWinner;            
-            winnings[_lottoId].push(eachShare);
-            winningsMap[_lottoId][lottoWinner] = eachShare;
-        }
+        address lottoWinner = players[_lottoId][winnerIndex];
+        winner[_lottoId] = lottoWinner;
+        winning[_lottoId] = totalStaked;
         isFinished[_lottoId] = true;
 
         platformShare = platformShare.add(_platformShare);
         platformShares[_lottoId] = _platformShare;
-        ownersShares[_lottoId][_creator] = _ownerShare;
+        ownersShares[_lottoId] = _ownerShare;
 
         // TODO: Reward both winner and creator with grotto tokens
     }

@@ -20,8 +20,6 @@ describe("Grotto: Play Lotto Tests", () => {
     nopLotto = {
       id: 10,
       creator: accounts[1].address,
-      numberOfWinners: 1,
-      winnersShares: [100],
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
@@ -30,15 +28,13 @@ describe("Grotto: Play Lotto Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winners: [],
-      winnings: []
+      winner: address0,
+      winning: 0
     };
 
     tbLotto = {
       id: 100,
       creator: accounts[1].address,
-      numberOfWinners: 1,
-      winnersShares: [100],
       startTime: Math.floor(new Date().getTime() / 1000),
       endTime: Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
@@ -47,8 +43,8 @@ describe("Grotto: Play Lotto Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winners: [],
-      winnings: []
+      winner: address0,
+      winning: 0
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
@@ -170,20 +166,19 @@ describe("Grotto: Play Lotto Tests", () => {
       const player1 = await grotto.connect(accounts[2]);
       await expect(player1.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
 
-      let lotto = await grotto.getLottoById(20);
-      expect(lotto.winners).to.be.an("array");
+      let lotto = await grotto.getLottoById(20);      
 
       // player 2
       const player2 = await grotto.connect(accounts[3]);
       await expect(player2.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
-      lotto = await grotto.getLottoById(nopLotto.id );
-      expect(lotto.winners).to.be.an("array");
 
       // player 3
       const player3 = await grotto.connect(accounts[4]);
       await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
       lotto = await grotto.getLottoById(nopLotto.id);
-      expect(lotto.winners[0]).to.be.oneOf([accounts[2].address, accounts[3].address, accounts[4].address]);
+      expect(lotto.winner).to.be.oneOf([accounts[2].address, accounts[3].address, accounts[4].address]);
+      // TODO: calculate winning
+      // expect(lotto.winning)
 
     } catch (error) {
       console.log("Errored: ", error);
@@ -193,12 +188,12 @@ describe("Grotto: Play Lotto Tests", () => {
 
   it('should claim winnings', async () => {
     const lotto = await grotto.getLottoById(nopLotto.id);
-    const winner = lotto.winners[0];
-    const winnerAccountIndex = accounts.map((account, index) => account.address === winner ? index : -1).filter(index => index >= 0);
-    const balanceBefore = await ethers.provider.getBalance(winner);   
-    const player1 = await grotto.connect(accounts[winnerAccountIndex[0]]); 
-    await expect(player1.claim(nopLotto.id)).to.emit(grotto, "Claimed");
-    const balanceAfter = await ethers.provider.getBalance(winner);    
+    const winnerAddress = lotto.winner;
+    const winnerAccountIndex = accounts.map((account, index) => account.address === winnerAddress ? index : -1).filter(index => index >= 0);
+    const balanceBefore = await ethers.provider.getBalance(winnerAddress);   
+    const winner = await grotto.connect(accounts[winnerAccountIndex[0]]); 
+    await expect(winner.claim(nopLotto.id)).to.emit(grotto, "Claimed");
+    const balanceAfter = await ethers.provider.getBalance(winnerAddress);    
     expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
   });
 
@@ -299,20 +294,16 @@ describe("Grotto: Play Lotto Tests", () => {
       const player1 = await grotto.connect(accounts[2]);
       await expect(player1.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
 
-      let lotto = await grotto.getLottoById(nopLotto.id);
-      expect(lotto.winners).to.be.an("array");
-
       // player 2
       const player2 = await grotto.connect(accounts[3]);
       await expect(player2.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");      
-      lotto = await grotto.getLottoById(nopLotto.id );
-      expect(lotto.winners).to.be.an("array");
 
       // player 3
       const player3 = await grotto.connect(accounts[4]);
       await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
-      lotto = await grotto.getLottoById(nopLotto.id);
-      expect(lotto.winners[0]).to.be.oneOf([accounts[2].address, accounts[3].address, accounts[4].address]);
+      let lotto = await grotto.getLottoById(nopLotto.id);
+      expect(lotto.winner).to.be.oneOf([accounts[2].address, accounts[3].address, accounts[4].address]);
+      // TODO: calculate winning
 
     } catch (error) {
       console.log("Errored: ", error);

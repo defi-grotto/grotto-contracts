@@ -14,20 +14,17 @@ enum PotGuessType {
 struct Lotto {
     uint256 id;
     address creator;
-    uint256 numberOfWinners;
-    uint256[] winnersShares;
     uint256 startTime;
     uint256 endTime;
     uint256 maxNumberOfPlayers;
     // how much each player has to bet
     uint256 betAmount;
-    WinningType winningType;
-    uint256[] winnings;
-
+    WinningType winningType;    
     bool isFinished;
     uint256 stakes;
     address[] players;
-    address[] winners;
+    uint256 winning;
+    address winner;
 }
 
 struct Pot {

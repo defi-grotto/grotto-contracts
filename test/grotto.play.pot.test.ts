@@ -28,8 +28,6 @@ describe("Grotto: Play Pot Tests", () => {
     nopLotto = {
       id: 10,
       creator: accounts[1].address,
-      numberOfWinners: 1,
-      winnersShares: [100],
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
@@ -38,15 +36,13 @@ describe("Grotto: Play Pot Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winners: [],
-      winnings: [],
+      winner: address0,
+      winning: 0,
     };
 
     tbLotto = {
       id: 100,
       creator: accounts[1].address,
-      numberOfWinners: 1,
-      winnersShares: [100],
       startTime: Math.floor(new Date().getTime() / 1000),
       endTime: Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
@@ -55,8 +51,8 @@ describe("Grotto: Play Pot Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winners: [],
-      winnings: [],
+      winner: address0,
+      winning: 0,
     };
 
     nopPot = {
@@ -264,8 +260,7 @@ describe("Grotto: Play Pot Tests", () => {
       const pot: Pot = await grotto.getPotById(nopPot.lotto.id);
 
       expect(pot.lotto.creator).to.equal(accounts[0].address);
-      expect(pot.lotto.winners).to.be.an("array");
-      expect(pot.lotto.winners[0]).to.equal(accounts[3].address);
+      expect(pot.lotto.winner).to.equal(accounts[3].address);
 
       const totalStaked = ethers.utils
         .parseEther("0.01")
@@ -273,7 +268,7 @@ describe("Grotto: Play Pot Tests", () => {
         .add(ethers.utils.parseEther("0.01"));
       const winnerShare = totalStaked.mul(70).div(100);
       expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
-        ethers.utils.formatEther(pot.lotto.winnings[0])
+        ethers.utils.formatEther(pot.lotto.winning)
       );
     } catch (error) {
       console.log(error);
@@ -283,7 +278,7 @@ describe("Grotto: Play Pot Tests", () => {
 
   it('should claim winnings', async () => {
     const pot: Pot = await grotto.getPotById(nopPot.lotto.id);
-    const winner = pot.lotto.winners[0];
+    const winner = pot.lotto.winner;
     const winnerAccountIndex = accounts.map((account, index) => account.address === winner ? index : -1).filter(index => index >= 0);
     const balanceBefore = await ethers.provider.getBalance(winner);   
     const player1 = await grotto.connect(accounts[winnerAccountIndex[0]]); 

@@ -18,8 +18,6 @@ describe("Grotto: Create Lotto Tests", () => {
     lotto = {
       id: 1,
       creator: accounts[1].address,
-      numberOfWinners: 1,
-      winnersShares: [100],
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
       betAmount: BigNumber.from(0),
@@ -28,8 +26,8 @@ describe("Grotto: Create Lotto Tests", () => {
       isFinished: false,
       players: [],
       stakes: BigNumber.from(0),
-      winners: [],
-      winnings: [],
+      winner: address0,
+      winning: 0,
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
@@ -107,22 +105,6 @@ describe("Grotto: Create Lotto Tests", () => {
     }
   });
 
-  it("should not create a lotto if number of winners and winners shares length don't match", async () => {
-    try {
-      const overrides = {
-        value: ethers.utils.parseEther("0.01"),
-      };
-
-      lotto.id = 2;
-      lotto.numberOfWinners = 2;
-      await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
-        "Winnershares length does not match number of winners"
-      );
-    } catch (error) {
-      console.log(error);
-      expect(error).to.equal(undefined);
-    }
-  });
 
   it("should not create a lotto if winning type is time based and start time is not less than end time", async () => {
     try {
@@ -131,7 +113,6 @@ describe("Grotto: Create Lotto Tests", () => {
       };
 
       lotto.id = 2;
-      lotto.numberOfWinners = 1;
       lotto.winningType = WinningType.TIME_BASED;
       await expect(grotto.createLotto(lotto, overrides)).to.be.revertedWith(
         "Start time must be less than end time"

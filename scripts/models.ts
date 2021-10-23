@@ -14,8 +14,6 @@ export enum PotGuessType {
 export interface Lotto {
   id: number;
   creator: string;
-  numberOfWinners: number;
-  winnersShares: number[];
   startTime: number;
   endTime: number;
   maxNumberOfPlayers: number;
@@ -24,8 +22,8 @@ export interface Lotto {
   isFinished: boolean;
   stakes: BigNumber;
   players: string[];
-  winners: string[];  
-  winnings: number[]
+  winner: string;  
+  winning: number;
 }
 
 export interface Pot {

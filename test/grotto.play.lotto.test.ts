@@ -100,8 +100,7 @@ describe("Grotto: Play Lotto Tests", () => {
       const overrides = {
         value: ethers.utils.parseEther("0.01"),
       };      
-      const player1 = await grotto.connect(accounts[1]);
-      await expect(player1.playLotto(nopLotto.id, overrides)).to.be.revertedWith("Creator can not play");
+      await expect(grotto.playLotto(nopLotto.id, overrides)).to.be.revertedWith("Creator can not play");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -150,7 +149,7 @@ describe("Grotto: Play Lotto Tests", () => {
       await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
 
       const player4 = await grotto.connect(accounts[5]);
-      await expect(player4.playLotto(nopLotto.id, overrides)).to.be.revertedWith("Max Number of Players reached");
+      await expect(player4.playLotto(nopLotto.id, overrides)).to.be.revertedWith("Lotto is finished");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

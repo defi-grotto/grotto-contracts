@@ -183,7 +183,7 @@ describe("Grotto: Create Lotto Tests", () => {
     try {
       const lotto = await grotto.getLottoById(1);
       expect(lotto.id.toNumber()).to.be.eq(1);
-      expect(lotto.creator).to.be.eq(accounts[1].address);
+      expect(lotto.creator).to.be.eq(accounts[0].address);
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

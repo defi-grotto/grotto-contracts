@@ -229,7 +229,7 @@ describe("Grotto: Create Pot Tests", () => {
     try {
       const pot = await grotto.getPotById(1);
       expect(pot.lotto.id.toNumber()).to.be.eq(1);
-      expect(pot.lotto.creator).to.be.eq(accounts[1].address);
+      expect(pot.lotto.creator).to.be.eq(accounts[0].address);
       expect(pot.winningNumbers).to.be.an("array");
       expect(pot.winningNumbers[0]).to.eq(33);
       expect(pot.winningNumbers[1]).to.eq(12);

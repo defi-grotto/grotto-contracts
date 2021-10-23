@@ -16,8 +16,8 @@ contract Controller is ControllerInterface {
     mapping(uint256 => uint256) private platformShares;
     mapping(uint256 => mapping(address => uint256)) private ownersShares;
 
-    uint256 private platformSharePercentage;
-    uint256 private ownerSharePercentage;
+    uint256 private platformSharePercentage = 10;
+    uint256 private ownerSharePercentage = 20;
 
     uint256 private maxWinningNumbers = 10;
     uint256 private maxWinners = 10;
@@ -84,13 +84,10 @@ contract Controller is ControllerInterface {
     }
 
     modifier is_valid_lotto(Lotto memory _lotto) {
-        require(_lotto.betAmount > 0, ERROR_7);        
+        require(_lotto.betAmount > 0, ERROR_7);
 
         require(creator[_lotto.id] != _lotto.creator, ERROR_4);
-        require(
-            _lotto.numberOfWinners == _lotto.winnersShares.length,
-            ERROR_5
-        );
+        require(_lotto.numberOfWinners == _lotto.winnersShares.length, ERROR_5);
 
         require(_lotto.numberOfWinners <= 10, ERROR_25);
 
@@ -118,6 +115,8 @@ contract Controller is ControllerInterface {
         require(_pot.potAmount > 0, ERROR_11);
         require(_pot.winningNumbers.length > 0, ERROR_12);
         require(_pot.winningNumbers.length <= 10, ERROR_33);
+        require(_pot.lotto.numberOfWinners == 1, ERROR_34);
+        require(_pot.lotto.winnersShares.length == 1, ERROR_35);
         _;
     }
 
@@ -146,7 +145,7 @@ contract Controller is ControllerInterface {
         _;
     }
 
-    // TODO: This method exposes a vulnerability....should check msg.sender somewhere 
+    // TODO: This method exposes a vulnerability....should check msg.sender somewhere
     function setGrotto(address _grotto, address _grottoCaller)
         external
         override
@@ -173,7 +172,7 @@ contract Controller is ControllerInterface {
         } else {
             revert(ERROR_2);
         }
-    }    
+    }
 
     function addNewLotto(Lotto memory _lotto)
         external
@@ -220,9 +219,9 @@ contract Controller is ControllerInterface {
         players[_pot.lotto.id] = _pot.lotto.players;
         potAmount[_pot.lotto.id] = _pot.potAmount;
         winningNumbers[_pot.lotto.id] = _pot.winningNumbers;
-        for(uint256 i = 0; i < _pot.winningNumbers.length; i++) {
+        for (uint256 i = 0; i < _pot.winningNumbers.length; i = i.add(1)) {
             winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
-        }                
+        }
         potGuessType[_pot.lotto.id] = _pot.potGuessType;
         isPot[_pot.lotto.id] = true;
         return true;
@@ -321,7 +320,7 @@ contract Controller is ControllerInterface {
         uint256 _potId,
         uint256 _betPlaced,
         address _player,
-        uint256[] memory _guesses   
+        uint256[] memory _guesses
     )
         external
         override
@@ -335,31 +334,41 @@ contract Controller is ControllerInterface {
         return true;
     }
 
-    function findPotWinner(uint256 _potId, address _player, address _creator, uint256[] memory _guesses) private {
+    function findPotWinner(
+        uint256 _potId,
+        address _player,
+        address _creator,
+        uint256[] memory _guesses
+    ) private {
         uint256 current = block.timestamp;
 
-        if(!isFinished[_potId]) {
-            if(isPot[_potId]) {
+        if (!isFinished[_potId]) {
+            if (isPot[_potId]) {
                 if (
-                    (winningType[_potId] == WinningType.NUMBER_OF_PLAYERS || winningType[_potId] == WinningType.TIME_BASED) &&
-                    (players[_potId].length == maxNumberOfPlayers[_potId] || endTime[_potId] <= current)
-                ) {        
-                    // TODO: no winner found, send all money to pot creator                        
+                    (winningType[_potId] == WinningType.NUMBER_OF_PLAYERS &&
+                        players[_potId].length == maxNumberOfPlayers[_potId]) ||
+                    (winningType[_potId] == WinningType.TIME_BASED &&
+                        endTime[_potId] <= current)
+                ) {
+                    // TODO: no winner found, send all money to pot creator
                 } else {
                     _findPotWinner(_potId, _player, _creator, _guesses);
-                }      
-            }  
+                }
+            }
         }
     }
 
     function findLottoWinner(uint256 _lottoId, address _creator) private {
         uint256 current = block.timestamp;
 
-        if(!isFinished[_lottoId]) {
-            if(!isPot[_lottoId]) {
+        if (!isFinished[_lottoId]) {
+            if (!isPot[_lottoId]) {
                 if (
-                    (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS && players[_lottoId].length == maxNumberOfPlayers[_lottoId])
-                    || (winningType[_lottoId] == WinningType.TIME_BASED && endTime[_lottoId] <= current)
+                    (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS &&
+                        players[_lottoId].length ==
+                        maxNumberOfPlayers[_lottoId]) ||
+                    (winningType[_lottoId] == WinningType.TIME_BASED &&
+                        endTime[_lottoId] <= current)
                 ) {
                     _findLottoWinner(_lottoId, _creator);
                 }
@@ -367,32 +376,41 @@ contract Controller is ControllerInterface {
         }
     }
 
-    function _findPotWinner(uint256 _potId, address _player, address _creator, uint256[] memory _guesses) private {
+    function _findPotWinner(
+        uint256 _potId,
+        address _player,
+        address _creator,
+        uint256[] memory _guesses
+    ) private {
         // is there a winner?
         bool won = true;
-        if(potGuessType[_potId] == PotGuessType.NUMBERS) {
+        if (potGuessType[_potId] == PotGuessType.NUMBERS) {
             // just check that all guesses exists in winning numbers
-            for(uint256 i = 0; i < _guesses.length; i++) {
-                if(winningNumbersMap[_potId][_guesses[i]] == false) {
+            for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
+                if (winningNumbersMap[_potId][_guesses[i]] == false) {
                     won = false;
                     break;
                 }
             }
-        } else if(potGuessType[_potId] == PotGuessType.ORDER) {
-            for(uint256 i = 0; i < _guesses.length; i++) {
-                if(_guesses[i] != winningNumbers[_potId][i]) {
+        } else if (potGuessType[_potId] == PotGuessType.ORDER) {
+            for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
+                if (_guesses[i] != winningNumbers[_potId][i]) {
                     won = false;
-                    break;                    
+                    break;
                 }
             }
         }
 
-        if(won) {
-            uint256 totalStaked = stakes[_potId] + potAmount[_potId];
+        if (won) {
+            uint256 totalStaked = stakes[_potId].add(potAmount[_potId]);
 
             // take platform's share
-            uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(100);
-            uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(100);
+            uint256 _platformShare = totalStaked
+                .mul(platformSharePercentage)
+                .div(100);
+            uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(
+                100
+            );
 
             totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
 
@@ -402,7 +420,7 @@ contract Controller is ControllerInterface {
             winningsMap[_potId][_player] = totalStaked;
             isFinished[_potId] = true;
 
-            platformShare = platformShare.add(_platformShare);                        
+            platformShare = platformShare.add(_platformShare);
             platformShares[_potId] = _platformShare;
             ownersShares[_potId][_creator] = _ownerShare;
 
@@ -412,30 +430,44 @@ contract Controller is ControllerInterface {
 
     function _findLottoWinner(uint256 _lottoId, address _creator) private {
         uint256 totalStaked = stakes[_lottoId];
-        
+
         // take platform's share
-        uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(100);
+        uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(
+            100
+        );
         uint256 _ownerShare = totalStaked.mul(ownerSharePercentage).div(100);
 
         totalStaked = totalStaked.sub(_platformShare).sub(_ownerShare);
 
         for (uint256 i = 0; i < numberOfWinners[_lottoId]; i = i.add(1)) {
             bytes32 randBase = keccak256(abi.encodePacked(players[i]));
-            randBase = keccak256(abi.encodePacked(randBase, players[players[_lottoId].length.div(2)]));
-            randBase = keccak256(abi.encodePacked(randBase, players[players[_lottoId].length.sub(1)]));
+            randBase = keccak256(
+                abi.encodePacked(
+                    randBase,
+                    players[players[_lottoId].length.div(2)]
+                )
+            );
+            randBase = keccak256(
+                abi.encodePacked(
+                    randBase,
+                    players[players[_lottoId].length.sub(1)]
+                )
+            );
 
             uint256 winnerIndex = uint256(
                 keccak256(abi.encodePacked(totalStaked, randBase))
             ) % (players[_lottoId].length);
 
             address lottoWinner = players[_lottoId][winnerIndex];
-            uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(100);
+            uint256 eachShare = totalStaked.mul(winnersShares[_lottoId][i]).div(
+                100
+            );
             winners[_lottoId].push(lottoWinner);
-            winnersMap[_lottoId][lottoWinner] = lottoWinner;
+            winnersMap[_lottoId][lottoWinner] = lottoWinner;            
             winnings[_lottoId].push(eachShare);
             winningsMap[_lottoId][lottoWinner] = eachShare;
         }
-        isFinished[_lottoId] = true;        
+        isFinished[_lottoId] = true;
 
         platformShare = platformShare.add(_platformShare);
         platformShares[_lottoId] = _platformShare;
@@ -444,11 +476,7 @@ contract Controller is ControllerInterface {
         // TODO: Reward both winner and creator with grotto tokens
     }
 
-    function claimWinnings(uint256 _lottoId)
-        external
-        override
-        returns (bool)
-    {
+    function claimWinnings(uint256 _lottoId) external override returns (bool) {
         require(isFinished[_lottoId], ERROR_22);
         require(!isClaimed[_lottoId], ERROR_23);
         isClaimed[_lottoId] = true;

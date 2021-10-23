@@ -34,3 +34,5 @@ string constant ERROR_30 = "Only creator can force end time based lotto";
 string constant ERROR_31 = "ID Supplied is not a pot id";
 string constant ERROR_32 = "ID Supplied is not a lotto id";
 string constant ERROR_33 = "Not more than 10 winning numbers per pot";
+string constant ERROR_34 = "Max number of players for a pot is 1";
+string constant ERROR_35 = "Winner's shares for a pot must be an array of 1";

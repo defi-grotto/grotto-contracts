@@ -25,13 +25,15 @@ contract Grotto is GrottoInterface {
     }
 
     function createLotto(Lotto memory lotto) external payable {
-        lotto.betAmount = msg.value;        
+        lotto.betAmount = msg.value;   
+        lotto.creator = msg.sender;     
         bool result = controller.addNewLotto(lotto);
         require(result, ERROR_9);
         emit LottoCreated(lotto);
     }
 
     function createPot(Pot memory pot) external payable {
+        pot.lotto.creator = msg.sender;     
         pot.potAmount = msg.value;
         bool result = controller.addNewPot(pot);
         require(result, ERROR_13);

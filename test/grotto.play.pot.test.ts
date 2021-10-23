@@ -168,16 +168,43 @@ describe.only("Grotto: Play Pot Tests", () => {
       const guesses = [3, 6, 9, 1];
 
       const player2 = await grotto.connect(accounts[3]);
-      await expect(player2.playPot(nopLotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");      
+      await expect(player2.playPot(nopPot.lotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");      
 
       const player3 = await grotto.connect(accounts[4]);
-      await expect(player3.playPot(nopLotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");            
+      await expect(player3.playPot(nopPot.lotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");            
 
       const player4 = await grotto.connect(accounts[5]);
-      await expect(player4.playPot(nopLotto.id, guesses, overrides)).to.be.revertedWith("Max Number of Players reached");
+      await expect(player4.playPot(nopPot.lotto.id, guesses, overrides)).to.be.revertedWith("Max Number of Players reached");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }    
-  });  
+  }); 
+  
+  it('should not find a winner if numbers matched but not in order', async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+
+      nopPot.lotto.id = nopPot.lotto.id + 1001;
+      await expect(grotto.createPot(nopPot, overrides)).to.emit(
+        grotto,
+        "PotCreated"
+      );      
+
+      // Numbers matched but not order
+      let guesses = [3, 6, 3, 9];
+      const player2 = await grotto.connect(accounts[3]);
+      await expect(player2.playPot(nopPot.lotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");      
+
+      // Numbers matched but not order, should allow a bet to be placed
+      guesses = [3, 6, 3, 9];
+      const player3 = await grotto.connect(accounts[4]);
+      await expect(player3.playPot(nopPot.lotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");            
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  })
 });

@@ -150,7 +150,7 @@ describe("Grotto: Play Lotto Tests", () => {
       await expect(player3.playLotto(nopLotto.id, overrides)).to.emit(grotto, "BetPlaced");            
 
       const player4 = await grotto.connect(accounts[5]);
-      await expect(player4.playLotto(nopLotto.id, overrides)).to.be.revertedWith("Lotto is finished");
+      await expect(player4.playLotto(nopLotto.id, overrides)).to.be.revertedWith("Max Number of Players reached");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

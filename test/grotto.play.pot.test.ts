@@ -7,7 +7,7 @@ import { Lotto, platformOwner, Pot, PotGuessType, WinningType } from "../scripts
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -158,5 +158,26 @@ describe("Grotto: Play Pot Tests", () => {
   
   it('should not claim winnings before pot is finished', async () => {
     await expect(grotto.claim(nopPot.lotto.id)).to.be.revertedWith("Lotto is not finished");
-  });      
+  }); 
+  
+  it("should not play pot if max number of players reached", async () => {
+    try {
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };      
+      const guesses = [3, 6, 9, 1];
+
+      const player2 = await grotto.connect(accounts[3]);
+      await expect(player2.playPot(nopLotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");      
+
+      const player3 = await grotto.connect(accounts[4]);
+      await expect(player3.playPot(nopLotto.id, guesses, overrides)).to.emit(grotto, "BetPlaced");            
+
+      const player4 = await grotto.connect(accounts[5]);
+      await expect(player4.playPot(nopLotto.id, guesses, overrides)).to.be.revertedWith("Max Number of Players reached");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }    
+  });  
 });

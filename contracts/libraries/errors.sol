@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 string constant ERROR_1 = "";
 string constant ERROR_2 = "Called setGrotto on Storage with wrong parameters";
@@ -26,7 +26,7 @@ string constant ERROR_22 = "Lotto is not finished";
 string constant ERROR_23 = "Lotto is already claimed";
 string constant ERROR_24 = "Result from playPot is false";
 string constant ERROR_25 = "Claim can only be called by winner or creator";
-string constant ERROR_26 = "";
+string constant ERROR_26 = "Invalid Call. Not Applicable";
 string constant ERROR_27 = "Claimer is not a winner";
 string constant ERROR_28 = "Winning is zero";
 string constant ERROR_29 = "Can not force end lotto";

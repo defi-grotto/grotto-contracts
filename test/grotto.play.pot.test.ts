@@ -9,7 +9,7 @@ import {
   Pot,
   PotGuessType,
   WinningType,
-} from "../scripts/models";
+} from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 

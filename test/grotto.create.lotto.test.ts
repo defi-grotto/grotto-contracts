@@ -3,7 +3,7 @@ import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { Lotto, platformOwner, WinningType } from "../scripts/models";
+import { Lotto, platformOwner, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 

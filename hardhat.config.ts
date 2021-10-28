@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-contract-sizer";
+import "@openzeppelin/hardhat-upgrades";
 
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -15,7 +16,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 module.exports = {
   solidity: {
-    version: "0.8.3",
+    version: "0.8.4",
     settings: {
       optimizer: {
         enabled: true,

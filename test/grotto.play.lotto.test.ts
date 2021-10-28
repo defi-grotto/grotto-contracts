@@ -1,5 +1,5 @@
 import { Contract } from "@ethersproject/contracts";
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
@@ -7,7 +7,7 @@ import { Lotto, platformOwner, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Play Lotto Tests", () => {
+describe.only("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];  
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -50,13 +50,21 @@ describe("Grotto: Play Lotto Tests", () => {
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Controller = await ethers.getContractFactory("Controller");
+    const LottoController = await ethers.getContractFactory("LottoController");
+    const controller = await upgrades.deployProxy(LottoController);
 
-    const controller = await (await Controller.deploy()).deployed();
-    console.log(`Storage Deployed to ${controller.address}`);
+    grotto = await upgrades.deployProxy(Grotto, [
+      controller.address,
+      address0
+    ]);    
+
+    await controller.grantLottoCreator(grotto.address);
+    await controller.grantLottoPlayer(grotto.address);
+    await controller.grantAdmin(grotto.address);
+
+    console.log(`Lotto Controller Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
 
-    grotto = await (await Grotto.deploy(controller.address, platformOwner)).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);    
   });
 
@@ -306,8 +314,7 @@ describe("Grotto: Play Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };      
 
-      const creator = await grotto.connect(accounts[0]);
-      await creator.forceEndLotto(tbLotto.id);
+      await grotto.forceEnd(tbLotto.id);
       const player4 = await grotto.connect(accounts[5]);
       await expect(player4.playLotto(tbLotto.id, overrides)).to.be.revertedWith("Lotto has reached end time");
     } catch (error) {

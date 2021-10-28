@@ -8,18 +8,20 @@ import "./libraries/controller.interface.sol";
 import "./libraries/grotto.interface.sol";
 import "./libraries/errors.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 
 
-contract Grotto is GrottoInterface, OwnableUpgradeable {
+contract Grotto is GrottoInterface, Initializable {
     address private lottoControllerAddress;
     address private potControllerAddress;
 
     ControllerInterface private lottoController;    
     ControllerInterface private potController;    
 
+    address owner;
+
     function initialize(address _lottoControllerAddress, address _potControllerAddress) public initializer {
+        owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
         lottoController = ControllerInterface(lottoControllerAddress);
 
@@ -93,7 +95,8 @@ contract Grotto is GrottoInterface, OwnableUpgradeable {
         return potController.getPotById(potId);
     }
 
-    function forceEndLotto(uint256 lottoId) external onlyOwner {
+    function forceEnd(uint256 lottoId) external {
+        require(msg.sender == owner, ERROR_30);
         ControllerInterface controller;
         if(lottoController.isLottoId(lottoId)) {
             controller = lottoController;

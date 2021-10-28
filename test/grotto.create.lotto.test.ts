@@ -1,5 +1,5 @@
 import { Contract } from "@ethersproject/contracts";
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
@@ -32,13 +32,20 @@ describe("Grotto: Create Lotto Tests", () => {
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Controller = await ethers.getContractFactory("Controller");
+    const LottoController = await ethers.getContractFactory("LottoController");
+    const controller = await upgrades.deployProxy(LottoController);
 
-    const controller = await (await Controller.deploy()).deployed();
+    grotto = await upgrades.deployProxy(Grotto, [
+      controller.address,
+      address0
+    ]);    
+
+    await controller.grantLottoCreator(grotto.address);
+    await controller.grantLottoPlayer(grotto.address);
+    await controller.grantAdmin(grotto.address);
+      
     console.log(`Storage Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
-
-    grotto = await (await Grotto.deploy(controller.address, platformOwner)).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);
   });
 

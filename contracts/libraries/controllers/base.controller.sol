@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 import "./controller.interface.sol";
-import "./errors.sol";
+import "../errors.sol";
 
 abstract contract BaseController is ControllerInterface {
     bytes32 public constant LOTTO_CREATOR = keccak256("LOTTO_CREATOR_ROLE");

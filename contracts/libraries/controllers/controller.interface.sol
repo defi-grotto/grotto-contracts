@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.4;
-import "./models.sol";
+import "../models.sol";
 
 interface ControllerInterface {
     function addNewLotto(Lotto memory lotto) external returns (bool);

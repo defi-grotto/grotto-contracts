@@ -4,7 +4,7 @@ pragma solidity 0.8.4;
 pragma experimental ABIEncoderV2;
 import "hardhat/console.sol";
 import "./libraries/models.sol";
-import "./libraries/controller.interface.sol";
+import "./libraries/controllers/controller.interface.sol";
 import "./libraries/grotto.interface.sol";
 import "./libraries/errors.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";

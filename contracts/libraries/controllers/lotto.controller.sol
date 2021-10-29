@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.4;
 
-import "./models.sol";
+import "../models.sol";
 import "./base.controller.sol";
-import "./errors.sol";
+import "../errors.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";

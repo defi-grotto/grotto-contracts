@@ -44,7 +44,7 @@ describe("Grotto: Create Lotto Tests", () => {
     await controller.grantLottoPlayer(grotto.address);
     await controller.grantAdmin(grotto.address);
       
-    console.log(`Storage Deployed to ${controller.address}`);
+    console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
     console.log(`Grotto Deployed to ${grotto.address}`);
   });

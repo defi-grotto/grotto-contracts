@@ -58,10 +58,6 @@ contract Grotto is GrottoInterface, Initializable {
         emit BetPlaced(potId, msg.value, msg.sender);        
     }    
 
-    function findWinners(uint256 lottoId) external {
-        
-    }
-
     function claim(uint256 lottoId) external payable {        
         ControllerInterface controller;
         if(address(lottoController) != address(0) && lottoController.isLottoId(lottoId)) {

@@ -64,9 +64,9 @@ contract Grotto is GrottoInterface, Initializable {
 
     function claim(uint256 lottoId) external payable {        
         ControllerInterface controller;
-        if(lottoController.isLottoId(lottoId)) {
+        if(address(lottoController) != address(0) && lottoController.isLottoId(lottoId)) {
             controller = lottoController;
-        } else if(potController.isPotId(lottoId)) {
+        } else if(address(potController) != address(0) && potController.isPotId(lottoId)) {
             controller = potController;
         }
 

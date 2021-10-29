@@ -1,5 +1,5 @@
 import { Contract } from "@ethersproject/contracts";
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
@@ -13,7 +13,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -72,15 +72,22 @@ describe("Grotto: Play Pot Tests", () => {
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Controller = await ethers.getContractFactory("Controller");
+    const PotController = await ethers.getContractFactory("PotController");
+    const controller = await upgrades.deployProxy(PotController);
 
-    const controller = await (await Controller.deploy()).deployed();
-    console.log(`Storage Deployed to ${controller.address}`);
+    grotto = await upgrades.deployProxy(Grotto, [      
+      address0,
+      controller.address,
+    ]);    
+
+    await controller.grantLottoCreator(grotto.address);
+    await controller.grantLottoPlayer(grotto.address);
+    await controller.grantAdmin(grotto.address);
+
+    console.log(`PotController Deployed to ${controller.address}`);
+
     expect(controller.address).to.not.eq(address0);
 
-    grotto = await (
-      await Grotto.deploy(controller.address, platformOwner)
-    ).deployed();
     console.log(`Grotto Deployed to ${grotto.address}`);
   });
 

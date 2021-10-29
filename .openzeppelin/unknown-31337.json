@@ -7,7 +7,7 @@
       "hash": "0x9c286cb9ff68ea2a60d2a883599e046640c47878ba454f8ab3eb8394bcab4c43",
       "type": 2,
       "accessList": [],
-      "blockHash": "0x152c8fce43f35114a9fda7e681b295cb185e6b1f9fb92f56cf3f79f5a874668f",
+      "blockHash": "0x7c3e6ceb89823d44e7fef720d780edfd6c0b340939293635aefc897e63faf3cd",
       "blockNumber": 2,
       "transactionIndex": 0,
       "confirmations": 1,
@@ -55,72 +55,11 @@
     },
     {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0xed4a038b2c18a1e17bb1d5414369ea4b32fe521b1e0c28bc48b49806931eea2c",
+      "txHash": "0xe9dafb659c246107e30e517fa25603a884632873934abef52460aa4fe7502d26",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "274b4fe6e860a976e8929bbc3ca82b9855c746534055c3b706fe7357ae6c077a": {
-      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0x7d34869c2b3493140e62bfe74bbb0e818be87f703a29ae86b6737af611e86d1b",
-      "layout": {
-        "storage": [
-          {
-            "contract": "Initializable",
-            "label": "_initialized",
-            "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
-          },
-          {
-            "contract": "Initializable",
-            "label": "_initializing",
-            "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
-          },
-          {
-            "contract": "Grotto",
-            "label": "lottoControllerAddress",
-            "type": "t_address",
-            "src": "contracts/grotto.sol:15"
-          },
-          {
-            "contract": "Grotto",
-            "label": "potControllerAddress",
-            "type": "t_address",
-            "src": "contracts/grotto.sol:16"
-          },
-          {
-            "contract": "Grotto",
-            "label": "lottoController",
-            "type": "t_contract(ControllerInterface)2114",
-            "src": "contracts/grotto.sol:18"
-          },
-          {
-            "contract": "Grotto",
-            "label": "potController",
-            "type": "t_contract(ControllerInterface)2114",
-            "src": "contracts/grotto.sol:19"
-          },
-          {
-            "contract": "Grotto",
-            "label": "owner",
-            "type": "t_address",
-            "src": "contracts/grotto.sol:21"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address"
-          },
-          "t_contract(ControllerInterface)2114": {
-            "label": "contract ControllerInterface"
-          },
-          "t_bool": {
-            "label": "bool"
-          }
-        }
-      }
-    },
     "01f14625283c8568616583b0116f3c847a4872e350c995c325194b10b40865c2": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       "txHash": "0xa629a108a097d5e12f218038e7cb1e0f07a6490890bbe1b2678ab0cdaa564131",
@@ -213,7 +152,7 @@
           {
             "contract": "BaseController",
             "label": "winningType",
-            "type": "t_mapping(t_uint256,t_enum(WinningType)3633)",
+            "type": "t_mapping(t_uint256,t_enum(WinningType)3653)",
             "src": "contracts/libraries/controllers/base.controller.sol:44"
           },
           {
@@ -315,7 +254,7 @@
           {
             "contract": "PotController",
             "label": "potGuessType",
-            "type": "t_mapping(t_uint256,t_enum(PotGuessType)3636)",
+            "type": "t_mapping(t_uint256,t_enum(PotGuessType)3656)",
             "src": "contracts/libraries/controllers/pot.controller.sol:30"
           }
         ],
@@ -341,10 +280,10 @@
           "t_bool": {
             "label": "bool"
           },
-          "t_mapping(t_uint256,t_enum(PotGuessType)3636)": {
+          "t_mapping(t_uint256,t_enum(PotGuessType)3656)": {
             "label": "mapping(uint256 => enum PotGuessType)"
           },
-          "t_enum(PotGuessType)3636": {
+          "t_enum(PotGuessType)3656": {
             "label": "enum PotGuessType",
             "members": [
               "NUMBERS",
@@ -385,10 +324,10 @@
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)"
           },
-          "t_mapping(t_uint256,t_enum(WinningType)3633)": {
+          "t_mapping(t_uint256,t_enum(WinningType)3653)": {
             "label": "mapping(uint256 => enum WinningType)"
           },
-          "t_enum(WinningType)3633": {
+          "t_enum(WinningType)3653": {
             "label": "enum WinningType",
             "members": [
               "TIME_BASED",
@@ -400,6 +339,67 @@
           },
           "t_array(t_address)dyn_storage": {
             "label": "address[]"
+          }
+        }
+      }
+    },
+    "c39fe29201d16c869a014954a334d662b499a5f2a50e0d127b8fd5bd98e99731": {
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "txHash": "0xf26758073e4d130bd7897783aa112982240bed2509b8edc2a73fbdcf5b5e98d9",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "Grotto",
+            "label": "lottoControllerAddress",
+            "type": "t_address",
+            "src": "contracts/grotto.sol:15"
+          },
+          {
+            "contract": "Grotto",
+            "label": "potControllerAddress",
+            "type": "t_address",
+            "src": "contracts/grotto.sol:16"
+          },
+          {
+            "contract": "Grotto",
+            "label": "lottoController",
+            "type": "t_contract(ControllerInterface)2134",
+            "src": "contracts/grotto.sol:18"
+          },
+          {
+            "contract": "Grotto",
+            "label": "potController",
+            "type": "t_contract(ControllerInterface)2134",
+            "src": "contracts/grotto.sol:19"
+          },
+          {
+            "contract": "Grotto",
+            "label": "owner",
+            "type": "t_address",
+            "src": "contracts/grotto.sol:21"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(ControllerInterface)2134": {
+            "label": "contract ControllerInterface"
+          },
+          "t_bool": {
+            "label": "bool"
           }
         }
       }

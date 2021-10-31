@@ -12,6 +12,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 
 contract Grotto is GrottoInterface, Initializable {
+    // ============================ VARIABLES ============================
     address private lottoControllerAddress;
     address private potControllerAddress;
 
@@ -20,6 +21,7 @@ contract Grotto is GrottoInterface, Initializable {
 
     address owner;
 
+    // ============================ INITIALIZER ============================
     function initialize(address _lottoControllerAddress, address _potControllerAddress) public initializer {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
@@ -29,43 +31,40 @@ contract Grotto is GrottoInterface, Initializable {
         potController = ControllerInterface(potControllerAddress);        
     }
 
-    function createLotto(Lotto memory lotto) external payable {
-        lotto.betAmount = msg.value;   
-        lotto.stakes = msg.value;
-        lotto.creator = msg.sender;             
-        bool result = lottoController.addNewLotto(lotto);
-        require(result, ERROR_9);
-        emit LottoCreated(lotto);
+    // ============================ EXTERNAL METHODS ============================
+    function createLotto(Lotto memory _lotto) external payable {
+        _lotto.betAmount = msg.value;   
+        _lotto.stakes = msg.value;
+        _lotto.creator = msg.sender;             
+        bool _result = lottoController.addNewLotto(_lotto);
+        require(_result, ERROR_9);
+        emit LottoCreated(_lotto);
     }
 
-    function createPot(Pot memory pot) external payable {
-        pot.lotto.creator = msg.sender;     
-        pot.potAmount = msg.value;
-        pot.lotto.stakes = msg.value;
-        bool result = potController.addNewPot(pot);
-        require(result, ERROR_13);
-        emit PotCreated(pot);
+    function createPot(Pot memory _pot) external payable {
+        _pot.lotto.creator = msg.sender;     
+        _pot.potAmount = msg.value;
+        _pot.lotto.stakes = msg.value;
+        bool _result = potController.addNewPot(_pot);
+        require(_result, ERROR_13);
+        emit PotCreated(_pot);
     }
 
-    function playLotto(uint256 lottoId) external payable {
-        bool result = lottoController.playLotto(lottoId, msg.value, msg.sender);
-        require(result, ERROR_20);
-        emit BetPlaced(lottoId, msg.value, msg.sender);
+    function playLotto(uint256 _lottoId) external payable {
+        bool _result = lottoController.playLotto(_lottoId, msg.value, msg.sender);
+        require(_result, ERROR_20);
+        emit BetPlaced(_lottoId, msg.value, msg.sender);
     }     
 
-    function playPot(uint256 potId, uint256[] memory guesses) external payable {
-        bool result = potController.playPot(potId, msg.value, msg.sender, guesses);
-        require(result, ERROR_24);
-        emit BetPlaced(potId, msg.value, msg.sender);        
+    function playPot(uint256 _potId, uint256[] memory _guesses) external payable {
+        bool _result = potController.playPot(_potId, msg.value, msg.sender, _guesses);
+        require(_result, ERROR_24);
+        emit BetPlaced(_potId, msg.value, msg.sender);        
     }    
 
-    function getPotWinning(uint256 lottoId) external view {        
-        
-    }
-
-    function claim(uint256 lottoId) external payable {        
-        ControllerInterface controller = _getController(lottoId);
-        Claim memory _claim = controller.claimWinning(lottoId, msg.sender);
+    function claim(uint256 _lottoId) external payable {        
+        ControllerInterface _controller = _getController(_lottoId);
+        Claim memory _claim = _controller.claimWinning(_lottoId, msg.sender);
 
         require(_claim.creator != address(0), ERROR_34);
         require(_claim.creatorShares != 0, ERROR_35);                
@@ -79,35 +78,39 @@ contract Grotto is GrottoInterface, Initializable {
             payable(_claim.creator).transfer(_claim.creatorShares);
         }
         
-        emit Claimed(lottoId);
+        emit Claimed(_lottoId);
     }
 
-    function getLottoById(uint256 lottoId) external view returns (Lotto memory) {
-        return lottoController.getLottoById(lottoId);
+    function forceEnd(uint256 _lottoId) external {
+        require(msg.sender == owner, ERROR_30);
+        ControllerInterface _controller = _getController(_lottoId);
+        require(_controller.forceEnd(_lottoId), ERROR_29);    
+    }    
+
+    // ============================ EXTERNAL VIEW METHODS ============================
+    function getLottoById(uint256 _lottoId) external view returns (Lotto memory) {
+        return lottoController.getLottoById(_lottoId);
     }
 
-    function getPotById(uint256 potId) external view returns (Pot memory) {
-        return potController.getPotById(potId);
+    function getPotById(uint256 _potId) external view returns (Pot memory) {
+        return potController.getPotById(_potId);
     }
 
-    function getTotalStaked(uint256 lottoId) external view returns (uint256) {
-        ControllerInterface controller = _getController(lottoId);
-        return controller.getTotalStaked(lottoId);
+    function getTotalStaked(uint256 _lottoId) external view returns (uint256) {
+        ControllerInterface controller = _getController(_lottoId);
+        return controller.getTotalStaked(_lottoId);
     }
 
-    function _getController(uint256 lottoId) private view returns (ControllerInterface) {
-        ControllerInterface controller;
-        if(address(lottoController) != address(0) && lottoController.isLottoId(lottoId)) {
-            controller = lottoController;
-        } else if(address(potController) != address(0) && potController.isPotId(lottoId)) {
-            controller = potController;
+
+    // ============================ PRIVATE VIEW METHODS ============================
+    function _getController(uint256 _lottoId) private view returns (ControllerInterface) {
+        ControllerInterface _controller;
+        if(address(lottoController) != address(0) && lottoController.isLottoId(_lottoId)) {
+            _controller = lottoController;
+        } else if(address(potController) != address(0) && potController.isPotId(_lottoId)) {
+            _controller = potController;
         }
 
-        return controller;           
-    }
-    function forceEnd(uint256 lottoId) external {
-        require(msg.sender == owner, ERROR_30);
-        ControllerInterface controller = _getController(lottoId);
-        require(controller.forceEnd(lottoId), ERROR_29);    
+        return _controller;           
     }
 }

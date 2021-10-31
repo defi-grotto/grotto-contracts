@@ -41,6 +41,7 @@ contract Grotto is GrottoInterface, Initializable {
     function createPot(Pot memory pot) external payable {
         pot.lotto.creator = msg.sender;     
         pot.potAmount = msg.value;
+        pot.lotto.stakes = msg.value;
         bool result = potController.addNewPot(pot);
         require(result, ERROR_13);
         emit PotCreated(pot);
@@ -58,17 +59,13 @@ contract Grotto is GrottoInterface, Initializable {
         emit BetPlaced(potId, msg.value, msg.sender);        
     }    
 
+    function getPotWinning(uint256 lottoId) external view {        
+        
+    }
+
     function claim(uint256 lottoId) external payable {        
-        ControllerInterface controller;
-        if(address(lottoController) != address(0) && lottoController.isLottoId(lottoId)) {
-            controller = lottoController;
-        } else if(address(potController) != address(0) && potController.isPotId(lottoId)) {
-            controller = potController;
-        }
-
-        require(controller.setClaimed(lottoId));
-
-        Claim memory _claim = controller.getClaim(lottoId);
+        ControllerInterface controller = _getController(lottoId);
+        Claim memory _claim = controller.claimWinning(lottoId, msg.sender);
 
         require(_claim.creator != address(0), ERROR_34);
         require(_claim.creatorShares != 0, ERROR_35);                
@@ -78,7 +75,9 @@ contract Grotto is GrottoInterface, Initializable {
             payable(_claim.winner).transfer(_claim.winning);
         }   
 
-        payable(_claim.creator).transfer(_claim.creatorShares);
+        if(msg.sender == _claim.creator) {
+            payable(_claim.creator).transfer(_claim.creatorShares);
+        }
         
         emit Claimed(lottoId);
     }
@@ -91,15 +90,24 @@ contract Grotto is GrottoInterface, Initializable {
         return potController.getPotById(potId);
     }
 
-    function forceEnd(uint256 lottoId) external {
-        require(msg.sender == owner, ERROR_30);
+    function getTotalStaked(uint256 lottoId) external view returns (uint256) {
+        ControllerInterface controller = _getController(lottoId);
+        return controller.getTotalStaked(lottoId);
+    }
+
+    function _getController(uint256 lottoId) private view returns (ControllerInterface) {
         ControllerInterface controller;
-        if(lottoController.isLottoId(lottoId)) {
+        if(address(lottoController) != address(0) && lottoController.isLottoId(lottoId)) {
             controller = lottoController;
-        } else if(potController.isPotId(lottoId)) {
+        } else if(address(potController) != address(0) && potController.isPotId(lottoId)) {
             controller = potController;
         }
 
+        return controller;           
+    }
+    function forceEnd(uint256 lottoId) external {
+        require(msg.sender == owner, ERROR_30);
+        ControllerInterface controller = _getController(lottoId);
         require(controller.forceEnd(lottoId), ERROR_29);    
     }
 }

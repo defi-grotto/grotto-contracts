@@ -31,6 +31,8 @@ export interface Pot {
   lotto: Lotto;
   potAmount: BigNumber;
   winningNumbers: number[];
+  winners: string[];
+  winningsPerWinner: number;
   potGuessType: PotGuessType;
 }
 

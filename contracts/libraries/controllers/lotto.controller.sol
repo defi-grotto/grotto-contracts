@@ -26,7 +26,6 @@ contract LottoController is
     }
 
     function grantLottoCreator(address account) public override onlyRole(ADMIN) {
-        console.log("caller: ", msg.sender);
         grantRole(LOTTO_CREATOR, account);
     }
 
@@ -61,9 +60,26 @@ contract LottoController is
     }
 
 
-    function isLottoId(uint256 _potId) external view override returns (bool) {
-        return isPot[_potId] == false;
+    function isLottoId(uint256 _lottoId) external view override returns (bool) {
+        return isPot[_lottoId] == false;
     }
+
+    function claimWinning(uint256 _lottoId, address _claimer)
+        external
+        override
+        returns (Claim memory)
+    {
+        require(isFinished[_lottoId], ERROR_22);
+        require(!isClaimed[_lottoId], ERROR_23);
+        isClaimed[_lottoId] = true;
+        return
+            Claim({
+                winner: winner[_lottoId],
+                creator: creator[_lottoId],
+                winning: winning[_lottoId],
+                creatorShares: creatorShares[_lottoId]
+            });
+    }    
 
     function getLottoById(uint256 _lottoId)
         external

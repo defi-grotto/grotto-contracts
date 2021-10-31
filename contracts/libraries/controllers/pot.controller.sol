@@ -9,10 +9,11 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract PotController is
-    BaseController,
-    AccessControlUpgradeable
-{
+/* TODO: 
+    Multiple winners possible
+    Strictly time based
+*/
+contract PotController is BaseController, AccessControlUpgradeable {
     using SafeMath for uint256;
 
     // Pot Data Structure
@@ -21,6 +22,10 @@ contract PotController is
     // The numbers the players must guess
     mapping(uint256 => uint256[]) private winningNumbers;
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
+    mapping(uint256 => address[]) private winners;
+    mapping(uint256 => mapping(address => bool)) private isWinner;
+    mapping(uint256 => uint256) private winningsPerWinner;
+    mapping(uint256 => mapping(address => bool)) private winningClaimed;
 
     /* 
         The Type of Guess
@@ -38,7 +43,11 @@ contract PotController is
         maxWinners = 10;
     }
 
-    function grantLottoCreator(address account) public override onlyRole(ADMIN) {
+    function grantLottoCreator(address account)
+        public
+        override
+        onlyRole(ADMIN)
+    {
         grantRole(LOTTO_CREATOR, account);
     }
 
@@ -103,7 +112,7 @@ contract PotController is
             creatorShares: creatorShares[_potId],
             startTime: startTime[_potId],
             endTime: endTime[_potId],
-            maxNumberOfPlayers: maxNumberOfPlayers[_potId],
+            maxNumberOfPlayers: 0,
             betAmount: betAmount[_potId],
             winningType: winningType[_potId],
             isFinished: isFinished[_potId],
@@ -117,10 +126,16 @@ contract PotController is
             lotto: lotto,
             potAmount: potAmount[_potId],
             winningNumbers: winningNumbers[_potId],
-            potGuessType: potGuessType[_potId]
+            potGuessType: potGuessType[_potId],
+            winners: winners[_potId],
+            winningsPerWinner: winningsPerWinner[_potId]
         });
 
         return pot;
+    }
+
+    function getPotWinning(uint256 _potId) external view returns (uint256) {
+        return winningsPerWinner[_potId];
     }
 
     function playPot(
@@ -138,51 +153,15 @@ contract PotController is
     {
         stakes[_potId] = stakes[_potId].add(_betPlaced);
         players[_potId].push(_player);
-        findPotWinner(_potId, _player, _guesses);
+        checkIfWinner(_potId, _player, _guesses);
         return true;
     }
 
-    function findPotWinner(
+    function checkIfWinner(
         uint256 _potId,
         address _player,
         uint256[] memory _guesses
     ) private {
-        uint256 current = block.timestamp;
-
-        if (!isFinished[_potId]) {
-            if (isPot[_potId]) {
-                if (
-                    (winningType[_potId] == WinningType.NUMBER_OF_PLAYERS &&
-                        players[_potId].length == maxNumberOfPlayers[_potId]) ||
-                    (winningType[_potId] == WinningType.TIME_BASED &&
-                        endTime[_potId] <= current)
-                ) {
-                    uint256 totalStaked = stakes[_potId].add(potAmount[_potId]);
-
-                    // take platform's share
-                    uint256 _platformShare = totalStaked
-                        .mul(platformSharePercentage)
-                        .div(100);
-
-                    uint256 _creatorShares = totalStaked.sub(_platformShare);
-
-                    isFinished[_potId] = true;
-                    platformShare = platformShare.add(_platformShare);
-                    platformShares[_potId] = _platformShare;
-                    creatorShares[_potId] = _creatorShares;
-                } else {
-                    _findPotWinner(_potId, _player, _guesses);
-                }
-            }
-        }
-    }
-
-    function _findPotWinner(
-        uint256 _potId,
-        address _player,
-        uint256[] memory _guesses
-    ) private {
-        // is there a winner?
         bool won = true;
         if (potGuessType[_potId] == PotGuessType.NUMBERS) {
             // just check that all guesses exists in winning numbers
@@ -202,28 +181,58 @@ contract PotController is
         }
 
         if (won) {
-            uint256 totalStaked = stakes[_potId].add(potAmount[_potId]);
+            winners[_potId].push(_player);
+            isWinner[_potId][_player] = true;
+        }
+    }
 
+    function claimWinning(uint256 _potId, address _claimer)
+        external
+        override
+        returns (Claim memory)
+    {
+        require(startTime[_potId] <= block.timestamp, ERROR_14);
+        require(endTime[_potId] <= block.timestamp, ERROR_22);
+
+        require(isWinner[_potId][_claimer], ERROR_27);
+        require(winningClaimed[_potId][_claimer] == false, ERROR_26);
+
+        if (isClaimed[_potId] == false) {
+            // no one has claimed, calculate winners claims
+            uint256 totalStaked = stakes[_potId];
             // take platform's share
             uint256 _platformShare = totalStaked
                 .mul(platformSharePercentage)
                 .div(100);
-            uint256 _creatorShares = totalStaked
+
+            uint256 _totalWinners = winners[_potId].length;
+            uint256 _creatorShare = totalStaked
                 .mul(creatorSharesPercentage)
                 .div(100);
 
-            totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
+            if (_totalWinners <= 0) {
+                _creatorShare = totalStaked.sub(_platformShare);
+            } else {
+                winningsPerWinner[_potId] = (
+                    totalStaked.sub(_platformShare).sub(_creatorShare)
+                ).div(_totalWinners);
+            }
 
-            winner[_potId] = _player;
-            winning[_potId] = totalStaked;
-            isFinished[_potId] = true;
+            creatorShares[_potId] = _creatorShare;
 
-            platformShare = platformShare.add(_platformShare);
-            platformShares[_potId] = _platformShare;
-            creatorShares[_potId] = _creatorShares;
-
-            // TODO: Reward both winner and creator with grotto tokens
+            isClaimed[_potId] = true;
         }
+
+        winningClaimed[_potId][_claimer] = true;
+        isFinished[_potId] = true;
+        
+        return
+            Claim({
+                winner: _claimer,
+                creator: creator[_potId],
+                winning: winningsPerWinner[_potId],
+                creatorShares: creatorShares[_potId]
+            });
     }
 
     function forceEnd(uint256 _lottoId)

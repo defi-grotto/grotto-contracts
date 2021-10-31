@@ -55,6 +55,7 @@ abstract contract BaseController is ControllerInterface {
 
     mapping(uint256 => bool) internal isPot;
 
+    // ============================ MODIFIERS============================
     modifier is_valid_lotto(Lotto memory _lotto) {
         require(_lotto.betAmount > 0, ERROR_7);
 
@@ -70,7 +71,7 @@ abstract contract BaseController is ControllerInterface {
         }
         _;
     }
-    
+
     modifier can_play_lotto(
         uint256 _lottoId,
         uint256 _betPlaced,
@@ -82,7 +83,6 @@ abstract contract BaseController is ControllerInterface {
         require(_player != creator[_lottoId], ERROR_21);
         _;
     }
-
 
     modifier still_running(uint256 _lottoId) {
         if (winningType[_lottoId] == WinningType.TIME_BASED) {
@@ -97,37 +97,17 @@ abstract contract BaseController is ControllerInterface {
         _;
     }
 
-    function setClaimed(uint256 _lottoId) external override returns (bool) {
-        require(isFinished[_lottoId], ERROR_22);
-        require(!isClaimed[_lottoId], ERROR_23);
-        isClaimed[_lottoId] = true;
-        return true;
+    function getTotalStaked(uint256 _lottoId) external view override returns (uint256) {
+        return stakes[_lottoId];
     }
 
-    function getClaim(uint256 _lottoId)
-        external
-        view
-        override
-        returns (Claim memory)
-    {
-        return
-            Claim({
-                winner: winner[_lottoId],
-                creator: creator[_lottoId],
-                winning: winning[_lottoId],
-                creatorShares: creatorShares[_lottoId]
-            });
-    }
-
-
+    // ============================ VIRTUAL METHODS, NEEDS OVERRIDING ============================
     function addNewLotto(Lotto memory)
         external
         virtual
-        override        
+        override
         returns (bool)
-    {
-        revert(ERROR_26);
-    }
+    {}
 
     function getLottoById(uint256)
         external
@@ -135,33 +115,32 @@ abstract contract BaseController is ControllerInterface {
         virtual
         override
         returns (Lotto memory)
-    {
-    }
+    {}
 
     function playLotto(
         uint256,
         uint256,
         address
-    ) external override virtual returns (bool) {
-    }
+    ) external virtual override returns (bool) {}
 
-    function isLottoId(uint256) external view virtual override returns (bool) {
-    }   
+    function isLottoId(uint256) external view virtual override returns (bool) {}
 
-    function addNewPot(Pot memory) external virtual override returns (bool) {
-    }
+    function addNewPot(Pot memory) external virtual override returns (bool) {}
 
     function playPot(
         uint256,
         uint256,
         address,
         uint256[] memory
-    ) external override virtual returns (bool) {
-    }
+    ) external virtual override returns (bool) {}
 
-    function getPotById(uint256) external view virtual override returns (Pot memory) {
-    }
+    function getPotById(uint256)
+        external
+        view
+        virtual
+        override
+        returns (Pot memory)
+    {}
 
-    function isPotId(uint256) external view virtual override returns (bool) {
-    }    
+    function isPotId(uint256) external view virtual override returns (bool) {}
 }

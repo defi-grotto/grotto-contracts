@@ -9,8 +9,6 @@ interface ControllerInterface {
 
     function getLottoById(uint256 lottoId) external view returns (Lotto memory);
 
-    function getClaim(uint256 lottoId) external view returns (Claim memory);
-
     function getPotById(uint256 lottoId) external view returns (Pot memory);
 
     function playLotto(
@@ -26,17 +24,19 @@ interface ControllerInterface {
         uint256[] memory guesses
     ) external returns (bool);
 
-    function setClaimed(uint256 lottoId) external returns (bool);
-
     function forceEnd(uint256 lottoId) external returns (bool);
 
-    function isLottoId(uint256 lottoId) external returns (bool);
+    function isLottoId(uint256 lottoId) external view returns (bool);
 
-    function isPotId(uint256 potId) external returns (bool);
+    function isPotId(uint256 potId) external view returns (bool);
 
     function grantLottoCreator(address account) external;
 
     function grantLottoPlayer(address account) external;
 
     function grantAdmin(address account) external;
+
+    function claimWinning(uint256 lottoId, address claimer) external returns (Claim memory);
+
+    function getTotalStaked(uint256 lottoId) external view returns (uint256);
 }

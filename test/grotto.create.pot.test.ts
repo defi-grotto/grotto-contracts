@@ -36,6 +36,8 @@ describe("Grotto: Create Pot Tests", () => {
       potAmount: BigNumber.from(0),
       winningNumbers: [33, 12, 99],
       potGuessType: PotGuessType.ORDER,
+      winners: [],
+      winningsPerWinner: 0
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");

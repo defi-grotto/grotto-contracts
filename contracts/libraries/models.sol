@@ -33,6 +33,8 @@ struct Pot {
     // how much the winner will win if they guessed the number right
     uint256 potAmount;
     uint256[] winningNumbers;
+    address[] winners;
+    uint256 winningsPerWinner;
     PotGuessType potGuessType;
 }
 

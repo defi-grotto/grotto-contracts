@@ -7,4 +7,5 @@ interface GrottoInterface {
     event PotCreated(Pot pot);
     event BetPlaced(uint256 indexed lottoId, uint256 amount, address indexed player);
     event Claimed(uint256 indexed lottoId);
+    event CreatorClaimed(uint256 indexed lottoId);
 }

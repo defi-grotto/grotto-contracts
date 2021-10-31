@@ -38,5 +38,7 @@ interface ControllerInterface {
 
     function claimWinning(uint256 lottoId, address claimer) external returns (Claim memory);
 
+    function creatorClaim(uint256 lottoId) external returns (Claim memory);
+
     function getTotalStaked(uint256 lottoId) external view returns (uint256);
 }

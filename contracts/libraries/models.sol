@@ -40,7 +40,5 @@ struct Pot {
 
 struct Claim {
     address winner;
-    address creator;
     uint256 winning;
-    uint256 creatorShares;
 }

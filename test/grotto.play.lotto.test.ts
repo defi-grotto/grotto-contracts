@@ -261,8 +261,14 @@ describe("Grotto: Play Lotto Tests", () => {
         ethers.utils.formatEther(lotto.creatorShares)
       );      
   
+      // claim by user first
+      const winnerAddress = lotto.winner;
+      const winnerAccountIndex = accounts.map((account, index) => account.address === winnerAddress ? index : -1).filter(index => index >= 0);
+      const winner = await grotto.connect(accounts[winnerAccountIndex[0]]); 
+      await expect(winner.claim(nopLotto.id)).to.emit(grotto, "Claimed");       
+
       const balanceBefore = await ethers.provider.getBalance(accounts[0].address);   
-      await expect(grotto.claim(nopLotto.id)).to.emit(grotto, "Claimed");            
+      await expect(grotto.claimCreator(nopLotto.id)).to.emit(grotto, "CreatorClaimed");            
       const balanceAfter = await ethers.provider.getBalance(accounts[0].address);    
       expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
     } catch (error) {

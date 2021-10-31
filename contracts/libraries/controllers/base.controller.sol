@@ -44,6 +44,7 @@ abstract contract BaseController is ControllerInterface {
     mapping(uint256 => WinningType) internal winningType;
     mapping(uint256 => bool) internal isFinished;
     mapping(uint256 => bool) internal isClaimed;
+    mapping(uint256 => bool) internal creatorClaimed;
     // all the money staked on the lotto/pot so far
     mapping(uint256 => uint256) internal stakes;
     // all the players in the lotto/pot
@@ -54,6 +55,7 @@ abstract contract BaseController is ControllerInterface {
     mapping(uint256 => uint256) internal winning;
 
     mapping(uint256 => bool) internal isPot;
+    mapping(uint256 => mapping(address => bool)) internal isWinner;
 
     // ============================ MODIFIERS============================
     modifier is_valid_lotto(Lotto memory _lotto) {
@@ -97,9 +99,17 @@ abstract contract BaseController is ControllerInterface {
         _;
     }
 
-    // ============================ METHODS ============================
+    // ============================ EXTERNAL VIEW METHODS ============================
     function getTotalStaked(uint256 _lottoId) external view override returns (uint256) {
         return stakes[_lottoId];
+    }
+
+    function creatorClaim(uint256 _lottoId) external override returns (Claim memory) {
+        require(isClaimed[_lottoId], ERROR_36);
+        require(creatorClaimed[_lottoId] == false, ERROR_37);
+
+        creatorClaimed[_lottoId] = true;
+        return Claim({winner: creator[_lottoId], winning: creatorShares[_lottoId]});
     }
 
     // ============================ VIRTUAL METHODS, NEEDS OVERRIDING ============================

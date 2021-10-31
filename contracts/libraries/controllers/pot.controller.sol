@@ -21,8 +21,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
     mapping(uint256 => uint256) private potAmount;    
     mapping(uint256 => uint256[]) private winningNumbers;
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
-    mapping(uint256 => address[]) private winners;
-    mapping(uint256 => mapping(address => bool)) private isWinner;
+    mapping(uint256 => address[]) private winners;    
     mapping(uint256 => uint256) private winningsPerWinner;
     mapping(uint256 => mapping(address => bool)) private winningClaimed;
 
@@ -189,9 +188,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         return
             Claim({
                 winner: _claimer,
-                creator: creator[_potId],
-                winning: winningsPerWinner[_potId],
-                creatorShares: creatorShares[_potId]
+                winning: winningsPerWinner[_potId]
             });
     }
 

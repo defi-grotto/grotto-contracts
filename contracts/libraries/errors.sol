@@ -36,3 +36,5 @@ string constant ERROR_32 = "ID Supplied is not a lotto id";
 string constant ERROR_33 = "Not more than 10 winning numbers per pot";
 string constant ERROR_34 = "Creator returns zero";
 string constant ERROR_35 = "Owner shares returns zero";
+string constant ERROR_36 = "Creator can't claim until at least one winner claimed";
+string constant ERROR_37 = "Creator already claimed";

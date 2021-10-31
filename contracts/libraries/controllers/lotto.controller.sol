@@ -10,12 +10,10 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract LottoController is
-    BaseController,
-    AccessControlUpgradeable
-{
+contract LottoController is BaseController, AccessControlUpgradeable {
     using SafeMath for uint256;
 
+    // ============================ INITIALIZER ============================
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
@@ -25,8 +23,12 @@ contract LottoController is
         maxWinners = 10;
     }
 
-
-    function grantLottoCreator(address account) public override onlyRole(ADMIN) {
+    // ============================ GRANTS ============================
+    function grantLottoCreator(address account)
+        public
+        override
+        onlyRole(ADMIN)
+    {
         grantRole(LOTTO_CREATOR, account);
     }
 
@@ -38,7 +40,7 @@ contract LottoController is
         grantRole(ADMIN, account);
     }
 
-
+    // ============================ EXTERNAL METHODS ============================
     function addNewLotto(Lotto memory _lotto)
         external
         override
@@ -60,27 +62,10 @@ contract LottoController is
         return true;
     }
 
-
+    // ============================ EXTERNAL VIEW METHODS ============================
     function isLottoId(uint256 _lottoId) external view override returns (bool) {
         return isPot[_lottoId] == false;
     }
-
-    function claimWinning(uint256 _lottoId, address _claimer)
-        external
-        override
-        returns (Claim memory)
-    {
-        require(isFinished[_lottoId], ERROR_22);
-        require(!isClaimed[_lottoId], ERROR_23);
-        isClaimed[_lottoId] = true;
-        return
-            Claim({
-                winner: winner[_lottoId],
-                creator: creator[_lottoId],
-                winning: winning[_lottoId],
-                creatorShares: creatorShares[_lottoId]
-            });
-    }    
 
     function getLottoById(uint256 _lottoId)
         external
@@ -107,6 +92,19 @@ contract LottoController is
             });
     }
 
+    // ============================ EXTERNAL METHODS ============================
+    function claimWinning(uint256 _lottoId, address _claimer)
+        external
+        override
+        returns (Claim memory)
+    {
+        require(isFinished[_lottoId], ERROR_22);
+        require(!isClaimed[_lottoId], ERROR_23);
+        require(isWinner[_lottoId][_claimer], ERROR_27);
+        isClaimed[_lottoId] = true;
+        return Claim({winner: winner[_lottoId], winning: winning[_lottoId]});
+    }
+
     function playLotto(
         uint256 _lottoId,
         uint256 _betPlaced,
@@ -125,6 +123,17 @@ contract LottoController is
         return true;
     }
 
+    function forceEnd(uint256 _lottoId)
+        external
+        override
+        onlyRole(ADMIN)
+        returns (bool)
+    {
+        endTime[_lottoId] = block.timestamp;
+        return true;
+    }
+
+    // ============================ PRIVATE METHODS ============================
     function findLottoWinner(uint256 _lottoId) private {
         uint256 current = block.timestamp;
 
@@ -137,56 +146,52 @@ contract LottoController is
                     (winningType[_lottoId] == WinningType.TIME_BASED &&
                         endTime[_lottoId] <= current)
                 ) {
-                    _findLottoWinner(_lottoId);
+                    uint256 totalStaked = stakes[_lottoId];
+
+                    // take platform's share
+                    uint256 _platformShare = totalStaked
+                        .mul(platformSharePercentage)
+                        .div(100);
+                    uint256 _creatorShares = totalStaked
+                        .mul(creatorSharesPercentage)
+                        .div(100);
+
+                    totalStaked = totalStaked.sub(_platformShare).sub(
+                        _creatorShares
+                    );
+
+                    bytes32 randBase = keccak256(abi.encode(players[0]));
+                    randBase = keccak256(
+                        abi.encode(
+                            randBase,
+                            players[players[_lottoId].length.div(2)]
+                        )
+                    );
+                    randBase = keccak256(
+                        abi.encode(
+                            randBase,
+                            players[players[_lottoId].length.sub(1)]
+                        )
+                    );
+
+                    uint256 winnerIndex = uint256(
+                        keccak256(abi.encode(totalStaked, randBase))
+                    ) % (players[_lottoId].length);
+
+                    address lottoWinner = players[_lottoId][winnerIndex];
+                    winner[_lottoId] = lottoWinner;
+                    winning[_lottoId] = totalStaked;
+                    isFinished[_lottoId] = true;
+
+                    isWinner[_lottoId][lottoWinner] = true;
+
+                    platformShare = platformShare.add(_platformShare);
+                    platformShares[_lottoId] = _platformShare;
+                    creatorShares[_lottoId] = _creatorShares;
+
+                    // TODO: Reward both winner and creator with grotto tokens
                 }
             }
         }
-    }
-
-    function _findLottoWinner(uint256 _lottoId) private {
-        uint256 totalStaked = stakes[_lottoId];
-
-        // take platform's share
-        uint256 _platformShare = totalStaked.mul(platformSharePercentage).div(
-            100
-        );
-        uint256 _creatorShares = totalStaked.mul(creatorSharesPercentage).div(
-            100
-        );
-
-        totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
-
-        bytes32 randBase = keccak256(abi.encode(players[0]));
-        randBase = keccak256(
-            abi.encode(randBase, players[players[_lottoId].length.div(2)])
-        );
-        randBase = keccak256(
-            abi.encode(randBase, players[players[_lottoId].length.sub(1)])
-        );
-
-        uint256 winnerIndex = uint256(
-            keccak256(abi.encode(totalStaked, randBase))
-        ) % (players[_lottoId].length);
-
-        address lottoWinner = players[_lottoId][winnerIndex];
-        winner[_lottoId] = lottoWinner;
-        winning[_lottoId] = totalStaked;
-        isFinished[_lottoId] = true;
-
-        platformShare = platformShare.add(_platformShare);
-        platformShares[_lottoId] = _platformShare;
-        creatorShares[_lottoId] = _creatorShares;
-
-        // TODO: Reward both winner and creator with grotto tokens
-    }
-
-    function forceEnd(uint256 _lottoId)
-        external
-        override
-        onlyRole(ADMIN)
-        returns (bool)
-    {
-        endTime[_lottoId] = block.timestamp;
-        return true;
     }
 }

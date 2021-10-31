@@ -9,40 +9,41 @@ import "./libraries/grotto.interface.sol";
 import "./libraries/errors.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-
-
 contract Grotto is GrottoInterface, Initializable {
     // ============================ VARIABLES ============================
     address private lottoControllerAddress;
     address private potControllerAddress;
 
-    ControllerInterface private lottoController;    
-    ControllerInterface private potController;    
+    ControllerInterface private lottoController;
+    ControllerInterface private potController;
 
     address owner;
 
     // ============================ INITIALIZER ============================
-    function initialize(address _lottoControllerAddress, address _potControllerAddress) public initializer {
+    function initialize(
+        address _lottoControllerAddress,
+        address _potControllerAddress
+    ) public initializer {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
         lottoController = ControllerInterface(lottoControllerAddress);
 
         potControllerAddress = _potControllerAddress;
-        potController = ControllerInterface(potControllerAddress);        
+        potController = ControllerInterface(potControllerAddress);
     }
 
     // ============================ EXTERNAL METHODS ============================
     function createLotto(Lotto memory _lotto) external payable {
-        _lotto.betAmount = msg.value;   
+        _lotto.betAmount = msg.value;
         _lotto.stakes = msg.value;
-        _lotto.creator = msg.sender;             
+        _lotto.creator = msg.sender;
         bool _result = lottoController.addNewLotto(_lotto);
         require(_result, ERROR_9);
         emit LottoCreated(_lotto);
     }
 
     function createPot(Pot memory _pot) external payable {
-        _pot.lotto.creator = msg.sender;     
+        _pot.lotto.creator = msg.sender;
         _pot.potAmount = msg.value;
         _pot.lotto.stakes = msg.value;
         bool _result = potController.addNewPot(_pot);
@@ -51,44 +52,65 @@ contract Grotto is GrottoInterface, Initializable {
     }
 
     function playLotto(uint256 _lottoId) external payable {
-        bool _result = lottoController.playLotto(_lottoId, msg.value, msg.sender);
+        bool _result = lottoController.playLotto(
+            _lottoId,
+            msg.value,
+            msg.sender
+        );
         require(_result, ERROR_20);
         emit BetPlaced(_lottoId, msg.value, msg.sender);
-    }     
+    }
 
-    function playPot(uint256 _potId, uint256[] memory _guesses) external payable {
-        bool _result = potController.playPot(_potId, msg.value, msg.sender, _guesses);
+    function playPot(uint256 _potId, uint256[] memory _guesses)
+        external
+        payable
+    {
+        bool _result = potController.playPot(
+            _potId,
+            msg.value,
+            msg.sender,
+            _guesses
+        );
         require(_result, ERROR_24);
-        emit BetPlaced(_potId, msg.value, msg.sender);        
-    }    
+        emit BetPlaced(_potId, msg.value, msg.sender);
+    }
 
-    function claim(uint256 _lottoId) external payable {        
+    function claimCreator(uint256 _lottoId) external payable {
+        ControllerInterface _controller = _getController(_lottoId);
+        Claim memory _claim = _controller.creatorClaim(_lottoId);
+
+        require(_claim.winner != address(0), ERROR_34);
+        require(_claim.winning != 0, ERROR_35);
+
+        payable(_claim.winner).transfer(_claim.winning);
+        
+        emit CreatorClaimed(_lottoId);
+    }
+
+    function claim(uint256 _lottoId) external payable {
         ControllerInterface _controller = _getController(_lottoId);
         Claim memory _claim = _controller.claimWinning(_lottoId, msg.sender);
 
-        require(_claim.creator != address(0), ERROR_34);
-        require(_claim.creatorShares != 0, ERROR_35);                
-
         // it's possible that there's no winner for pots
-        if(_claim.winner != address(0) && _claim.winning > 0) {
+        if (_claim.winner != address(0) && _claim.winning > 0) {
             payable(_claim.winner).transfer(_claim.winning);
-        }   
-
-        if(msg.sender == _claim.creator) {
-            payable(_claim.creator).transfer(_claim.creatorShares);
         }
-        
+
         emit Claimed(_lottoId);
     }
 
     function forceEnd(uint256 _lottoId) external {
         require(msg.sender == owner, ERROR_30);
         ControllerInterface _controller = _getController(_lottoId);
-        require(_controller.forceEnd(_lottoId), ERROR_29);    
-    }    
+        require(_controller.forceEnd(_lottoId), ERROR_29);
+    }
 
     // ============================ EXTERNAL VIEW METHODS ============================
-    function getLottoById(uint256 _lottoId) external view returns (Lotto memory) {
+    function getLottoById(uint256 _lottoId)
+        external
+        view
+        returns (Lotto memory)
+    {
         return lottoController.getLottoById(_lottoId);
     }
 
@@ -101,16 +123,25 @@ contract Grotto is GrottoInterface, Initializable {
         return controller.getTotalStaked(_lottoId);
     }
 
-
     // ============================ PRIVATE VIEW METHODS ============================
-    function _getController(uint256 _lottoId) private view returns (ControllerInterface) {
+    function _getController(uint256 _lottoId)
+        private
+        view
+        returns (ControllerInterface)
+    {
         ControllerInterface _controller;
-        if(address(lottoController) != address(0) && lottoController.isLottoId(_lottoId)) {
+        if (
+            address(lottoController) != address(0) &&
+            lottoController.isLottoId(_lottoId)
+        ) {
             _controller = lottoController;
-        } else if(address(potController) != address(0) && potController.isPotId(_lottoId)) {
+        } else if (
+            address(potController) != address(0) &&
+            potController.isPotId(_lottoId)
+        ) {
             _controller = potController;
         }
 
-        return _controller;           
+        return _controller;
     }
 }

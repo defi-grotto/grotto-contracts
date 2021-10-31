@@ -97,6 +97,7 @@ abstract contract BaseController is ControllerInterface {
         _;
     }
 
+    // ============================ METHODS ============================
     function getTotalStaked(uint256 _lottoId) external view override returns (uint256) {
         return stakes[_lottoId];
     }

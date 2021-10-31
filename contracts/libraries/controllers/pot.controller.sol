@@ -16,10 +16,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract PotController is BaseController, AccessControlUpgradeable {
     using SafeMath for uint256;
 
-    // Pot Data Structure
+    // ============================ VARIABLES ============================
     // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
-    mapping(uint256 => uint256) private potAmount;
-    // The numbers the players must guess
+    mapping(uint256 => uint256) private potAmount;    
     mapping(uint256 => uint256[]) private winningNumbers;
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
     mapping(uint256 => address[]) private winners;
@@ -34,6 +33,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
     */
     mapping(uint256 => PotGuessType) private potGuessType;
 
+    // ============================ INITIALIZER ============================
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
@@ -43,22 +43,24 @@ contract PotController is BaseController, AccessControlUpgradeable {
         maxWinners = 10;
     }
 
-    function grantLottoCreator(address account)
+    // ============================ GRANTS ============================
+    function grantLottoCreator(address _account)
         public
         override
         onlyRole(ADMIN)
     {
-        grantRole(LOTTO_CREATOR, account);
+        grantRole(LOTTO_CREATOR, _account);
     }
 
-    function grantLottoPlayer(address account) public override onlyRole(ADMIN) {
-        grantRole(LOTTO_PLAYER, account);
+    function grantLottoPlayer(address _account) public override onlyRole(ADMIN) {
+        grantRole(LOTTO_PLAYER, _account);
     }
 
-    function grantAdmin(address account) public override onlyRole(ADMIN) {
-        grantRole(ADMIN, account);
+    function grantAdmin(address _account) public override onlyRole(ADMIN) {
+        grantRole(ADMIN, _account);
     }
 
+    // ============================ MODIFIERS ============================
     modifier is_valid_pot(Pot memory _pot) {
         require(creator[_pot.lotto.id] != _pot.lotto.creator, ERROR_4);
         require(_pot.potAmount > 0, ERROR_11);
@@ -67,6 +69,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         _;
     }
 
+    // ============================ EXTERNAL METHODS ============================
     function addNewPot(Pot memory _pot)
         external
         override
@@ -95,49 +98,6 @@ contract PotController is BaseController, AccessControlUpgradeable {
         return true;
     }
 
-    function isPotId(uint256 _potId) external view override returns (bool) {
-        return isPot[_potId];
-    }
-
-    function getPotById(uint256 _potId)
-        external
-        view
-        override
-        returns (Pot memory)
-    {
-        require(isPot[_potId], ERROR_31);
-        Lotto memory lotto = Lotto({
-            id: lottoId[_potId],
-            creator: creator[_potId],
-            creatorShares: creatorShares[_potId],
-            startTime: startTime[_potId],
-            endTime: endTime[_potId],
-            maxNumberOfPlayers: 0,
-            betAmount: betAmount[_potId],
-            winningType: winningType[_potId],
-            isFinished: isFinished[_potId],
-            stakes: stakes[_potId],
-            players: players[_potId],
-            winner: winner[_potId],
-            winning: winning[_potId]
-        });
-
-        Pot memory pot = Pot({
-            lotto: lotto,
-            potAmount: potAmount[_potId],
-            winningNumbers: winningNumbers[_potId],
-            potGuessType: potGuessType[_potId],
-            winners: winners[_potId],
-            winningsPerWinner: winningsPerWinner[_potId]
-        });
-
-        return pot;
-    }
-
-    function getPotWinning(uint256 _potId) external view returns (uint256) {
-        return winningsPerWinner[_potId];
-    }
-
     function playPot(
         uint256 _potId,
         uint256 _betPlaced,
@@ -162,25 +122,25 @@ contract PotController is BaseController, AccessControlUpgradeable {
         address _player,
         uint256[] memory _guesses
     ) private {
-        bool won = true;
+        bool _won = true;
         if (potGuessType[_potId] == PotGuessType.NUMBERS) {
             // just check that all guesses exists in winning numbers
             for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
                 if (winningNumbersMap[_potId][_guesses[i]] == false) {
-                    won = false;
+                    _won = false;
                     break;
                 }
             }
         } else if (potGuessType[_potId] == PotGuessType.ORDER) {
             for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
                 if (_guesses[i] != winningNumbers[_potId][i]) {
-                    won = false;
+                    _won = false;
                     break;
                 }
             }
         }
 
-        if (won) {
+        if (_won) {
             winners[_potId].push(_player);
             isWinner[_potId][_player] = true;
         }
@@ -199,22 +159,22 @@ contract PotController is BaseController, AccessControlUpgradeable {
 
         if (isClaimed[_potId] == false) {
             // no one has claimed, calculate winners claims
-            uint256 totalStaked = stakes[_potId];
+            uint256 _totalStaked = stakes[_potId];
             // take platform's share
-            uint256 _platformShare = totalStaked
+            uint256 _platformShare = _totalStaked
                 .mul(platformSharePercentage)
                 .div(100);
 
             uint256 _totalWinners = winners[_potId].length;
-            uint256 _creatorShare = totalStaked
+            uint256 _creatorShare = _totalStaked
                 .mul(creatorSharesPercentage)
                 .div(100);
 
             if (_totalWinners <= 0) {
-                _creatorShare = totalStaked.sub(_platformShare);
+                _creatorShare = _totalStaked.sub(_platformShare);
             } else {
                 winningsPerWinner[_potId] = (
-                    totalStaked.sub(_platformShare).sub(_creatorShare)
+                    _totalStaked.sub(_platformShare).sub(_creatorShare)
                 ).div(_totalWinners);
             }
 
@@ -243,5 +203,49 @@ contract PotController is BaseController, AccessControlUpgradeable {
     {
         endTime[_lottoId] = block.timestamp;
         return true;
+    }    
+
+    // ============================ EXTERNAL VIEW METHODS ============================
+    function isPotId(uint256 _potId) external view override returns (bool) {
+        return isPot[_potId];
+    }
+
+    function getPotById(uint256 _potId)
+        external
+        view
+        override
+        returns (Pot memory)
+    {
+        require(isPot[_potId], ERROR_31);
+        Lotto memory _lotto = Lotto({
+            id: lottoId[_potId],
+            creator: creator[_potId],
+            creatorShares: creatorShares[_potId],
+            startTime: startTime[_potId],
+            endTime: endTime[_potId],
+            maxNumberOfPlayers: 0,
+            betAmount: betAmount[_potId],
+            winningType: winningType[_potId],
+            isFinished: isFinished[_potId],
+            stakes: stakes[_potId],
+            players: players[_potId],
+            winner: winner[_potId],
+            winning: winning[_potId]
+        });
+
+        Pot memory _pot = Pot({
+            lotto: _lotto,
+            potAmount: potAmount[_potId],
+            winningNumbers: winningNumbers[_potId],
+            potGuessType: potGuessType[_potId],
+            winners: winners[_potId],
+            winningsPerWinner: winningsPerWinner[_potId]
+        });
+
+        return _pot;
+    }
+
+    function getPotWinning(uint256 _potId) external view returns (uint256) {
+        return winningsPerWinner[_potId];
     }
 }

@@ -25,6 +25,7 @@ contract LottoController is
         maxWinners = 10;
     }
 
+
     function grantLottoCreator(address account) public override onlyRole(ADMIN) {
         grantRole(LOTTO_CREATOR, account);
     }

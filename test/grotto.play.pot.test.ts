@@ -3,16 +3,11 @@ import { ethers, waffle, upgrades } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import {
-  Lotto,
-  Pot,
-  PotGuessType,
-  WinningType,
-} from "./models";
+import { Lotto, Pot, PotGuessType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -45,17 +40,14 @@ describe("Grotto: Play Pot Tests", () => {
       potGuessType: PotGuessType.ORDER,
       winningNumbers: [3, 6, 9, 3],
       winners: [],
-      winningsPerWinner: 0      
+      winningsPerWinner: 0,
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
     const PotController = await ethers.getContractFactory("PotController");
     const controller = await upgrades.deployProxy(PotController);
 
-    grotto = await upgrades.deployProxy(Grotto, [      
-      address0,
-      controller.address,
-    ]);    
+    grotto = await upgrades.deployProxy(Grotto, [address0, controller.address]);
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -97,9 +89,10 @@ describe("Grotto: Play Pot Tests", () => {
 
       const guesses = [3, 6, 9, 1];
       const player1 = await grotto.connect(accounts[2]);
-      await expect(
-        player1.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player1.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -174,16 +167,24 @@ describe("Grotto: Play Pot Tests", () => {
       // Numbers matched but not order
       let guesses = [3, 6, 3, 9];
       const player2 = await grotto.connect(accounts[3]);
-      await expect(
-        player2.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player2.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       // Numbers matched but not order, should allow a bet to be placed
       guesses = [3, 6, 3, 9];
       const player3 = await grotto.connect(accounts[4]);
-      await expect(
-        player3.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player3.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
+
+      await grotto.forceEnd(tbPot.lotto.id);
+
+      await expect(player2.claim(tbPot.lotto.id)).to.be.revertedWith(
+        "Claimer is not a winner"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -205,58 +206,71 @@ describe("Grotto: Play Pot Tests", () => {
       // Numbers matched but not order
       let guesses = [3, 6, 3, 9];
       const player3 = await grotto.connect(accounts[4]);
-      await expect(
-        player3.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player3.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       // Numbers matched and is in the correct order
       guesses = [3, 6, 9, 3];
       const player2 = await grotto.connect(accounts[3]);
-      await expect(
-        player2.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player2.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       guesses = [3, 6, 9, 3];
       const player5 = await grotto.connect(accounts[5]);
-      await expect(
-        player5.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");      
+      await expect(player5.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       guesses = [3, 6, 9, 3];
       const player6 = await grotto.connect(accounts[6]);
-      await expect(
-        player6.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");          
-      
+      await expect(player6.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
+
       guesses = [3, 6, 9, 3];
       const player7 = await grotto.connect(accounts[7]);
-      await expect(
-        player7.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");                      
+      await expect(player7.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
-      await grotto.forceEnd(tbPot.lotto.id);      
+      await grotto.forceEnd(tbPot.lotto.id);
+
+      const balanceBefore = await ethers.provider.getBalance(
+        accounts[3].address
+      );
+      await player2.claim(tbPot.lotto.id);
+      const balanceAfter = await ethers.provider.getBalance(
+        accounts[3].address
+      );
 
       let pot: Pot = await grotto.getPotById(tbPot.lotto.id);
 
       expect(pot.lotto.creator).to.equal(accounts[0].address);
 
-      const totalStaked = await grotto.getTotalStaked(pot.lotto.id)
+      const totalStaked = await grotto.getTotalStaked(pot.lotto.id);
       const winners = pot.winners;
 
-      const winnerShare = (totalStaked.mul(70).div(100)).div(winners.length);
+      const winnerShare = totalStaked.mul(70).div(100).div(winners.length);
 
-      const balanceBefore = await ethers.provider.getBalance(accounts[3].address); 
-      await player2.claim(tbPot.lotto.id);      
-      const balanceAfter = await ethers.provider.getBalance(accounts[3].address);
-
-      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
-      expect(+ethers.utils.formatEther(balanceBefore.add(winnerShare))).to.greaterThanOrEqual(+ethers.utils.formatEther(balanceAfter));
+      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
+        +ethers.utils.formatEther(balanceAfter)
+      );
+      expect(
+        +ethers.utils.formatEther(balanceBefore.add(winnerShare))
+      ).to.greaterThanOrEqual(+ethers.utils.formatEther(balanceAfter));
 
       pot = await grotto.getPotById(tbPot.lotto.id);
       const creatorShares = totalStaked.mul(20).div(100);
       expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
         ethers.utils.formatEther(pot.lotto.creatorShares)
-      );      
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -267,16 +281,16 @@ describe("Grotto: Play Pot Tests", () => {
   //   const pot: Pot = await grotto.getPotById(nopPot.lotto.id);
   //   const winner = pot.lotto.winner;
   //   const winnerAccountIndex = accounts.map((account, index) => account.address === winner ? index : -1).filter(index => index >= 0);
-  //   const balanceBefore = await ethers.provider.getBalance(winner);   
-  //   const player1 = await grotto.connect(accounts[winnerAccountIndex[0]]); 
+  //   const balanceBefore = await ethers.provider.getBalance(winner);
+  //   const player1 = await grotto.connect(accounts[winnerAccountIndex[0]]);
   //   await expect(player1.claim(nopLotto.id)).to.emit(grotto, "Claimed");
-  //   const balanceAfter = await ethers.provider.getBalance(winner);    
+  //   const balanceAfter = await ethers.provider.getBalance(winner);
   //   expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
-  // });  
+  // });
 
   // it('should not claim winnings twice', async () => {
   //   await expect(grotto.claim(nopPot.lotto.id)).to.be.revertedWith("Lotto is already claimed");
-  // });  
+  // });
 
   // it('should claim by creator', async () => {
   //   try {
@@ -321,13 +335,13 @@ describe("Grotto: Play Pot Tests", () => {
   //     const creatorShares = totalStaked.mul(20).div(100);
   //     expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
   //       ethers.utils.formatEther(pot.lotto.creatorShares)
-  //     );            
+  //     );
 
-  //     const balanceBefore = await ethers.provider.getBalance(accounts[0].address);       
+  //     const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
   //     await expect(grotto.claim(nopLotto.id)).to.emit(grotto, "Claimed");
-  //     const balanceAfter = await ethers.provider.getBalance(accounts[0].address);    
+  //     const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
   //     expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
-  
+
   //   } catch (error) {
   //     console.log(error);
   //     expect(error).to.equal(undefined);
@@ -352,7 +366,7 @@ describe("Grotto: Play Pot Tests", () => {
   //     await expect(
   //       player3.playPot(nopPot.lotto.id, guesses, overrides)
   //     ).to.emit(grotto, "BetPlaced");
-      
+
   //     // Numbers matched but not order
   //     guesses = [3, 6, 3, 9];
   //     const player2 = await grotto.connect(accounts[3]);
@@ -381,16 +395,16 @@ describe("Grotto: Play Pot Tests", () => {
   //     const creatorShares = totalStaked.mul(90).div(100);
   //     expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
   //       ethers.utils.formatEther(pot.lotto.creatorShares)
-  //     );            
+  //     );
 
-  //     const balanceBefore = await ethers.provider.getBalance(accounts[0].address);       
+  //     const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
   //     await expect(grotto.claim(nopLotto.id)).to.emit(grotto, "Claimed");
-  //     const balanceAfter = await ethers.provider.getBalance(accounts[0].address);    
+  //     const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
   //     expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
-  
+
   //   } catch (error) {
   //     console.log(error);
   //     expect(error).to.equal(undefined);
-  //   }    
+  //   }
   // });
 });

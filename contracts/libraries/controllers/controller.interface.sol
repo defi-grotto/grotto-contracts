@@ -40,5 +40,7 @@ interface ControllerInterface {
 
     function creatorClaim(uint256 lottoId) external returns (Claim memory);
 
+    function platformClaim(uint256 lottoId) external returns (Claim memory);
+
     function getTotalStaked(uint256 lottoId) external view returns (uint256);
 }

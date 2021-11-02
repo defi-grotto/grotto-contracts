@@ -87,6 +87,17 @@ contract Grotto is GrottoInterface, Initializable {
         emit CreatorClaimed(_lottoId);
     }
 
+    function claimPlatform(uint256 _lottoId) external payable {
+        ControllerInterface _controller = _getController(_lottoId);
+        Claim memory _claim = _controller.platformClaim(_lottoId);
+
+        require(_claim.winning != 0, ERROR_35);
+
+        payable(owner).transfer(_claim.winning);
+        
+        emit CreatorClaimed(_lottoId);
+    }    
+
     function claim(uint256 _lottoId) external payable {
         ControllerInterface _controller = _getController(_lottoId);
         Claim memory _claim = _controller.claimWinning(_lottoId, msg.sender);

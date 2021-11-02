@@ -133,6 +133,20 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         return true;
     }
 
+    function platformClaim(uint256 _lottoId)
+        external
+        override
+        returns (Claim memory)
+    {
+        require(platformClaimed[_lottoId] == false, ERROR_37);
+        require(startTime[_lottoId] <= block.timestamp, ERROR_14);
+        require(endTime[_lottoId] <= block.timestamp, ERROR_22);
+        
+        platformClaimed[_lottoId] = true;
+        return Claim({winner: address(0), winning: platformShares[_lottoId]});        
+    }
+    
+
     function creatorClaim(uint256 _lottoId)
         external
         virtual

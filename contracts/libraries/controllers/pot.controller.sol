@@ -203,6 +203,19 @@ contract PotController is BaseController, AccessControlUpgradeable {
         return true;
     }
 
+    function platformClaim(uint256 _potId)
+        external
+        override
+        returns (Claim memory)
+    {
+        require(platformClaimed[_potId] == false, ERROR_37);
+        require(startTime[_potId] <= block.timestamp, ERROR_14);
+        require(endTime[_potId] <= block.timestamp, ERROR_22);
+        
+        platformClaimed[_potId] = true;
+        return Claim({winner: address(0), winning: platformShares[_potId]});        
+    }
+    
     function creatorClaim(uint256 _potId)
         external
         override

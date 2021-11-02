@@ -7,7 +7,7 @@ import { Lotto, Pot, PotGuessType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -302,6 +302,23 @@ describe("Grotto: Play Pot Tests", () => {
       expect(error).to.equal(undefined);
     }
   });
+
+  it("should claim by platform", async () => {
+    try {
+      await playToWin();
+      await expect(grotto.claimPlatform(tbPot.lotto.id)).to.be.revertedWith(
+        "Owner shares returns zero"
+      );
+      await validateWinners();
+      const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
+      await grotto.claimPlatform(tbPot.lotto.id);            
+      const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
+      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  });  
 
   it('should send everything to creator if no winner found', async () => {
     try {

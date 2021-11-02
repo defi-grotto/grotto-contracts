@@ -44,6 +44,7 @@ abstract contract BaseController is ControllerInterface {
     mapping(uint256 => bool) internal isFinished;
     mapping(uint256 => bool) internal isClaimed;
     mapping(uint256 => bool) internal creatorClaimed;
+    mapping(uint256 => bool) internal platformClaimed;
     // all the money staked on the lotto/pot so far
     mapping(uint256 => uint256) internal stakes;
     // all the players in the lotto/pot

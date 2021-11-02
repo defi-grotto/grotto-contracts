@@ -100,16 +100,13 @@ abstract contract BaseController is ControllerInterface {
     }
 
     // ============================ EXTERNAL VIEW METHODS ============================
-    function getTotalStaked(uint256 _lottoId) external view override returns (uint256) {
+    function getTotalStaked(uint256 _lottoId)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return stakes[_lottoId];
-    }
-
-    function creatorClaim(uint256 _lottoId) external override returns (Claim memory) {
-        require(isClaimed[_lottoId], ERROR_36);
-        require(creatorClaimed[_lottoId] == false, ERROR_37);
-
-        creatorClaimed[_lottoId] = true;
-        return Claim({winner: creator[_lottoId], winning: creatorShares[_lottoId]});
     }
 
     // ============================ VIRTUAL METHODS, NEEDS OVERRIDING ============================
@@ -118,6 +115,13 @@ abstract contract BaseController is ControllerInterface {
         virtual
         override
         returns (bool)
+    {}
+
+    function creatorClaim(uint256 _lottoId)
+        external
+        virtual
+        override
+        returns (Claim memory)
     {}
 
     function getLottoById(uint256)

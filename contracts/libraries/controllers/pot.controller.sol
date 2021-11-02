@@ -154,7 +154,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         require(endTime[_potId] <= block.timestamp, ERROR_22);
 
         require(isWinner[_potId][_claimer], ERROR_27);
-        require(winningClaimed[_potId][_claimer] == false, ERROR_26);
+        require(winningClaimed[_potId][_claimer] == false, ERROR_26);        
 
         if (isClaimed[_potId] == false) {
             // no one has claimed, calculate winners claims
@@ -201,6 +201,16 @@ contract PotController is BaseController, AccessControlUpgradeable {
         endTime[_lottoId] = block.timestamp;
         return true;
     }    
+
+    function creatorClaim(uint256 _potId) override external returns (Claim memory) {
+        if(winners[_potId].length > 0) {   
+            require(isClaimed[_potId], ERROR_36);
+            require(creatorClaimed[_potId] == false, ERROR_37);
+        }
+
+        creatorClaimed[_potId] = true;
+        return Claim({winner: creator[_potId], winning: creatorShares[_potId]});
+    }
 
     // ============================ EXTERNAL VIEW METHODS ============================
     function isPotId(uint256 _potId) external view override returns (bool) {

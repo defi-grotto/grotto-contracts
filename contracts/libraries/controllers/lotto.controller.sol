@@ -133,6 +133,19 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         return true;
     }
 
+    function creatorClaim(uint256 _lottoId)
+        external
+        virtual
+        override
+        returns (Claim memory)
+    {
+        require(creatorClaimed[_lottoId] == false, ERROR_37);
+        require(startTime[_lottoId] <= block.timestamp, ERROR_14);
+        require(endTime[_lottoId] <= block.timestamp, ERROR_22);
+        creatorClaimed[_lottoId] = true;
+        return Claim({winner: creator[_lottoId], winning: creatorShares[_lottoId]});        
+    }
+
     // ============================ PRIVATE METHODS ============================
     function findLottoWinner(uint256 _lottoId) private {
         uint256 current = block.timestamp;

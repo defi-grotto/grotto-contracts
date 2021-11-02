@@ -116,13 +116,6 @@ abstract contract BaseController is ControllerInterface {
         returns (bool)
     {}
 
-    function creatorClaim(uint256 _lottoId)
-        external
-        virtual
-        override
-        returns (Claim memory)
-    {}
-
     function getLottoById(uint256)
         external
         view

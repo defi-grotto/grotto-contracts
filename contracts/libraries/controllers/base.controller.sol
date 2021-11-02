@@ -10,7 +10,6 @@ abstract contract BaseController is ControllerInterface {
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
     address internal platformOwner;
-    uint256 internal platformShare;
     mapping(uint256 => uint256) internal platformShares;
     mapping(uint256 => uint256) internal creatorShares;
 

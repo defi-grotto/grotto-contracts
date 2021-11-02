@@ -18,10 +18,10 @@ contract PotController is BaseController, AccessControlUpgradeable {
 
     // ============================ VARIABLES ============================
     // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
-    mapping(uint256 => uint256) private potAmount;    
+    mapping(uint256 => uint256) private potAmount;
     mapping(uint256 => uint256[]) private winningNumbers;
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
-    mapping(uint256 => address[]) private winners;    
+    mapping(uint256 => address[]) private winners;
     mapping(uint256 => uint256) private winningsPerWinner;
     mapping(uint256 => mapping(address => bool)) private winningClaimed;
 
@@ -51,7 +51,11 @@ contract PotController is BaseController, AccessControlUpgradeable {
         grantRole(LOTTO_CREATOR, _account);
     }
 
-    function grantLottoPlayer(address _account) public override onlyRole(ADMIN) {
+    function grantLottoPlayer(address _account)
+        public
+        override
+        onlyRole(ADMIN)
+    {
         grantRole(LOTTO_PLAYER, _account);
     }
 
@@ -154,7 +158,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         require(endTime[_potId] <= block.timestamp, ERROR_22);
 
         require(isWinner[_potId][_claimer], ERROR_27);
-        require(winningClaimed[_potId][_claimer] == false, ERROR_26);        
+        require(winningClaimed[_potId][_claimer] == false, ERROR_26);
 
         if (isClaimed[_potId] == false) {
             // no one has claimed, calculate winners claims
@@ -178,18 +182,15 @@ contract PotController is BaseController, AccessControlUpgradeable {
             }
 
             creatorShares[_potId] = _creatorShare;
+            platformShares[_potId] = _platformShare;      
 
             isClaimed[_potId] = true;
         }
 
         winningClaimed[_potId][_claimer] = true;
         isFinished[_potId] = true;
-        
-        return
-            Claim({
-                winner: _claimer,
-                winning: winningsPerWinner[_potId]
-            });
+
+        return Claim({winner: _claimer, winning: winningsPerWinner[_potId]});
     }
 
     function forceEnd(uint256 _lottoId)
@@ -200,12 +201,33 @@ contract PotController is BaseController, AccessControlUpgradeable {
     {
         endTime[_lottoId] = block.timestamp;
         return true;
-    }    
+    }
 
-    function creatorClaim(uint256 _potId) override external returns (Claim memory) {
-        if(winners[_potId].length > 0) {   
-            require(isClaimed[_potId], ERROR_36);
-            require(creatorClaimed[_potId] == false, ERROR_37);
+    function creatorClaim(uint256 _potId)
+        external
+        override
+        returns (Claim memory)
+    {
+        require(creatorClaimed[_potId] == false, ERROR_37);
+        require(startTime[_potId] <= block.timestamp, ERROR_14);
+        require(endTime[_potId] <= block.timestamp, ERROR_22);
+
+        if (winners[_potId].length > 0) {
+            require(isClaimed[_potId], ERROR_36);            
+        } else {
+            uint256 _totalStaked = stakes[_potId];
+            uint256 _platformShare = _totalStaked
+                .mul(platformSharePercentage)
+                .div(100);
+
+            uint256 _creatorShare = _totalStaked
+                .mul(creatorSharesPercentage)
+                .div(100);
+
+            _creatorShare = _totalStaked.sub(_platformShare); 
+
+            creatorShares[_potId] = _creatorShare;     
+            platformShares[_potId] = _platformShare;      
         }
 
         creatorClaimed[_potId] = true;

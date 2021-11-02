@@ -185,7 +185,6 @@ contract LottoController is BaseController, AccessControlUpgradeable {
 
                     isWinner[_lottoId][lottoWinner] = true;
 
-                    platformShare = platformShare.add(_platformShare);
                     platformShares[_lottoId] = _platformShare;
                     creatorShares[_lottoId] = _creatorShares;
 

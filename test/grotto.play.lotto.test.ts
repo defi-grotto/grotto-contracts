@@ -271,6 +271,12 @@ describe("Grotto: Play Lotto Tests", () => {
       await expect(grotto.claimCreator(nopLotto.id)).to.emit(grotto, "CreatorClaimed");            
       const balanceAfter = await ethers.provider.getBalance(accounts[0].address);    
       expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
+
+      // claim by platform too
+      const balanceBeforeP = await ethers.provider.getBalance(accounts[0].address);   
+      await expect(grotto.claimPlatform(nopLotto.id)).to.emit(grotto, "PlatformClaimed");            
+      const balanceAfterP = await ethers.provider.getBalance(accounts[0].address);    
+      expect(+ethers.utils.formatEther(balanceBeforeP)).to.be.lessThan(+ethers.utils.formatEther(balanceAfterP));      
     } catch (error) {
       console.log("Errored: ", error);
       expect(error).to.equal(undefined);

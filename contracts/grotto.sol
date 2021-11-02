@@ -95,7 +95,7 @@ contract Grotto is GrottoInterface, Initializable {
 
         payable(owner).transfer(_claim.winning);
         
-        emit CreatorClaimed(_lottoId);
+        emit PlatformClaimed(_lottoId);
     }    
 
     function claim(uint256 _lottoId) external payable {

@@ -2,19 +2,19 @@
   "manifestVersion": "3.2",
   "admin": {
     "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "txHash": "0xe5910ebbd405ec5911a184ccbe53d58a0c5545213b763f5e42b187137573d25a",
+    "txHash": "0x3d147d475b90f8b2d9e195e9d51744700716b7f5326e07ab5c6e6236d3b1c002",
     "deployTransaction": {
-      "hash": "0xe5910ebbd405ec5911a184ccbe53d58a0c5545213b763f5e42b187137573d25a",
+      "hash": "0x3d147d475b90f8b2d9e195e9d51744700716b7f5326e07ab5c6e6236d3b1c002",
       "type": 2,
       "accessList": [],
-      "blockHash": "0x1043aef953c66a069dfbe3f53c65223c98ea4698c715eb2bd28bd3622466d693",
+      "blockHash": "0x5dc0bad2b01eab4771dfa7065c99a618e3b16f4dc93e537bba6593f47ae36519",
       "blockNumber": 2,
       "transactionIndex": 0,
       "confirmations": 1,
       "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "gasPrice": {
         "type": "BigNumber",
-        "hex": "0x6a9b87bb"
+        "hex": "0x6a75f8fc"
       },
       "maxPriorityFeePerGas": {
         "type": "BigNumber",
@@ -22,7 +22,7 @@
       },
       "maxFeePerGas": {
         "type": "BigNumber",
-        "hex": "0x999c4576"
+        "hex": "0x995127f8"
       },
       "gasLimit": {
         "type": "BigNumber",
@@ -35,8 +35,8 @@
       },
       "nonce": 1,
       "data": "0x608060405234801561001057600080fd5b50600080546001600160a01b031916339081178255604051909182917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a350610759806100616000396000f3fe60806040526004361061007b5760003560e01c80639623609d1161004e5780639623609d1461011157806399a88ec414610124578063f2fde38b14610144578063f3b7dead146101645761007b565b8063204e1c7a14610080578063715018a6146100bc5780637eff275e146100d35780638da5cb5b146100f3575b600080fd5b34801561008c57600080fd5b506100a061009b366004610515565b610184565b6040516001600160a01b03909116815260200160405180910390f35b3480156100c857600080fd5b506100d1610215565b005b3480156100df57600080fd5b506100d16100ee366004610554565b610292565b3480156100ff57600080fd5b506000546001600160a01b03166100a0565b6100d161011f36600461058c565b61031c565b34801561013057600080fd5b506100d161013f366004610554565b6103ad565b34801561015057600080fd5b506100d161015f366004610515565b610405565b34801561017057600080fd5b506100a061017f366004610515565b6104ef565b6000806000836001600160a01b03166040516101aa90635c60da1b60e01b815260040190565b600060405180830381855afa9150503d80600081146101e5576040519150601f19603f3d011682016040523d82523d6000602084013e6101ea565b606091505b5091509150816101f957600080fd5b8080602001905181019061020d9190610538565b949350505050565b6000546001600160a01b031633146102485760405162461bcd60e51b815260040161023f906106c0565b60405180910390fd5b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b6000546001600160a01b031633146102bc5760405162461bcd60e51b815260040161023f906106c0565b6040516308f2839760e41b81526001600160a01b038281166004830152831690638f283970906024015b600060405180830381600087803b15801561030057600080fd5b505af1158015610314573d6000803e3d6000fd5b505050505050565b6000546001600160a01b031633146103465760405162461bcd60e51b815260040161023f906106c0565b60405163278f794360e11b81526001600160a01b03841690634f1ef286903490610376908690869060040161065d565b6000604051808303818588803b15801561038f57600080fd5b505af11580156103a3573d6000803e3d6000fd5b5050505050505050565b6000546001600160a01b031633146103d75760405162461bcd60e51b815260040161023f906106c0565b604051631b2ce7f360e11b81526001600160a01b038281166004830152831690633659cfe6906024016102e6565b6000546001600160a01b0316331461042f5760405162461bcd60e51b815260040161023f906106c0565b6001600160a01b0381166104945760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b606482015260840161023f565b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b6000806000836001600160a01b03166040516101aa906303e1469160e61b815260040190565b600060208284031215610526578081fd5b81356105318161070b565b9392505050565b600060208284031215610549578081fd5b81516105318161070b565b60008060408385031215610566578081fd5b82356105718161070b565b915060208301356105818161070b565b809150509250929050565b6000806000606084860312156105a0578081fd5b83356105ab8161070b565b925060208401356105bb8161070b565b9150604084013567ffffffffffffffff808211156105d7578283fd5b818601915086601f8301126105ea578283fd5b8135818111156105fc576105fc6106f5565b604051601f8201601f19908116603f01168101908382118183101715610624576106246106f5565b8160405282815289602084870101111561063c578586fd5b82602086016020830137856020848301015280955050505050509250925092565b600060018060a01b038416825260206040818401528351806040850152825b818110156106985785810183015185820160600152820161067c565b818111156106a95783606083870101525b50601f01601f191692909201606001949350505050565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604082015260600190565b634e487b7160e01b600052604160045260246000fd5b6001600160a01b038116811461072057600080fd5b5056fea2646970667358221220d849f96f3086b9f82cdcf665adb8c697ace05638da1c7c16ab2d26293717af6764736f6c63430008020033",
-      "r": "0x9ff598bab7fc701d019f501c46d2c4a68eca0947f65c0fb0986b1fcb5ebec6d0",
-      "s": "0x72e3bea8c39c587ec46ca7cd226507734483243c61b21a28a186d61b8ea59d55",
+      "r": "0x3b3e2491d242b6beed03553c7e8c4498990cd0fb1fff60ab8b77a412b118aba9",
+      "s": "0x1832a2a92749e839083f9b6819d95a812fc9d97859226bede2649c9ef23b48d5",
       "v": 1,
       "creates": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       "chainId": 31337
@@ -54,50 +54,55 @@
       "kind": "transparent"
     },
     {
-      "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-      "txHash": "0xc3f7a96a25a8646811d453badc278bdb418970af6d61b9c7a7c6534691497998",
-      "kind": "transparent"
-    },
-    {
-      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
-      "txHash": "0x903d650e1c86dff201da8688062c207da0145db3890ea771ee95a8fc60eb3fff",
-      "kind": "transparent"
-    },
-    {
-      "address": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
-      "txHash": "0x5014788e6a5ace4854b5991d8917995ebdca99ba5e31d2a1b726f85e10891c45",
-      "kind": "transparent"
-    },
-    {
-      "address": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
-      "txHash": "0x12858ee174c2db125932e252866fa94c785946694a12c5abacf0fe8ff49e3e30",
-      "kind": "transparent"
-    },
-    {
       "address": "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570",
       "txHash": "0xbe151e95e97155986624c494093554a90feb9932ef3aada3467abe2fa6925194",
       "kind": "transparent"
     },
     {
-      "address": "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
-      "txHash": "0x96e73a3d92eebaf6fe399cd5736e965222a5efc4c6931ac45837e868fbf82375",
-      "kind": "transparent"
-    },
-    {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x900ce99a6b6de856a52ec2e90df8e75e8d88368d8937942c3ce8c4d29862ae3e",
+      "txHash": "0xee46d57e7db82861112efe6095915eff2a7c5b8cd17d5dbb0367b47af0520710",
       "kind": "transparent"
     },
     {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0x7b5d83f2a078559c1c6ec370d87def6232aa1838af4f885cf74183f87d44f5db",
+      "txHash": "0x90e0c484476556b507f17034c2c4663840c9562556afff8f0fb8cb655f7f46bd",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+      "txHash": "0x68729e33d204c6de57386f1f102f2d14a6216f19d7e14a8340facc2775cc3eca",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+      "txHash": "0xe88ca7173a2959b2589d612803d5c795fd8a808003a35ab6de37cbd8d917b73c",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
+      "txHash": "0x3d701267e8ed5876210eb5c2a0236a0dbeaddc6f467f27c18878a3509b4946f6",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+      "txHash": "0x5faa25f9c2fec4f03a013c46e08c0f6d5b2025d8651a4155927bc1529180ab15",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
+      "txHash": "0xd3cbbdbbf9d548cd92e7beb1f40cd2a2c1bba094bb33be38431737fc2fab8bd5",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x4c5859f0F772848b2D91F1D83E2Fe57935348029",
+      "txHash": "0x7c3b2acc0e3b0a2539f6718e09027c76c86314228bc9fdd374601ef85d7b4393",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "ffde965c3daddf885a903ddef3f886b9b6ea69551ea14261eaeea32a3f56121d": {
-      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
-      "txHash": "0xeaeb4567e21e044fd4c2f09fd575a16518644eca27d54351924d3d16c3f33820",
+    "f9e8935009597eed16cb015eb3cfd160c2e99788784320d18996d6bd0ff5bdfc": {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0xe529ef29ec0219bebf6942361fb3354182a1e6cfa13ff5690deadd537d480d44",
       "layout": {
         "storage": [
           {
@@ -181,7 +186,7 @@
           {
             "contract": "BaseController",
             "label": "winningType",
-            "type": "t_mapping(t_uint256,t_enum(WinningType)3889)",
+            "type": "t_mapping(t_uint256,t_enum(WinningType)4057)",
             "src": "contracts/libraries/controllers/base.controller.sol:43"
           },
           {
@@ -204,39 +209,45 @@
           },
           {
             "contract": "BaseController",
+            "label": "platformClaimed",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "src": "contracts/libraries/controllers/base.controller.sol:47"
+          },
+          {
+            "contract": "BaseController",
             "label": "stakes",
             "type": "t_mapping(t_uint256,t_uint256)",
-            "src": "contracts/libraries/controllers/base.controller.sol:48"
+            "src": "contracts/libraries/controllers/base.controller.sol:49"
           },
           {
             "contract": "BaseController",
             "label": "players",
             "type": "t_mapping(t_uint256,t_array(t_address)dyn_storage)",
-            "src": "contracts/libraries/controllers/base.controller.sol:50"
+            "src": "contracts/libraries/controllers/base.controller.sol:51"
           },
           {
             "contract": "BaseController",
             "label": "winner",
             "type": "t_mapping(t_uint256,t_address)",
-            "src": "contracts/libraries/controllers/base.controller.sol:52"
+            "src": "contracts/libraries/controllers/base.controller.sol:53"
           },
           {
             "contract": "BaseController",
             "label": "winning",
             "type": "t_mapping(t_uint256,t_uint256)",
-            "src": "contracts/libraries/controllers/base.controller.sol:54"
+            "src": "contracts/libraries/controllers/base.controller.sol:55"
           },
           {
             "contract": "BaseController",
             "label": "isPot",
             "type": "t_mapping(t_uint256,t_bool)",
-            "src": "contracts/libraries/controllers/base.controller.sol:56"
+            "src": "contracts/libraries/controllers/base.controller.sol:57"
           },
           {
             "contract": "BaseController",
             "label": "isWinner",
             "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
-            "src": "contracts/libraries/controllers/base.controller.sol:57"
+            "src": "contracts/libraries/controllers/base.controller.sol:58"
           },
           {
             "contract": "Initializable",
@@ -273,97 +284,9 @@
             "label": "__gap",
             "type": "t_array(t_uint256)49_storage",
             "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:219"
-          },
-          {
-            "contract": "PotController",
-            "label": "potAmount",
-            "type": "t_mapping(t_uint256,t_uint256)",
-            "src": "contracts/libraries/controllers/pot.controller.sol:21"
-          },
-          {
-            "contract": "PotController",
-            "label": "winningNumbers",
-            "type": "t_mapping(t_uint256,t_array(t_uint256)dyn_storage)",
-            "src": "contracts/libraries/controllers/pot.controller.sol:22"
-          },
-          {
-            "contract": "PotController",
-            "label": "winningNumbersMap",
-            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
-            "src": "contracts/libraries/controllers/pot.controller.sol:23"
-          },
-          {
-            "contract": "PotController",
-            "label": "winners",
-            "type": "t_mapping(t_uint256,t_array(t_address)dyn_storage)",
-            "src": "contracts/libraries/controllers/pot.controller.sol:24"
-          },
-          {
-            "contract": "PotController",
-            "label": "winningsPerWinner",
-            "type": "t_mapping(t_uint256,t_uint256)",
-            "src": "contracts/libraries/controllers/pot.controller.sol:25"
-          },
-          {
-            "contract": "PotController",
-            "label": "winningClaimed",
-            "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
-            "src": "contracts/libraries/controllers/pot.controller.sol:26"
-          },
-          {
-            "contract": "PotController",
-            "label": "potGuessType",
-            "type": "t_mapping(t_uint256,t_enum(PotGuessType)3892)",
-            "src": "contracts/libraries/controllers/pot.controller.sol:33"
           }
         ],
         "types": {
-          "t_mapping(t_uint256,t_uint256)": {
-            "label": "mapping(uint256 => uint256)"
-          },
-          "t_uint256": {
-            "label": "uint256"
-          },
-          "t_mapping(t_uint256,t_array(t_uint256)dyn_storage)": {
-            "label": "mapping(uint256 => uint256[])"
-          },
-          "t_array(t_uint256)dyn_storage": {
-            "label": "uint256[]"
-          },
-          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
-            "label": "mapping(uint256 => mapping(uint256 => bool))"
-          },
-          "t_mapping(t_uint256,t_bool)": {
-            "label": "mapping(uint256 => bool)"
-          },
-          "t_bool": {
-            "label": "bool"
-          },
-          "t_mapping(t_uint256,t_array(t_address)dyn_storage)": {
-            "label": "mapping(uint256 => address[])"
-          },
-          "t_array(t_address)dyn_storage": {
-            "label": "address[]"
-          },
-          "t_address": {
-            "label": "address"
-          },
-          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
-            "label": "mapping(uint256 => mapping(address => bool))"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)"
-          },
-          "t_mapping(t_uint256,t_enum(PotGuessType)3892)": {
-            "label": "mapping(uint256 => enum PotGuessType)"
-          },
-          "t_enum(PotGuessType)3892": {
-            "label": "enum PotGuessType",
-            "members": [
-              "NUMBERS",
-              "ORDER"
-            ]
-          },
           "t_mapping(t_bytes32,t_struct(RoleData)43_storage)": {
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
           },
@@ -383,31 +306,119 @@
               }
             ]
           },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]"
+          },
+          "t_uint256": {
+            "label": "uint256"
           },
           "t_array(t_uint256)50_storage": {
             "label": "uint256[50]"
           },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)"
           },
-          "t_mapping(t_uint256,t_enum(WinningType)3889)": {
+          "t_mapping(t_uint256,t_enum(WinningType)4057)": {
             "label": "mapping(uint256 => enum WinningType)"
           },
-          "t_enum(WinningType)3889": {
+          "t_enum(WinningType)4057": {
             "label": "enum WinningType",
             "members": [
               "TIME_BASED",
               "NUMBER_OF_PLAYERS"
             ]
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)"
+          },
+          "t_mapping(t_uint256,t_array(t_address)dyn_storage)": {
+            "label": "mapping(uint256 => address[])"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
+            "label": "mapping(uint256 => mapping(address => bool))"
+          }
+        }
+      }
+    },
+    "38df0ec166ab8ef1e43476dac8a1c104a0096c64272c6939ce9498be9be55019": {
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "txHash": "0xc879c83166575706682789edd00dab4f203a23211a694dd980da5e83efcac5e6",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "Grotto",
+            "label": "lottoControllerAddress",
+            "type": "t_address",
+            "src": "contracts/grotto.sol:14"
+          },
+          {
+            "contract": "Grotto",
+            "label": "potControllerAddress",
+            "type": "t_address",
+            "src": "contracts/grotto.sol:15"
+          },
+          {
+            "contract": "Grotto",
+            "label": "lottoController",
+            "type": "t_contract(ControllerInterface)2202",
+            "src": "contracts/grotto.sol:17"
+          },
+          {
+            "contract": "Grotto",
+            "label": "potController",
+            "type": "t_contract(ControllerInterface)2202",
+            "src": "contracts/grotto.sol:18"
+          },
+          {
+            "contract": "Grotto",
+            "label": "owner",
+            "type": "t_address",
+            "src": "contracts/grotto.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(ControllerInterface)2202": {
+            "label": "contract ControllerInterface"
+          },
+          "t_bool": {
+            "label": "bool"
           }
         }
       }
     },
     "f329d2f003cf7f23703964889453faf5ab8ee0e3626c8d0d0990d3a1e36900a1": {
-      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xeab9b10efa2ed232bb1cd9faaf65b91404d53a2f6ddc5cfcfca7de2f03479318",
+      "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+      "txHash": "0xdfb56c4f27898eb5d048d333e534c165c57c672ee9ca4406bde057bd932741ac",
       "layout": {
         "storage": [
           {
@@ -491,7 +502,7 @@
           {
             "contract": "BaseController",
             "label": "winningType",
-            "type": "t_mapping(t_uint256,t_enum(WinningType)4053)",
+            "type": "t_mapping(t_uint256,t_enum(WinningType)4057)",
             "src": "contracts/libraries/controllers/base.controller.sol:43"
           },
           {
@@ -629,7 +640,7 @@
           {
             "contract": "PotController",
             "label": "potGuessType",
-            "type": "t_mapping(t_uint256,t_enum(PotGuessType)4056)",
+            "type": "t_mapping(t_uint256,t_enum(PotGuessType)4060)",
             "src": "contracts/libraries/controllers/pot.controller.sol:33"
           }
         ],
@@ -670,10 +681,10 @@
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)"
           },
-          "t_mapping(t_uint256,t_enum(PotGuessType)4056)": {
+          "t_mapping(t_uint256,t_enum(PotGuessType)4060)": {
             "label": "mapping(uint256 => enum PotGuessType)"
           },
-          "t_enum(PotGuessType)4056": {
+          "t_enum(PotGuessType)4060": {
             "label": "enum PotGuessType",
             "members": [
               "NUMBERS",
@@ -708,76 +719,15 @@
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)"
           },
-          "t_mapping(t_uint256,t_enum(WinningType)4053)": {
+          "t_mapping(t_uint256,t_enum(WinningType)4057)": {
             "label": "mapping(uint256 => enum WinningType)"
           },
-          "t_enum(WinningType)4053": {
+          "t_enum(WinningType)4057": {
             "label": "enum WinningType",
             "members": [
               "TIME_BASED",
               "NUMBER_OF_PLAYERS"
             ]
-          }
-        }
-      }
-    },
-    "0132fb9070a6a71299a4f3bfbaf8966eb96cd1cd276a01da744e6227f442c54c": {
-      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0x81352f8a5fa6bca6f4269746c53007347955634ba0d66fe248bad1485470d376",
-      "layout": {
-        "storage": [
-          {
-            "contract": "Initializable",
-            "label": "_initialized",
-            "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
-          },
-          {
-            "contract": "Initializable",
-            "label": "_initializing",
-            "type": "t_bool",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
-          },
-          {
-            "contract": "Grotto",
-            "label": "lottoControllerAddress",
-            "type": "t_address",
-            "src": "contracts/grotto.sol:14"
-          },
-          {
-            "contract": "Grotto",
-            "label": "potControllerAddress",
-            "type": "t_address",
-            "src": "contracts/grotto.sol:15"
-          },
-          {
-            "contract": "Grotto",
-            "label": "lottoController",
-            "type": "t_contract(ControllerInterface)2202",
-            "src": "contracts/grotto.sol:17"
-          },
-          {
-            "contract": "Grotto",
-            "label": "potController",
-            "type": "t_contract(ControllerInterface)2202",
-            "src": "contracts/grotto.sol:18"
-          },
-          {
-            "contract": "Grotto",
-            "label": "owner",
-            "type": "t_address",
-            "src": "contracts/grotto.sol:20"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address"
-          },
-          "t_contract(ControllerInterface)2202": {
-            "label": "contract ControllerInterface"
-          },
-          "t_bool": {
-            "label": "bool"
           }
         }
       }

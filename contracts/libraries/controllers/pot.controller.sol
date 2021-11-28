@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.4;
+pragma solidity 0.8.9;
 
 import "../models.sol";
 import "./base.controller.sol";
@@ -9,10 +9,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-/* TODO: 
-    Multiple winners possible
-    Strictly time based
-*/
 contract PotController is BaseController, AccessControlUpgradeable {
     using SafeMath for uint256;
 

@@ -9,6 +9,15 @@ abstract contract BaseController is ControllerInterface {
     bytes32 public constant LOTTO_PLAYER = keccak256("LOTTO_PLAYER_ROLE");
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
+    uint256[] activeIds;
+    uint256[] completedIds;
+
+    // games that the player played in
+    mapping(address => uint256[]) participated;
+
+    // games that the player has claimed
+    mapping(address => uint256[]) claimed;    
+
     address internal platformOwner;
     mapping(uint256 => uint256) internal platformShares;
     mapping(uint256 => uint256) internal creatorShares;

@@ -59,6 +59,9 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         stakes[_lotto.id] = _lotto.stakes;
         players[_lotto.id] = _lotto.players;
         isPot[_lotto.id] = false;
+
+        activeIds.push(_lotto.id);
+        
         return true;
     }
 
@@ -102,6 +105,10 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         require(!isClaimed[_lottoId], ERROR_23);
         require(isWinner[_lottoId][_claimer], ERROR_27);
         isClaimed[_lottoId] = true;
+
+        delete activeIds[_lottoId];
+        completedIds.push(_lottoId);
+
         return Claim({winner: winner[_lottoId], winning: winning[_lottoId]});
     }
 
@@ -120,6 +127,8 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
         players[_lottoId].push(_player);
         findLottoWinner(_lottoId);
+
+
         return true;
     }
 

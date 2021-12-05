@@ -94,6 +94,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         }
         potGuessType[_pot.lotto.id] = _pot.potGuessType;
         isPot[_pot.lotto.id] = true;
+        activeIds.push(_pot.lotto.id);
         return true;
     }
 
@@ -186,6 +187,9 @@ contract PotController is BaseController, AccessControlUpgradeable {
         winningClaimed[_potId][_claimer] = true;
         isFinished[_potId] = true;
 
+        delete activeIds[_potId];
+        completedIds.push(_potId);
+        
         return Claim({winner: _claimer, winning: winningsPerWinner[_potId]});
     }
 

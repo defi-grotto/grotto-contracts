@@ -13,10 +13,11 @@ abstract contract BaseController is ControllerInterface {
     uint256[] completedIds;
 
     // games that the player played in
+    mapping(address => mapping(uint256 => bool)) playedIn;
     mapping(address => uint256[]) participated;
 
     // games that the player has claimed
-    mapping(address => uint256[]) claimed;    
+    mapping(address => uint256[]) userClaims;
 
     address internal platformOwner;
     mapping(uint256 => uint256) internal platformShares;

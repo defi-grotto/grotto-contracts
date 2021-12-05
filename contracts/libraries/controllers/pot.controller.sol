@@ -113,6 +113,14 @@ contract PotController is BaseController, AccessControlUpgradeable {
     {
         stakes[_potId] = stakes[_potId].add(_betPlaced);
         players[_potId].push(_player);
+
+        if(!playedIn[_player][_potId]) {
+            uint256[] memory plays = participated[_player];
+            plays[plays.length] = _potId;
+            participated[_player] = plays;
+            playedIn[_player][_potId] = true;
+        }
+                
         checkIfWinner(_potId, _player, _guesses);
         return true;
     }
@@ -189,6 +197,10 @@ contract PotController is BaseController, AccessControlUpgradeable {
 
         delete activeIds[_potId];
         completedIds.push(_potId);
+        
+        uint256[] memory claims = userClaims[_claimer];
+        claims[claims.length] = _potId;
+        userClaims[_claimer] = claims;
         
         return Claim({winner: _claimer, winning: winningsPerWinner[_potId]});
     }

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.9;
+pragma solidity 0.8.11;
 
 import "./controller.interface.sol";
 import "../errors.sol";
@@ -9,7 +9,8 @@ abstract contract BaseController is ControllerInterface {
     bytes32 public constant LOTTO_PLAYER = keccak256("LOTTO_PLAYER_ROLE");
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
-    uint256[] activeIds;
+    mapping(uint256 => bool) activeIdsMap;
+
     uint256[] completedIds;
 
     // games that the player played in

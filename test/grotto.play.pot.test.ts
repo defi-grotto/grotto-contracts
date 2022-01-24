@@ -11,10 +11,53 @@ describe("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
-  let nopLotto: Lotto;
   let tbLotto: Lotto;
 
   let tbPot: Pot;
+
+  before(async () => {
+    accounts = await ethers.getSigners();
+    tbLotto = {
+      id: 100,
+      creator: accounts[1].address,
+      creatorShares: BigNumber.from(0),
+      startTime: Math.floor(new Date().getTime() / 1000),
+      endTime: Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
+      betAmount: BigNumber.from(0),
+      maxNumberOfPlayers: 0,
+      winningType: WinningType.TIME_BASED,
+      isFinished: false,
+      players: [],
+      stakes: BigNumber.from(0),
+      winner: address0,
+      winning: 0,
+    };
+
+    tbPot = {
+      lotto: tbLotto,
+      potAmount: BigNumber.from(0),
+      potGuessType: PotGuessType.ORDER,
+      winningNumbers: [3, 6, 9, 3],
+      winners: [],
+      winningsPerWinner: 0,
+    };
+
+    const Grotto = await ethers.getContractFactory("Grotto");
+    const PotController = await ethers.getContractFactory("PotController");
+    const controller = await upgrades.deployProxy(PotController);
+
+    grotto = await upgrades.deployProxy(Grotto, [address0, controller.address]);
+
+    await controller.grantLottoCreator(grotto.address);
+    await controller.grantLottoPlayer(grotto.address);
+    await controller.grantAdmin(grotto.address);
+
+    console.log(`PotController Deployed to ${controller.address}`);
+
+    expect(controller.address).to.not.eq(address0);
+
+    console.log(`Grotto Deployed to ${grotto.address}`);
+  });
 
   const playToWin = async () => {
     const overrides = {
@@ -93,50 +136,6 @@ describe("Grotto: Play Pot Tests", () => {
       );
     }
   };
-
-  before(async () => {
-    accounts = await ethers.getSigners();
-    tbLotto = {
-      id: 100,
-      creator: accounts[1].address,
-      creatorShares: BigNumber.from(0),
-      startTime: Math.floor(new Date().getTime() / 1000),
-      endTime: Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours
-      betAmount: BigNumber.from(0),
-      maxNumberOfPlayers: 0,
-      winningType: WinningType.TIME_BASED,
-      isFinished: false,
-      players: [],
-      stakes: BigNumber.from(0),
-      winner: address0,
-      winning: 0,
-    };
-
-    tbPot = {
-      lotto: tbLotto,
-      potAmount: BigNumber.from(0),
-      potGuessType: PotGuessType.ORDER,
-      winningNumbers: [3, 6, 9, 3],
-      winners: [],
-      winningsPerWinner: 0,
-    };
-
-    const Grotto = await ethers.getContractFactory("Grotto");
-    const PotController = await ethers.getContractFactory("PotController");
-    const controller = await upgrades.deployProxy(PotController);
-
-    grotto = await upgrades.deployProxy(Grotto, [address0, controller.address]);
-
-    await controller.grantLottoCreator(grotto.address);
-    await controller.grantLottoPlayer(grotto.address);
-    await controller.grantAdmin(grotto.address);
-
-    console.log(`PotController Deployed to ${controller.address}`);
-
-    expect(controller.address).to.not.eq(address0);
-
-    console.log(`Grotto Deployed to ${grotto.address}`);
-  });
 
   it("should create grotto contract", async () => {
     expect(grotto.address).to.not.eq(address0);

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.9;
+pragma solidity 0.8.11;
 
 string constant ERROR_1 = "";
 string constant ERROR_2 = "Called setGrotto on Storage with wrong parameters";

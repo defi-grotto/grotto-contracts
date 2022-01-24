@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.9;
+pragma solidity 0.8.11;
 
 import "../models.sol";
 import "./base.controller.sol";
@@ -94,7 +94,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         }
         potGuessType[_pot.lotto.id] = _pot.potGuessType;
         isPot[_pot.lotto.id] = true;
-        activeIds.push(_pot.lotto.id);
+        activeIdsMap[_pot.lotto.id] = true;
         return true;
     }
 
@@ -115,9 +115,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         players[_potId].push(_player);
 
         if(!playedIn[_player][_potId]) {
-            uint256[] memory plays = participated[_player];
-            plays[plays.length] = _potId;
-            participated[_player] = plays;
+            participated[_player].push(_potId);
             playedIn[_player][_potId] = true;
         }
                 
@@ -195,13 +193,10 @@ contract PotController is BaseController, AccessControlUpgradeable {
         winningClaimed[_potId][_claimer] = true;
         isFinished[_potId] = true;
 
-        delete activeIds[_potId];
+        activeIdsMap[_potId] = false;
         completedIds.push(_potId);
         
-        uint256[] memory claims = userClaims[_claimer];
-        claims[claims.length] = _potId;
-        userClaims[_claimer] = claims;
-        
+        userClaims[_claimer].push(_potId);        
         return Claim({winner: _claimer, winning: winningsPerWinner[_potId]});
     }
 

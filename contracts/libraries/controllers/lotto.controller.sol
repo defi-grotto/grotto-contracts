@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.9;
+pragma solidity 0.8.11;
 
 import "../models.sol";
 import "./base.controller.sol";
@@ -60,7 +60,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         players[_lotto.id] = _lotto.players;
         isPot[_lotto.id] = false;
 
-        activeIds.push(_lotto.id);
+        activeIdsMap[_lotto.id] = true;
 
         return true;
     }
@@ -106,12 +106,10 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         require(isWinner[_lottoId][_claimer], ERROR_27);
         isClaimed[_lottoId] = true;
 
-        delete activeIds[_lottoId];
+        activeIdsMap[_lottoId] = false;
         completedIds.push(_lottoId);
 
-        uint256[] memory claims = userClaims[_claimer];
-        claims[claims.length] = _lottoId;
-        userClaims[_claimer] = claims;
+        userClaims[_claimer].push(_lottoId);
         
         return Claim({winner: winner[_lottoId], winning: winning[_lottoId]});
     }
@@ -132,9 +130,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         players[_lottoId].push(_player);
 
         if(!playedIn[_player][_lottoId]) {
-            uint256[] memory plays = participated[_player];
-            plays[plays.length] = _lottoId;
-            participated[_player] = plays;
+            participated[_player].push(_lottoId);
             playedIn[_player][_lottoId] = true;
         }
 

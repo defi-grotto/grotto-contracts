@@ -43,7 +43,9 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
     };
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+    const SingleWinnerPotController = await ethers.getContractFactory(
+      "SingleWinnerPotController"
+    );
     const controller = await upgrades.deployProxy(SingleWinnerPotController);
 
     grotto = await upgrades.deployProxy(Grotto, [address0, controller.address]);
@@ -58,7 +60,7 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
 
     console.log(`Grotto Deployed to ${grotto.address}`);
   });
-    
+
   const playToWin = async () => {
     const overrides = {
       value: ethers.utils.parseEther("0.01"),
@@ -90,25 +92,25 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
   };
 
   const validateWinners = async () => {
-      const player = await grotto.connect(accounts[3]);
-      const address = accounts[3].address;
-      const balanceBefore = await ethers.provider.getBalance(address);
-      await player.claim(tbPot.lotto.id);
-      const balanceAfter = await ethers.provider.getBalance(address);
-      let pot: Pot = await grotto.getPotById(tbPot.lotto.id);
-      expect(pot.lotto.creator).to.equal(accounts[0].address);
-      const totalStaked = await grotto.getTotalStaked(pot.lotto.id);
-      const winnerShare = totalStaked.mul(70).div(100);
-      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
-        +ethers.utils.formatEther(balanceAfter)
-      );
-      expect(
-        +ethers.utils.formatEther(balanceBefore.add(winnerShare))
-      ).to.greaterThanOrEqual(+ethers.utils.formatEther(balanceAfter));
-      const creatorShares = totalStaked.mul(20).div(100);
-      expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
-        ethers.utils.formatEther(pot.lotto.creatorShares)
-      );    
+    const player = await grotto.connect(accounts[3]);
+    const address = accounts[3].address;
+    const balanceBefore = await ethers.provider.getBalance(address);
+    await player.claim(tbPot.lotto.id);
+    const balanceAfter = await ethers.provider.getBalance(address);
+    let pot: Pot = await grotto.getPotById(tbPot.lotto.id);
+    expect(pot.lotto.creator).to.equal(accounts[0].address);
+    const totalStaked = await grotto.getTotalStaked(pot.lotto.id);
+    const winnerShare = totalStaked.mul(70).div(100);
+    expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
+      +ethers.utils.formatEther(balanceAfter)
+    );
+    expect(
+      +ethers.utils.formatEther(balanceBefore.add(winnerShare))
+    ).to.greaterThanOrEqual(+ethers.utils.formatEther(balanceAfter));
+    const creatorShares = totalStaked.mul(20).div(100);
+    expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
+      ethers.utils.formatEther(pot.lotto.creatorShares)
+    );
   };
 
   it("should create grotto contract", async () => {
@@ -245,6 +247,33 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
   it("should find winner(s) if number is matched and is in order", async () => {
     try {
       await playToWin();
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  });
+
+  it("should not play again if one winner already found", async () => {
+    try {
+      await playToWin();
+
+      const overrides = {
+        value: ethers.utils.parseEther("0.01"),
+      };
+      // Numbers matched but not order
+      let guesses = [3, 6, 3, 9];
+      const player3 = await grotto.connect(accounts[4]);
+      await expect(
+        player3.playPot(tbPot.lotto.id, guesses, overrides)
+      ).to.be.revertedWith("Lotto is finished");
+    } catch (error) {
+      console.log(error);
+      expect(error).to.equal(undefined);
+    }
+  });
+    
+  it("should claim winnings", async () => {
+    try {
       await validateWinners();
     } catch (error) {
       console.log(error);
@@ -266,10 +295,16 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
         "Creator can't claim until at least one winner claimed"
       );
       await validateWinners();
-      const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
-      await grotto.claimCreator(tbPot.lotto.id);            
-      const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
-      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
+      const balanceBefore = await ethers.provider.getBalance(
+        accounts[0].address
+      );
+      await grotto.claimCreator(tbPot.lotto.id);
+      const balanceAfter = await ethers.provider.getBalance(
+        accounts[0].address
+      );
+      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
+        +ethers.utils.formatEther(balanceAfter)
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -283,17 +318,23 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
         "Owner shares returns zero"
       );
       await validateWinners();
-      const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
-      await grotto.claimPlatform(tbPot.lotto.id);            
-      const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
-      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
+      const balanceBefore = await ethers.provider.getBalance(
+        accounts[0].address
+      );
+      await grotto.claimPlatform(tbPot.lotto.id);
+      const balanceAfter = await ethers.provider.getBalance(
+        accounts[0].address
+      );
+      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
+        +ethers.utils.formatEther(balanceAfter)
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
-  });  
+  });
 
-  it('should send everything to creator if no winner found', async () => {
+  it("should send everything to creator if no winner found", async () => {
     try {
       const overrides = {
         value: ethers.utils.parseEther("0.01"),
@@ -308,35 +349,43 @@ describe.only("Grotto: Play Single Winner Pot Tests", () => {
       // Numbers matched but not order
       let guesses = [3, 6, 3, 9];
       const player3 = await grotto.connect(accounts[4]);
-      await expect(
-        player3.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player3.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       // Numbers matched but not order
       guesses = [3, 6, 3, 9];
       const player2 = await grotto.connect(accounts[3]);
-      await expect(
-        player2.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player2.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       // Numbers matched but not order
       guesses = [3, 6, 3, 9];
       const player4 = await grotto.connect(accounts[5]);
-      await expect(
-        player4.playPot(tbPot.lotto.id, guesses, overrides)
-      ).to.emit(grotto, "BetPlaced");
+      await expect(player4.playPot(tbPot.lotto.id, guesses, overrides)).to.emit(
+        grotto,
+        "BetPlaced"
+      );
 
       await grotto.forceEnd(tbPot.lotto.id);
-      
+
       let pot: Pot = await grotto.getPotById(tbPot.lotto.id);
 
       expect(pot.lotto.creator).to.equal(accounts[0].address);
 
-      const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
-      await grotto.claimCreator(tbPot.lotto.id);            
-      const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
-      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(+ethers.utils.formatEther(balanceAfter));
-
+      const balanceBefore = await ethers.provider.getBalance(
+        accounts[0].address
+      );
+      await grotto.claimCreator(tbPot.lotto.id);
+      const balanceAfter = await ethers.provider.getBalance(
+        accounts[0].address
+      );
+      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
+        +ethers.utils.formatEther(balanceAfter)
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

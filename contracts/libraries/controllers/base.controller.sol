@@ -11,6 +11,7 @@ abstract contract BaseController is ControllerInterface {
 
     mapping(uint256 => bool) activeIdsMap;
 
+    uint256 autoIncrementId = 0;
     uint256[] completedIds;
 
     // games that the player played in

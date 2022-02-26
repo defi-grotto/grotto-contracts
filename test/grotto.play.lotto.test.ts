@@ -19,7 +19,7 @@ describe("Grotto: Play Lotto Tests", () => {
     // console.log(accounts.map(a => a.address));
     nopLotto = {
       id: 10,
-      creator: accounts[1].address,
+      // creator: accounts[1].address,
       creatorShares: BigNumber.from(0),
       startTime: 0, //Math.floor(new Date().getTime() / 1000),
       endTime: 0, //Math.floor((new Date().getTime() + 8.64e7) / 1000), // + 24 hours

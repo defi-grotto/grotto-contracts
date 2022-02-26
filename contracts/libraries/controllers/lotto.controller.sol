@@ -46,10 +46,10 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         onlyRole(LOTTO_CREATOR)
         is_valid_lotto(_lotto)
-        returns (bool)
     {
+        _lotto.id = ++autoIncrementId;
         lottoId[_lotto.id] = _lotto.id;
-        creator[_lotto.id] = _lotto.creator;
+        creator[_lotto.id] = msg.sender;
         startTime[_lotto.id] = _lotto.startTime;
         endTime[_lotto.id] = _lotto.endTime;
         maxNumberOfPlayers[_lotto.id] = _lotto.maxNumberOfPlayers;
@@ -62,7 +62,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
 
         activeIdsMap[_lotto.id] = true;
 
-        return true;
+        emit LottoCreated(_lotto.id);
     }
 
     // ============================ EXTERNAL VIEW METHODS ============================

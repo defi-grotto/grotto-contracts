@@ -3,7 +3,7 @@ pragma solidity 0.8.4;
 import "../models.sol";
 
 interface ControllerInterface {
-    function addNewLotto(Lotto memory lotto) external returns (bool);
+    function addNewLotto(Lotto memory lotto) external;
 
     function addNewPot(Pot memory pot) external returns (bool);
 
@@ -43,4 +43,6 @@ interface ControllerInterface {
     function platformClaim(uint256 lottoId) external returns (Claim memory);
 
     function getTotalStaked(uint256 lottoId) external view returns (uint256);
+
+    event LottoCreated(uint256 lottoId);
 }

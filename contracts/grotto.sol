@@ -26,7 +26,7 @@ contract Grotto is GrottoInterface, Initializable {
     ) public initializer {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
-        lottoController = ControllerInterface(lottoControllerAddress);        
+        lottoController = ControllerInterface(lottoControllerAddress);
         potControllerAddress = _potControllerAddress;
         potController = ControllerInterface(potControllerAddress);
     }
@@ -37,11 +37,12 @@ contract Grotto is GrottoInterface, Initializable {
         _lotto.stakes = msg.value;
         _lotto.creator = msg.sender;
 
-        uint256 creatorFees = (_lotto.betAmount * 100) / lottoController.getCreatorFeesPercentage();        
+        uint256 creatorFees = (_lotto.betAmount * 100) /
+            lottoController.getCreatorFeesPercentage();
         bool sent = false;
-        (sent, ) = payable(owner).call{value: creatorFees}('');
-        require(sent, 'CANCL');
-        
+        (sent, ) = payable(owner).call{value: creatorFees}("");
+        require(sent, "CANCL");
+
         bool _result = lottoController.addNewLotto(_lotto);
 
         require(_result, ERROR_9);
@@ -53,12 +54,13 @@ contract Grotto is GrottoInterface, Initializable {
         _pot.potAmount = msg.value;
         _pot.lotto.stakes = msg.value;
 
-        uint256 creatorFees = (_pot.potAmount * 100) / potController.getCreatorFeesPercentage();        
+        uint256 creatorFees = (_pot.potAmount * 100) /
+            potController.getCreatorFeesPercentage();
         bool sent = false;
-        (sent, ) = payable(owner).call{value: creatorFees}('');
-        require(sent, 'CANCL');
+        (sent, ) = payable(owner).call{value: creatorFees}("");
+        require(sent, "CANCL");
 
-        bool _result = potController.addNewPot(_pot);        
+        bool _result = potController.addNewPot(_pot);
         require(_result, ERROR_13);
         emit PotCreated(_pot);
     }
@@ -94,8 +96,10 @@ contract Grotto is GrottoInterface, Initializable {
         require(_claim.winner != address(0), ERROR_34);
         require(_claim.winning != 0, ERROR_35);
 
-        payable(_claim.winner).transfer(_claim.winning);
-        
+        bool sent = false;
+        (sent, ) = payable(_claim.winner).call{value: _claim.winning}("");
+        require(sent, "CANCL");
+
         emit CreatorClaimed(_lottoId);
     }
 
@@ -105,10 +109,12 @@ contract Grotto is GrottoInterface, Initializable {
 
         require(_claim.winning != 0, ERROR_35);
 
-        payable(owner).transfer(_claim.winning);
-        
+        bool sent = false;
+        (sent, ) = payable(owner).call{value: _claim.winning}("");
+        require(sent, "CANCL");
+
         emit PlatformClaimed(_lottoId);
-    }    
+    }
 
     function claim(uint256 _lottoId) external payable {
         ControllerInterface _controller = _getController(_lottoId);
@@ -116,7 +122,9 @@ contract Grotto is GrottoInterface, Initializable {
 
         // it's possible that there's no winner for pots
         if (_claim.winner != address(0) && _claim.winning > 0) {
-            payable(_claim.winner).transfer(_claim.winning);
+            bool sent = false;
+            (sent, ) = payable(_claim.winner).call{value: _claim.winning}("");
+            require(sent, "CANCL");
         }
 
         emit Claimed(_lottoId);

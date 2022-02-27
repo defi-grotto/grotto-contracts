@@ -32,10 +32,6 @@ contract PotController is BaseController, AccessControlUpgradeable {
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
-        platformSharePercentage = 10;
-        creatorSharesPercentage = 20;
-        maxWinningNumbers = 10;
-        maxWinners = 10;
     }
 
     // ============================ GRANTS ============================

@@ -26,8 +26,7 @@ contract Grotto is GrottoInterface, Initializable {
     ) public initializer {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
-        lottoController = ControllerInterface(lottoControllerAddress);
-
+        lottoController = ControllerInterface(lottoControllerAddress);        
         potControllerAddress = _potControllerAddress;
         potController = ControllerInterface(potControllerAddress);
     }
@@ -37,7 +36,14 @@ contract Grotto is GrottoInterface, Initializable {
         _lotto.betAmount = msg.value;
         _lotto.stakes = msg.value;
         _lotto.creator = msg.sender;
+
+        uint256 creatorFees = (_lotto.betAmount * 100) / lottoController.getCreatorFeesPercentage();        
+        bool sent = false;
+        (sent, ) = payable(owner).call{value: creatorFees}('');
+        require(sent, 'CANCL');
+        
         bool _result = lottoController.addNewLotto(_lotto);
+
         require(_result, ERROR_9);
         emit LottoCreated(_lotto);
     }
@@ -46,7 +52,13 @@ contract Grotto is GrottoInterface, Initializable {
         _pot.lotto.creator = msg.sender;
         _pot.potAmount = msg.value;
         _pot.lotto.stakes = msg.value;
-        bool _result = potController.addNewPot(_pot);
+
+        uint256 creatorFees = (_pot.potAmount * 100) / potController.getCreatorFeesPercentage();        
+        bool sent = false;
+        (sent, ) = payable(owner).call{value: creatorFees}('');
+        require(sent, 'CANCL');
+
+        bool _result = potController.addNewPot(_pot);        
         require(_result, ERROR_13);
         emit PotCreated(_pot);
     }

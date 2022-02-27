@@ -17,10 +17,6 @@ contract LottoController is BaseController, AccessControlUpgradeable {
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
-        platformSharePercentage = 10;
-        creatorSharesPercentage = 20;
-        maxWinningNumbers = 10;
-        maxWinners = 10;
     }
 
     // ============================ GRANTS ============================
@@ -46,6 +42,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         onlyRole(LOTTO_CREATOR)
         is_valid_lotto(_lotto)
+        returns (bool)
     {
         _lotto.id = ++autoIncrementId;
         lottoId[_lotto.id] = _lotto.id;
@@ -63,6 +60,8 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         activeIdsMap[_lotto.id] = true;
 
         emit LottoCreated(_lotto.id);
+
+        return true;
     }
 
     // ============================ EXTERNAL VIEW METHODS ============================
@@ -110,7 +109,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         completedIds.push(_lottoId);
 
         userClaims[_claimer].push(_lottoId);
-        
+
         return Claim({winner: winner[_lottoId], winning: winning[_lottoId]});
     }
 
@@ -129,12 +128,12 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
         players[_lottoId].push(_player);
 
-        if(!playedIn[_player][_lottoId]) {
+        if (!playedIn[_player][_lottoId]) {
             participated[_player].push(_lottoId);
             playedIn[_player][_lottoId] = true;
         }
 
-        findLottoWinner(_lottoId);        
+        findLottoWinner(_lottoId);
         return true;
     }
 
@@ -156,11 +155,10 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         require(platformClaimed[_lottoId] == false, ERROR_37);
         require(startTime[_lottoId] <= block.timestamp, ERROR_14);
         require(endTime[_lottoId] <= block.timestamp, ERROR_22);
-        
+
         platformClaimed[_lottoId] = true;
-        return Claim({winner: address(0), winning: platformShares[_lottoId]});        
+        return Claim({winner: address(0), winning: platformShares[_lottoId]});
     }
-    
 
     function creatorClaim(uint256 _lottoId)
         external
@@ -172,7 +170,11 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         require(startTime[_lottoId] <= block.timestamp, ERROR_14);
         require(endTime[_lottoId] <= block.timestamp, ERROR_22);
         creatorClaimed[_lottoId] = true;
-        return Claim({winner: creator[_lottoId], winning: creatorShares[_lottoId]});        
+        return
+            Claim({
+                winner: creator[_lottoId],
+                winning: creatorShares[_lottoId]
+            });
     }
 
     // ============================ PRIVATE METHODS ============================

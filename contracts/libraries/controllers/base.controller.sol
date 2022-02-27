@@ -25,11 +25,12 @@ abstract contract BaseController is ControllerInterface {
     mapping(uint256 => uint256) internal platformShares;
     mapping(uint256 => uint256) internal creatorShares;
 
-    uint256 internal platformSharePercentage;
-    uint256 internal creatorSharesPercentage;
+    uint256 internal platformSharePercentage = 10;
+    uint256 internal creatorFeesPercentage = 10;
+    uint256 internal creatorSharesPercentage = 20;
 
-    uint256 internal maxWinningNumbers;
-    uint256 internal maxWinners;
+    // uint256 internal maxWinningNumbers;
+    // uint256 internal maxWinners;
 
     // Lotto Data Structure
     // id of the lotto/pot
@@ -119,6 +120,10 @@ abstract contract BaseController is ControllerInterface {
         returns (uint256)
     {
         return stakes[_lottoId];
+    }
+
+    function getCreatorFeesPercentage() public view override returns (uint256) {
+        return creatorFeesPercentage;
     }
 
     // ============================ VIRTUAL METHODS, NEEDS OVERRIDING ============================

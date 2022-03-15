@@ -14,24 +14,17 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
     // ============================ VARIABLES ============================
     // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
-    mapping(uint256 => uint256) private potAmount;
-    mapping(uint256 => uint256[]) private winningNumbers;
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
     mapping(uint256 => mapping(address => bool)) private winningClaimed;
-    mapping(uint256 => uint256) private winningsPerWinner;
-    mapping(uint256 => address[]) private winners;
-
-    /* 
-        The Type of Guess
-            * Numbers: The player must guess just the numbers
-            * Order: The player must guess both the number and the order
-    */
-    mapping(uint256 => PotGuessType) private potGuessType;
 
     // ============================ INITIALIZER ============================
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
+        platformSharePercentage = 10;
+        creatorFees = 0;
+        creatorSharesPercentage = 20;
+        autoIncrementId = 0;
     }
 
     // ============================ GRANTS ============================
@@ -57,7 +50,8 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
     // ============================ MODIFIERS ============================
     modifier is_valid_pot(Pot memory _pot) {
-        require(creator[_pot.lotto.id] != _pot.lotto.creator, ERROR_4);
+        Pot memory _exists = pots[_pot.lotto.id];
+        require(_exists.lotto.creator != _pot.lotto.creator, ERROR_4);
         require(_pot.potAmount > 0, ERROR_11);
         require(_pot.winningNumbers.length > 0, ERROR_12);
         require(_pot.winningNumbers.length <= 10, ERROR_33);
@@ -71,27 +65,15 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         onlyRole(LOTTO_CREATOR)
         is_valid_lotto(_pot.lotto)
         is_valid_pot(_pot)
-        returns (bool)
+        returns (uint256)
     {
-        lottoId[_pot.lotto.id] = _pot.lotto.id;
-        creator[_pot.lotto.id] = _pot.lotto.creator;
-        startTime[_pot.lotto.id] = _pot.lotto.startTime;
-        endTime[_pot.lotto.id] = _pot.lotto.endTime;
-        maxNumberOfPlayers[_pot.lotto.id] = _pot.lotto.maxNumberOfPlayers;
-        betAmount[_pot.lotto.id] = _pot.lotto.betAmount;
-        winningType[_pot.lotto.id] = _pot.lotto.winningType;
-        isFinished[_pot.lotto.id] = _pot.lotto.isFinished;
-        stakes[_pot.lotto.id] = _pot.lotto.stakes;
-        players[_pot.lotto.id] = _pot.lotto.players;
-        potAmount[_pot.lotto.id] = _pot.potAmount;
-        winningNumbers[_pot.lotto.id] = _pot.winningNumbers;
+        _pot.lotto.id = ++autoIncrementId;
         for (uint256 i = 0; i < _pot.winningNumbers.length; i = i.add(1)) {
             winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
         }
-        potGuessType[_pot.lotto.id] = _pot.potGuessType;
-        isPot[_pot.lotto.id] = true;
+        _pot.lotto.status.isPot= true;
         activeIdsMap[_pot.lotto.id] = true;
-        return true;
+        return _pot.lotto.id;
     }
 
     function playPot(
@@ -107,14 +89,15 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         onlyRole(LOTTO_PLAYER)
         returns (bool)
     {
-        stakes[_potId] = stakes[_potId].add(_betPlaced);
-        players[_potId].push(_player);
+        Pot memory _exists = pots[_potId];
+        _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
+        _exists.lotto.players[_exists.lotto.players.length] = _player;
 
-        if(!playedIn[_player][_potId]) {
+        if (!playedIn[_player][_potId]) {
             participated[_player].push(_potId);
             playedIn[_player][_potId] = true;
         }
-                
+
         checkIfWinner(_potId, _player, _guesses);
         return true;
     }
@@ -124,8 +107,9 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         address _player,
         uint256[] memory _guesses
     ) private {
+        Pot memory _exists = pots[_potId];
         bool _won = true;
-        if (potGuessType[_potId] == PotGuessType.NUMBERS) {
+        if (_exists.potGuessType == PotGuessType.NUMBERS) {
             // just check that all guesses exists in winning numbers
             for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
                 if (winningNumbersMap[_potId][_guesses[i]] == false) {
@@ -133,9 +117,9 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
                     break;
                 }
             }
-        } else if (potGuessType[_potId] == PotGuessType.ORDER) {
+        } else if (_exists.potGuessType == PotGuessType.ORDER) {
             for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
-                if (_guesses[i] != winningNumbers[_potId][i]) {
+                if (_guesses[i] != _exists.winningNumbers[i]) {
                     _won = false;
                     break;
                 }
@@ -143,10 +127,9 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         }
 
         if (_won) {
-            winner[_potId] = _player;        
-            winners[_potId].push(_player);                    
+            _exists.lotto.winner = _player;
             isWinner[_potId][_player] = true;
-            isFinished[_potId] = true;
+            _exists.lotto.status.isFinished = true;
         }
     }
 
@@ -155,15 +138,16 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        require(startTime[_potId] <= block.timestamp, ERROR_14);
-        require(endTime[_potId] <= block.timestamp, ERROR_22);
+        Pot memory _exists = pots[_potId];
+        require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
+        require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
 
         require(isWinner[_potId][_claimer], ERROR_27);
         require(winningClaimed[_potId][_claimer] == false, ERROR_26);
 
-        if (isClaimed[_potId] == false) {
+        if (_exists.lotto.status.isClaimed == false) {
             // no one has claimed, calculate winners claims
-            uint256 _totalStaked = stakes[_potId];
+            uint256 _totalStaked = _exists.lotto.stakes;
             // take platform's share
             uint256 _platformShare = _totalStaked
                 .mul(platformSharePercentage)
@@ -177,64 +161,72 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
             if (_totalWinners <= 0) {
                 _creatorShare = _totalStaked.sub(_platformShare);
             } else {
-                winningsPerWinner[_potId] = (
+                _exists.winningsPerWinner = (
                     _totalStaked.sub(_platformShare).sub(_creatorShare)
                 ).div(_totalWinners);
             }
 
-            creatorShares[_potId] = _creatorShare;
-            platformShares[_potId] = _platformShare;      
+            _exists.lotto.creatorShares = _creatorShare;
+            _exists.lotto.platformShares = _platformShare;
 
-            isClaimed[_potId] = true;
+            _exists.lotto.status.isClaimed = true;
         }
 
         winningClaimed[_potId][_claimer] = true;
-        isFinished[_potId] = true;
+        _exists.lotto.status.isFinished = true;
 
         activeIdsMap[_potId] = false;
         completedIds.push(_potId);
-        
-        userClaims[_claimer].push(_potId);        
-        
-        return Claim({winner: _claimer, winning: winningsPerWinner[_potId]});
+
+        userClaims[_claimer].push(_potId);
+
+        return
+            Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
-    function forceEnd(uint256 _lottoId)
+    function forceEnd(uint256 _potId)
         external
         override
+        view
         onlyRole(ADMIN)
         returns (bool)
     {
-        endTime[_lottoId] = block.timestamp;
+        Pot memory _exists = pots[_potId];
+        _exists.lotto.endTime = block.timestamp;
         return true;
     }
 
     function platformClaim(uint256 _potId)
         external
         override
+        view
         returns (Claim memory)
     {
-        require(platformClaimed[_potId] == false, ERROR_37);
-        require(startTime[_potId] <= block.timestamp, ERROR_14);
-        require(endTime[_potId] <= block.timestamp, ERROR_22);
-        
-        platformClaimed[_potId] = true;
-        return Claim({winner: address(0), winning: platformShares[_potId]});        
+        Pot memory _exists = pots[_potId];
+        require(_exists.lotto.status.platformClaimed == false, ERROR_37);
+        require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
+        require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
+
+        _exists.lotto.status.platformClaimed = true;
+        return
+            Claim({winner: address(0), winning: _exists.lotto.platformShares});
     }
-    
+
     function creatorClaim(uint256 _potId)
         external
         override
+        view
         returns (Claim memory)
     {
-        require(creatorClaimed[_potId] == false, ERROR_37);
-        require(startTime[_potId] <= block.timestamp, ERROR_14);
-        require(endTime[_potId] <= block.timestamp, ERROR_22);
+        Pot memory _exists = pots[_potId];
+        require(_exists.lotto.status.creatorClaimed == false, ERROR_37);
+        require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
+        require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
 
-        if (winners[_potId].length > 0) {
-            require(isClaimed[_potId], ERROR_36);            
+        if (_exists.winners.length > 0) {
+            require(_exists.lotto.status.isClaimed, ERROR_36);
         } else {
-            uint256 _totalStaked = stakes[_potId];
+            uint256 _totalStaked = _exists.lotto.stakes;
             uint256 _platformShare = _totalStaked
                 .mul(platformSharePercentage)
                 .div(100);
@@ -243,19 +235,28 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
                 .mul(creatorSharesPercentage)
                 .div(100);
 
-            _creatorShare = _totalStaked.sub(_platformShare); 
+            _creatorShare = _totalStaked.sub(_platformShare);
 
-            creatorShares[_potId] = _creatorShare;     
-            platformShares[_potId] = _platformShare;      
+            _exists.lotto.creatorShares = _creatorShare;
+            _exists.lotto.platformShares = _platformShare;
         }
 
-        creatorClaimed[_potId] = true;
-        return Claim({winner: creator[_potId], winning: creatorShares[_potId]});
+        _exists.lotto.status.creatorClaimed = true;
+        return
+            Claim({
+                winner: _exists.lotto.creator,
+                winning: _exists.lotto.creatorShares
+            });
     }
 
     // ============================ EXTERNAL VIEW METHODS ============================
     function isPotId(uint256 _potId) external view override returns (bool) {
-        return isPot[_potId];
+        Pot memory _exists = pots[_potId];
+        return
+            _exists.lotto.id > 0 &&
+            _exists.lotto.creator != address(0) &&
+            _exists.lotto.status.isPot== true &&
+            _exists.potType == PotType.SINGLE_WINNER;
     }
 
     function getPotById(uint256 _potId)
@@ -264,36 +265,19 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         override
         returns (Pot memory)
     {
-        require(isPot[_potId], ERROR_31);
-        Lotto memory _lotto = Lotto({
-            id: lottoId[_potId],
-            creator: creator[_potId],
-            creatorShares: creatorShares[_potId],
-            startTime: startTime[_potId],
-            endTime: endTime[_potId],
-            maxNumberOfPlayers: 0,
-            betAmount: betAmount[_potId],
-            winningType: winningType[_potId],
-            isFinished: isFinished[_potId],
-            stakes: stakes[_potId],
-            players: players[_potId],
-            winner: winner[_potId],
-            winning: winning[_potId]
-        });
-
-        Pot memory _pot = Pot({
-            lotto: _lotto,
-            potAmount: potAmount[_potId],
-            winningNumbers: winningNumbers[_potId],
-            potGuessType: potGuessType[_potId],
-            winners: winners[_potId],
-            winningsPerWinner: winningsPerWinner[_potId]
-        });
-
-        return _pot;
+        Pot memory _exists = pots[_potId];
+        require(
+            _exists.lotto.id > 0 &&
+                _exists.lotto.creator != address(0) &&
+                _exists.lotto.status.isPot== true &&
+                _exists.potType == PotType.MULTIPLE_WINNER,
+            ERROR_31
+        );
+        return _exists;
     }
 
     function getPotWinning(uint256 _potId) external view returns (uint256) {
-        return winningsPerWinner[_potId];
+        Pot memory _exists = pots[_potId];
+        return _exists.winningsPerWinner;
     }
 }

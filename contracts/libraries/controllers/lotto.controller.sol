@@ -17,6 +17,10 @@ contract LottoController is BaseController, AccessControlUpgradeable {
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
+        platformSharePercentage = 10;
+        creatorFees = 0;
+        creatorSharesPercentage = 20;
+        autoIncrementId = 0;
     }
 
     // ============================ GRANTS ============================
@@ -42,31 +46,26 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         onlyRole(LOTTO_CREATOR)
         is_valid_lotto(_lotto)
-        returns (bool)
+        returns (uint256)
     {
         _lotto.id = ++autoIncrementId;
-        lottoId[_lotto.id] = _lotto.id;
-        creator[_lotto.id] = msg.sender;
-        startTime[_lotto.id] = _lotto.startTime;
-        endTime[_lotto.id] = _lotto.endTime;
-        maxNumberOfPlayers[_lotto.id] = _lotto.maxNumberOfPlayers;
-        betAmount[_lotto.id] = _lotto.betAmount;
-        winningType[_lotto.id] = _lotto.winningType;
-        isFinished[_lotto.id] = _lotto.isFinished;
-        stakes[_lotto.id] = _lotto.stakes;
-        players[_lotto.id] = _lotto.players;
-        isPot[_lotto.id] = false;
+        _lotto.status.isPot = false;
 
         activeIdsMap[_lotto.id] = true;
 
+        lottos[_lotto.id] = _lotto;
         emit LottoCreated(_lotto.id);
 
-        return true;
+        return _lotto.id;
     }
 
     // ============================ EXTERNAL VIEW METHODS ============================
     function isLottoId(uint256 _lottoId) external view override returns (bool) {
-        return isPot[_lottoId] == false;
+        Lotto memory _exists = lottos[_lottoId];
+        return
+            _exists.id > 0 &&
+            _exists.creator != address(0) &&
+            _exists.status.isPot == false;
     }
 
     function getLottoById(uint256 _lottoId)
@@ -75,23 +74,14 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Lotto memory)
     {
-        require(isPot[_lottoId] == false, ERROR_32);
-        return
-            Lotto({
-                id: lottoId[_lottoId],
-                creator: creator[_lottoId],
-                creatorShares: creatorShares[_lottoId],
-                startTime: startTime[_lottoId],
-                endTime: endTime[_lottoId],
-                maxNumberOfPlayers: maxNumberOfPlayers[_lottoId],
-                betAmount: betAmount[_lottoId],
-                winningType: winningType[_lottoId],
-                isFinished: isFinished[_lottoId],
-                stakes: stakes[_lottoId],
-                players: players[_lottoId],
-                winner: winner[_lottoId],
-                winning: winning[_lottoId]
-            });
+        Lotto memory _exists = lottos[_lottoId];
+        require(
+            _exists.id > 0 &&
+                _exists.creator != address(0) &&
+                _exists.status.isPot == false,
+            ERROR_32
+        );
+        return _exists;
     }
 
     // ============================ EXTERNAL METHODS ============================
@@ -100,17 +90,18 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        require(isFinished[_lottoId], ERROR_22);
-        require(!isClaimed[_lottoId], ERROR_23);
+        Lotto memory _exists = lottos[_lottoId];
+        require(_exists.status.isFinished, ERROR_22);
+        require(!_exists.status.isPot, ERROR_23);
         require(isWinner[_lottoId][_claimer], ERROR_27);
-        isClaimed[_lottoId] = true;
+        _exists.status.isPot = true;
 
         activeIdsMap[_lottoId] = false;
         completedIds.push(_lottoId);
 
         userClaims[_claimer].push(_lottoId);
 
-        return Claim({winner: winner[_lottoId], winning: winning[_lottoId]});
+        return Claim({winner: _exists.winner, winning: _exists.winning});
     }
 
     function playLotto(
@@ -125,8 +116,9 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         onlyRole(LOTTO_PLAYER)
         returns (bool)
     {
-        stakes[_lottoId] = stakes[_lottoId].add(_betPlaced);
-        players[_lottoId].push(_player);
+        Lotto memory _exists = lottos[_lottoId];
+        _exists.stakes = _exists.stakes.add(_betPlaced);
+        _exists.players[_exists.players.length] = _player;
 
         if (!playedIn[_player][_lottoId]) {
             participated[_player].push(_lottoId);
@@ -139,25 +131,29 @@ contract LottoController is BaseController, AccessControlUpgradeable {
 
     function forceEnd(uint256 _lottoId)
         external
+        view
         override
         onlyRole(ADMIN)
         returns (bool)
     {
-        endTime[_lottoId] = block.timestamp;
+        Lotto memory _exists = lottos[_lottoId];
+        _exists.endTime = block.timestamp;
         return true;
     }
 
     function platformClaim(uint256 _lottoId)
         external
+        view
         override
         returns (Claim memory)
     {
-        require(platformClaimed[_lottoId] == false, ERROR_37);
-        require(startTime[_lottoId] <= block.timestamp, ERROR_14);
-        require(endTime[_lottoId] <= block.timestamp, ERROR_22);
+        Lotto memory _exists = lottos[_lottoId];
+        require(_exists.status.platformClaimed == false, ERROR_37);
+        require(_exists.startTime <= block.timestamp, ERROR_14);
+        require(_exists.endTime <= block.timestamp, ERROR_22);
 
-        platformClaimed[_lottoId] = true;
-        return Claim({winner: address(0), winning: platformShares[_lottoId]});
+        _exists.status.platformClaimed = true;
+        return Claim({winner: address(0), winning: _exists.platformShares});
     }
 
     function creatorClaim(uint256 _lottoId)
@@ -166,75 +162,67 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        require(creatorClaimed[_lottoId] == false, ERROR_37);
-        require(startTime[_lottoId] <= block.timestamp, ERROR_14);
-        require(endTime[_lottoId] <= block.timestamp, ERROR_22);
-        creatorClaimed[_lottoId] = true;
-        return
-            Claim({
-                winner: creator[_lottoId],
-                winning: creatorShares[_lottoId]
-            });
+        Lotto memory _exists = lottos[_lottoId];
+        require(_exists.status.creatorClaimed == false, ERROR_37);
+        require(_exists.startTime <= block.timestamp, ERROR_14);
+        require(_exists.endTime <= block.timestamp, ERROR_22);
+        _exists.status.creatorClaimed = true;
+        return Claim({winner: _exists.creator, winning: _exists.creatorShares});
     }
 
     // ============================ PRIVATE METHODS ============================
     function findLottoWinner(uint256 _lottoId) private {
         uint256 current = block.timestamp;
+        Lotto memory _exists = lottos[_lottoId];
+        if (
+            (!_exists.status.isFinished &&
+                !_exists.status.isPot &&
+                (_exists.winningType == WinningType.NUMBER_OF_PLAYERS &&
+                    _exists.players.length == _exists.maxNumberOfPlayers)) ||
+            (_exists.winningType == WinningType.TIME_BASED &&
+                _exists.endTime <= current)
+        ) {
+            uint256 totalStaked = _exists.stakes;
 
-        if (!isFinished[_lottoId]) {
-            if (!isPot[_lottoId]) {
-                if (
-                    (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS &&
-                        players[_lottoId].length ==
-                        maxNumberOfPlayers[_lottoId]) ||
-                    (winningType[_lottoId] == WinningType.TIME_BASED &&
-                        endTime[_lottoId] <= current)
-                ) {
-                    uint256 totalStaked = stakes[_lottoId];
+            // take platform's share
+            uint256 _platformShare = totalStaked
+                .mul(platformSharePercentage)
+                .div(100);
+            uint256 _creatorShares = totalStaked
+                .mul(creatorSharesPercentage)
+                .div(100);
 
-                    // take platform's share
-                    uint256 _platformShare = totalStaked
-                        .mul(platformSharePercentage)
-                        .div(100);
-                    uint256 _creatorShares = totalStaked
-                        .mul(creatorSharesPercentage)
-                        .div(100);
+            totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
 
-                    totalStaked = totalStaked.sub(_platformShare).sub(
-                        _creatorShares
-                    );
+            bytes32 randBase = keccak256(abi.encode(_exists.players[0]));
+            randBase = keccak256(
+                abi.encode(
+                    randBase,
+                    _exists.players[_exists.players.length.div(2)]
+                )
+            );
+            randBase = keccak256(
+                abi.encode(
+                    randBase,
+                    _exists.players[_exists.players.length.sub(1)]
+                )
+            );
 
-                    bytes32 randBase = keccak256(abi.encode(players[0]));
-                    randBase = keccak256(
-                        abi.encode(
-                            randBase,
-                            players[players[_lottoId].length.div(2)]
-                        )
-                    );
-                    randBase = keccak256(
-                        abi.encode(
-                            randBase,
-                            players[players[_lottoId].length.sub(1)]
-                        )
-                    );
+            uint256 winnerIndex = uint256(
+                keccak256(abi.encode(totalStaked, randBase))
+            ) % (_exists.players.length);
 
-                    uint256 winnerIndex = uint256(
-                        keccak256(abi.encode(totalStaked, randBase))
-                    ) % (players[_lottoId].length);
+            address lottoWinner = _exists.players[winnerIndex];
+            _exists.winner = lottoWinner;
+            _exists.winning = totalStaked;
+            _exists.status.isFinished = true;
 
-                    address lottoWinner = players[_lottoId][winnerIndex];
-                    winner[_lottoId] = lottoWinner;
-                    winning[_lottoId] = totalStaked;
-                    isFinished[_lottoId] = true;
+            isWinner[_lottoId][lottoWinner] = true;
 
-                    isWinner[_lottoId][lottoWinner] = true;
+            _exists.platformShares = _platformShare;
+            _exists.creatorShares = _creatorShares;
 
-                    platformShares[_lottoId] = _platformShare;
-                    creatorShares[_lottoId] = _creatorShares;
-
-                    // TODO: Reward both winner and creator with grotto tokens
-                }
-            }
+            // TODO: Reward both winner and creator with grotto tokens
         }
     }
 }

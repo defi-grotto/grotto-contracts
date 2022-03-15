@@ -10,30 +10,9 @@ export enum PotGuessType {
   ORDER
 }
 
-
-export interface Lotto {
-  id: number;
-  creator?: string;
-  creatorShares: BigNumber;
-  startTime: number;
-  endTime: number;
-  maxNumberOfPlayers: number;
-  betAmount: BigNumber;
-  winningType: WinningType;
-  isFinished: boolean;
-  stakes: BigNumber;
-  players: string[];
-  winner: string;  
-  winning: number;
-}
-
-export interface Pot {
-  lotto: Lotto;
-  potAmount: BigNumber;
-  winningNumbers: number[];
-  winners: string[];
-  winningsPerWinner: number;
-  potGuessType: PotGuessType;
+export enum PotType {
+  MULTIPLE_WINNER,
+  SINGLE_WINNER    
 }
 
 export const platformOwner = "0xac706cE8A9BF27Afecf080fB298d0ee13cfb978A";

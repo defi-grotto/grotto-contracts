@@ -20,7 +20,7 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200000
+        runs: 1000
       }
     }
   },
@@ -28,5 +28,22 @@ module.exports = {
     alphaSort: true,
     runOnCompile: true,
     strict: true
-  }
+  },
+  networks: {
+    tbsc: {
+      url: "https://data-seed-prebsc-2-s3.binance.org:8545/",
+      accounts: ["147d87ddd5baf71ed197ea4fee8710f7f039ec72d0e9ebe5711d13a04f4f92f4"],
+    },
+    xdai: {
+      url: "https://rpc.xdaichain.com/",
+      accounts: ["147d87ddd5baf71ed197ea4fee8710f7f039ec72d0e9ebe5711d13a04f4f92f4"],      
+    },
+    sokol: {
+      url: "https://sokol.poa.network",
+      accounts: ["147d87ddd5baf71ed197ea4fee8710f7f039ec72d0e9ebe5711d13a04f4f92f4"],      
+    }    
+  },
+  mocha: {
+    timeout: 120000
+  },  
 };

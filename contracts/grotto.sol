@@ -13,56 +13,96 @@ contract Grotto is GrottoInterface, Initializable {
     // ============================ VARIABLES ============================
     address private lottoControllerAddress;
     address private potControllerAddress;
+    address private singleWinnerPotControllerAddress;
 
     ControllerInterface private lottoController;
     ControllerInterface private potController;
+    ControllerInterface private singleWinnerPotController;
 
     address owner;
 
     // ============================ INITIALIZER ============================
     function initialize(
         address _lottoControllerAddress,
-        address _potControllerAddress
+        address _potControllerAddress,
+        address _singleWinnerPotControllerAddress
     ) public initializer {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
         lottoController = ControllerInterface(lottoControllerAddress);
         potControllerAddress = _potControllerAddress;
         potController = ControllerInterface(potControllerAddress);
+        singleWinnerPotControllerAddress = _singleWinnerPotControllerAddress;
+        singleWinnerPotController = ControllerInterface(
+            singleWinnerPotControllerAddress
+        );
     }
 
     // ============================ EXTERNAL METHODS ============================
-    function createLotto(Lotto memory _lotto) external payable {
+    function createLotto(
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _maxNumberOfPlayers,
+        WinningType _winningType
+    ) external payable {
+        Lotto memory _lotto;
         _lotto.betAmount = msg.value;
         _lotto.stakes = msg.value;
         _lotto.creator = msg.sender;
+        _lotto.startTime = _startTime;
+        _lotto.endTime = _endTime;
+        _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
+        _lotto.winningType = _winningType;
 
-        uint256 creatorFees = (_lotto.betAmount * 100) /
-            lottoController.getCreatorFeesPercentage();
+        uint256 creatorFees = lottoController.getCreatorFees();
+        _lotto.stakes = msg.value - creatorFees;
         bool sent = false;
         (sent, ) = payable(owner).call{value: creatorFees}("");
         require(sent, "CANCL");
 
-        bool _result = lottoController.addNewLotto(_lotto);
+        uint256 _lottoId = lottoController.addNewLotto(_lotto);
 
-        require(_result, ERROR_9);
-        emit LottoCreated(_lotto);
+        emit LottoCreated(_lottoId);
     }
 
-    function createPot(Pot memory _pot) external payable {
+    function createPot(
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _maxNumberOfPlayers,
+        WinningType _winningType,
+        uint256[] memory _winningNumbers,
+        PotGuessType _pgt,
+        PotType _potType
+    ) external payable {
+        Lotto memory _lotto;
+        Pot memory _pot;        
         _pot.lotto.creator = msg.sender;
         _pot.potAmount = msg.value;
         _pot.lotto.stakes = msg.value;
+        _lotto.startTime = _startTime;
+        _lotto.endTime = _endTime;
+        _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
+        _lotto.winningType = _winningType;
+        _pot.lotto = _lotto;
+        _pot.winningNumbers = _winningNumbers;
+        _pot.potGuessType = _pgt;
+        _pot.potType = _potType;
 
-        uint256 creatorFees = (_pot.potAmount * 100) /
-            potController.getCreatorFeesPercentage();
+
+        ControllerInterface _controller;
+        if (_pot.potType == PotType.MULTIPLE_WINNER) {
+            _controller = potController;
+        } else {
+            _controller = singleWinnerPotController;
+        }
+        uint256 creatorFees = _controller.getCreatorFees();
+        _pot.potAmount = msg.value - creatorFees;
         bool sent = false;
         (sent, ) = payable(owner).call{value: creatorFees}("");
         require(sent, "CANCL");
 
-        bool _result = potController.addNewPot(_pot);
-        require(_result, ERROR_13);
-        emit PotCreated(_pot);
+        uint256 _potId = _controller.addNewPot(_pot);
+        emit PotCreated(_potId);
     }
 
     function playLotto(uint256 _lottoId) external payable {
@@ -75,11 +115,27 @@ contract Grotto is GrottoInterface, Initializable {
         emit BetPlaced(_lottoId, msg.value, msg.sender);
     }
 
+    function playSingleWinnerPot(uint256 _potId, uint256[] memory _guesses)
+        external
+        payable
+    {
+        ControllerInterface _controller = singleWinnerPotController;
+        bool _result = _controller.playPot(
+            _potId,
+            msg.value,
+            msg.sender,
+            _guesses
+        );
+        require(_result, ERROR_24);
+        emit BetPlaced(_potId, msg.value, msg.sender);
+    }
+
     function playPot(uint256 _potId, uint256[] memory _guesses)
         external
         payable
     {
-        bool _result = potController.playPot(
+        ControllerInterface _controller = potController;
+        bool _result = _controller.playPot(
             _potId,
             msg.value,
             msg.sender,
@@ -146,7 +202,8 @@ contract Grotto is GrottoInterface, Initializable {
     }
 
     function getPotById(uint256 _potId) external view returns (Pot memory) {
-        return potController.getPotById(_potId);
+        ControllerInterface _controller = _getController(_potId);
+        return _controller.getPotById(_potId);
     }
 
     function getTotalStaked(uint256 _lottoId) external view returns (uint256) {
@@ -161,18 +218,13 @@ contract Grotto is GrottoInterface, Initializable {
         returns (ControllerInterface)
     {
         ControllerInterface _controller;
-        if (
-            address(lottoController) != address(0) &&
-            lottoController.isLottoId(_lottoId)
-        ) {
+        if (lottoController.isLottoId(_lottoId)) {
             _controller = lottoController;
-        } else if (
-            address(potController) != address(0) &&
-            potController.isPotId(_lottoId)
-        ) {
+        } else if (potController.isPotId(_lottoId)) {
             _controller = potController;
+        } else if (singleWinnerPotController.isPotId(_lottoId)) {
+            _controller = singleWinnerPotController;
         }
-
         return _controller;
     }
 }

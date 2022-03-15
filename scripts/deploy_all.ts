@@ -11,9 +11,14 @@ const main = async () => {
   const potController = await upgrades.deployProxy(PotController);
   console.log(`PotController Deployed to ${potController.address}`);
 
+  const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+  const swPotController = await upgrades.deployProxy(SingleWinnerPotController);
+  console.log(`SingleWinnerPotController Deployed to ${swPotController.address}`);  
+
   const grotto = await upgrades.deployProxy(Grotto, [
     lottoController.address,
     potController.address,
+    swPotController.address,
   ]);
 
   console.log(`Grotto Deployed to ${grotto.address}`);

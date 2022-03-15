@@ -3,6 +3,7 @@ pragma solidity 0.8.4;
 
 import "./controller.interface.sol";
 import "../errors.sol";
+import "../models.sol";
 
 abstract contract BaseController is ControllerInterface {
     bytes32 public constant LOTTO_CREATOR = keccak256("LOTTO_CREATOR_ROLE");
@@ -10,71 +11,32 @@ abstract contract BaseController is ControllerInterface {
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
     mapping(uint256 => bool) activeIdsMap;
+    mapping(uint256 => Lotto) lottos;
+    mapping(uint256 => Pot) pots;
 
-    uint256 autoIncrementId = 0;
+    uint256 autoIncrementId;
     uint256[] completedIds;
 
     // games that the player played in
     mapping(address => mapping(uint256 => bool)) playedIn;
+    mapping(uint256 => mapping(address => bool)) isWinner;
     mapping(address => uint256[]) participated;
 
     // games that the player has claimed
     mapping(address => uint256[]) userClaims;
 
     address internal platformOwner;
-    mapping(uint256 => uint256) internal platformShares;
-    mapping(uint256 => uint256) internal creatorShares;
 
-    uint256 internal platformSharePercentage = 10;
-    uint256 internal creatorFeesPercentage = 10;
-    uint256 internal creatorSharesPercentage = 20;
-
-    // uint256 internal maxWinningNumbers;
-    // uint256 internal maxWinners;
-
-    // Lotto Data Structure
-    // id of the lotto/pot
-    mapping(uint256 => uint256) internal lottoId;
-    mapping(uint256 => address) internal creator;
-    mapping(uint256 => uint256) internal startTime;
-    mapping(uint256 => uint256) internal endTime;
-    // for a no of players based lotto/pot, how many players before winner is calculated and lotto stopped
-    mapping(uint256 => uint256) internal maxNumberOfPlayers;
-    // how much a person must bet
-    mapping(uint256 => uint256) internal betAmount;
-    /*
-        Type of Winning
-            * Time Based: 
-                * For lotto: it is finished after X time, the winner is randomly selected
-                * For pot: if a winner is not found after X time, pot creator gets all the stakes
-                    if a winner is found, they get the potAmount + stakes...there can be no multiple winners in a pot
-            * Number of players: 
-                For lotto: it is finished after X number of people played, the winner is randomly selected
-                For pot: if a winner is not found after X number of players have played, pot creator gets all the stakes
-                    if a winner is found, they get the potAmount + stakes...there can be no multiple winners in a pot
-    */
-    mapping(uint256 => WinningType) internal winningType;
-    mapping(uint256 => bool) internal isFinished;
-    mapping(uint256 => bool) internal isClaimed;
-    mapping(uint256 => bool) internal creatorClaimed;
-    mapping(uint256 => bool) internal platformClaimed;
-    // all the money staked on the lotto/pot so far
-    mapping(uint256 => uint256) internal stakes;
-    // all the players in the lotto/pot
-    mapping(uint256 => address[]) internal players;
-    // list of winners
-    mapping(uint256 => address) internal winner;
-    // each winner's winning
-    mapping(uint256 => uint256) internal winning;
-
-    mapping(uint256 => bool) internal isPot;
-    mapping(uint256 => mapping(address => bool)) internal isWinner;
+    uint256 internal platformSharePercentage;
+    uint256 internal creatorFees;
+    uint256 internal creatorSharesPercentage;
 
     // ============================ MODIFIERS============================
     modifier is_valid_lotto(Lotto memory _lotto) {
-        require(_lotto.betAmount > 0, ERROR_7);
+        Lotto memory _exists = lottos[_lotto.id];
 
-        require(creator[_lotto.id] != _lotto.creator, ERROR_4);
+        require(_lotto.betAmount > 0, ERROR_7);
+        require(_exists.creator != _lotto.creator, ERROR_4);
 
         if (_lotto.winningType == WinningType.TIME_BASED) {
             require(_lotto.startTime < _lotto.endTime, ERROR_6);
@@ -92,20 +54,22 @@ abstract contract BaseController is ControllerInterface {
         uint256 _betPlaced,
         address _player
     ) {
-        require(creator[_lottoId] != address(0), ERROR_19);
-        require(isFinished[_lottoId] == false, ERROR_17);
-        require(_betPlaced >= betAmount[_lottoId], ERROR_18);
-        require(_player != creator[_lottoId], ERROR_21);
+        Lotto memory _exists = lottos[_lottoId];
+        require(_exists.creator != address(0), ERROR_19);
+        require(_exists.status.isFinished == false, ERROR_17);
+        require(_betPlaced >= _exists.betAmount, ERROR_18);
+        require(_player != _exists.creator, ERROR_21);
         _;
     }
 
     modifier still_running(uint256 _lottoId) {
-        if (winningType[_lottoId] == WinningType.TIME_BASED) {
-            require(startTime[_lottoId] <= block.timestamp, ERROR_14);
-            require(endTime[_lottoId] > block.timestamp, ERROR_15);
-        } else if (winningType[_lottoId] == WinningType.NUMBER_OF_PLAYERS) {
+        Lotto memory _exists = lottos[_lottoId];
+        if (_exists.winningType == WinningType.TIME_BASED) {
+            require(_exists.startTime <= block.timestamp, ERROR_14);
+            require(_exists.endTime > block.timestamp, ERROR_15);
+        } else if (_exists.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                players[_lottoId].length < maxNumberOfPlayers[_lottoId],
+                _exists.players.length < _exists.maxNumberOfPlayers,
                 ERROR_16
             );
         }
@@ -119,11 +83,12 @@ abstract contract BaseController is ControllerInterface {
         override
         returns (uint256)
     {
-        return stakes[_lottoId];
+        Lotto memory _exists = lottos[_lottoId];
+        return _exists.stakes;
     }
 
-    function getCreatorFeesPercentage() public view override returns (uint256) {
-        return creatorFeesPercentage;
+    function getCreatorFees() public view override returns (uint256) {
+        return creatorFees;
     }
 
     // ============================ VIRTUAL METHODS, NEEDS OVERRIDING ============================
@@ -131,7 +96,7 @@ abstract contract BaseController is ControllerInterface {
         external
         virtual
         override
-        returns (bool)
+        returns (uint256)
     {}
 
     function getLottoById(uint256)
@@ -150,7 +115,7 @@ abstract contract BaseController is ControllerInterface {
 
     function isLottoId(uint256) external view virtual override returns (bool) {}
 
-    function addNewPot(Pot memory) external virtual override returns (bool) {}
+    function addNewPot(Pot memory) external virtual override returns (uint256) {}
 
     function playPot(
         uint256,

@@ -92,7 +92,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
     {
         Pot memory _exists = pots[_potId];
         _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
-        _exists.lotto.players[_exists.lotto.players.length] = _player;
+        players[_potId].push(_player);
 
         if (!playedIn[_player][_potId]) {
             participated[_player].push(_potId);

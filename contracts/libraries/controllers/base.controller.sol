@@ -21,7 +21,10 @@ abstract contract BaseController is ControllerInterface {
     // games that the player played in
     mapping(address => mapping(uint256 => bool)) playedIn;
     mapping(uint256 => mapping(address => bool)) isWinner;
+    mapping(uint256 => mapping(address => bool)) isClaimed;
     mapping(address => uint256[]) participated;
+
+    mapping(uint256 => address[]) players;
 
     // games that the player has claimed
     mapping(address => uint256[]) userClaims;
@@ -67,10 +70,9 @@ abstract contract BaseController is ControllerInterface {
         Lotto memory _exists = lottos[_lottoId];
         if (_exists.winningType == WinningType.TIME_BASED) {
             require(_exists.startTime <= block.timestamp, ERROR_14);
-            require(_exists.endTime > block.timestamp, ERROR_15);
         } else if (_exists.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                _exists.players.length < _exists.maxNumberOfPlayers,
+                players[_lottoId].length < _exists.maxNumberOfPlayers,
                 ERROR_16
             );
         }

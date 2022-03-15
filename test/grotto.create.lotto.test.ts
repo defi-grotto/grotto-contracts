@@ -9,7 +9,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 
 describe.only("Grotto: Create Lotto Tests", () => {
   let accounts: SignerWithAddress[];
-  const address0 = "0x0000000000000000000000000000000000000000";  
+  const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
 
   const lottoIds = [];
@@ -23,13 +23,13 @@ describe.only("Grotto: Create Lotto Tests", () => {
     grotto = await upgrades.deployProxy(Grotto, [
       controller.address,
       address0,
-      address0
-    ]);    
+      address0,
+    ]);
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
     await controller.grantAdmin(grotto.address);
-      
+
     console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
     console.log(`Grotto Deployed to ${grotto.address}`);
@@ -49,10 +49,9 @@ describe.only("Grotto: Create Lotto Tests", () => {
       // uint256 _endTime,
       // uint256 _maxNumberOfPlayers,
       // WinningType _winningType
-      await expect(grotto.createLotto(0, 0, 10, WinningType.NUMBER_OF_PLAYERS, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      await expect(
+        grotto.createLotto(0, 0, 10, WinningType.NUMBER_OF_PLAYERS, overrides)
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(1);
     } catch (error) {
       console.log(error);
@@ -66,9 +65,9 @@ describe.only("Grotto: Create Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
 
-      await expect(grotto.createLotto(0, 0, 0, WinningType.NUMBER_OF_PLAYERS, overrides)).to.be.revertedWith(
-        "Number of players must be greater than 0"
-      );
+      await expect(
+        grotto.createLotto(0, 0, 0, WinningType.NUMBER_OF_PLAYERS, overrides)
+      ).to.be.revertedWith("Number of players must be greater than 0");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -77,15 +76,14 @@ describe.only("Grotto: Create Lotto Tests", () => {
 
   it("should not create a lotto if bet amount is not greater than 0", async () => {
     try {
-      await expect(grotto.createLotto(0, 0, 10, WinningType.NUMBER_OF_PLAYERS)).to.be.revertedWith(
-        "Can not create a lotto with 0 bet amount"
-      );
+      await expect(
+        grotto.createLotto(0, 0, 10, WinningType.NUMBER_OF_PLAYERS)
+      ).to.be.revertedWith("Can not create a lotto with 0 bet amount");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
   });
-
 
   it("should not create a lotto if winning type is time based and start time is not less than end time", async () => {
     try {
@@ -93,9 +91,9 @@ describe.only("Grotto: Create Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
 
-      await expect(grotto.createLotto(10, 5, 10, WinningType.TIME_BASED, overrides)).to.be.revertedWith(
-        "Start time must be less than end time"
-      );
+      await expect(
+        grotto.createLotto(10, 5, 10, WinningType.TIME_BASED, overrides)
+      ).to.be.revertedWith("Start time must be less than end time");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -108,9 +106,9 @@ describe.only("Grotto: Create Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
 
-      await expect(grotto.createLotto(10, 500, 10, WinningType.TIME_BASED, overrides)).to.be.revertedWith(
-        "End time must be in the future"
-      );
+      await expect(
+        grotto.createLotto(10, 500, 10, WinningType.TIME_BASED, overrides)
+      ).to.be.revertedWith("End time must be in the future");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -120,15 +118,20 @@ describe.only("Grotto: Create Lotto Tests", () => {
   it("should create a lotto with winning type = time based", async () => {
     try {
       const overrides = {
-        value: ethers.utils.parseEther("0.01"),
+        value: ethers.utils.parseEther("0.1"),
       };
 
       const endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours;
-      const startTime =  Math.floor(new Date().getTime() / 1000);
-      await expect(grotto.createLotto(startTime, endTime, 10, WinningType.TIME_BASED, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      const startTime = Math.floor(new Date().getTime() / 1000);
+      await expect(
+        grotto.createLotto(
+          startTime,
+          endTime,
+          10,
+          WinningType.TIME_BASED,
+          overrides
+        )
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(2);
     } catch (error) {
       console.log(error);
@@ -141,9 +144,15 @@ describe.only("Grotto: Create Lotto Tests", () => {
       const lotto = await grotto.getLottoById(1);
       expect(lotto.id.toNumber()).to.be.eq(1);
       expect(lotto.creator).to.be.eq(accounts[0].address);
-      const lotto2 = await grotto.getLottoById(1);
-      expect(lotto2.id.toNumber()).to.be.eq(1);
-      expect(lotto2.creator).to.be.eq(accounts[0].address);      
+      expect(ethers.utils.formatEther(lotto.betAmount)).to.be.eq("0.01");
+      expect(ethers.utils.formatEther(lotto.stakes)).to.be.eq("0.01");
+      expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);      
+      const lotto2 = await grotto.getLottoById(2);
+      expect(lotto2.id.toNumber()).to.be.eq(2);
+      expect(lotto2.creator).to.be.eq(accounts[0].address);
+      expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.1");
+      expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.1");
+      expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);      
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

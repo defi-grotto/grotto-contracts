@@ -69,25 +69,26 @@ contract Grotto is GrottoInterface, Initializable {
         uint256 _startTime,
         uint256 _endTime,
         uint256 _maxNumberOfPlayers,
+        uint256 _betAmount,
         WinningType _winningType,
         uint256[] memory _winningNumbers,
         PotGuessType _pgt,
         PotType _potType
     ) external payable {
         Lotto memory _lotto;
-        Pot memory _pot;        
-        _pot.lotto.creator = msg.sender;
+        Pot memory _pot;
+        _lotto.creator = msg.sender;
         _pot.potAmount = msg.value;
-        _pot.lotto.stakes = msg.value;
+        _lotto.stakes = msg.value;
         _lotto.startTime = _startTime;
         _lotto.endTime = _endTime;
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
         _lotto.winningType = _winningType;
+        _lotto.betAmount = _betAmount;
         _pot.lotto = _lotto;
         _pot.winningNumbers = _winningNumbers;
         _pot.potGuessType = _pgt;
         _pot.potType = _potType;
-
 
         ControllerInterface _controller;
         if (_pot.potType == PotType.MULTIPLE_WINNER) {
@@ -200,7 +201,7 @@ contract Grotto is GrottoInterface, Initializable {
     function getCompletedLottos() external view returns (uint256[] memory) {
         ControllerInterface _controller = lottoController;
         return _controller.getCompletedLottos();
-    }    
+    }
 
     // ============================ EXTERNAL VIEW METHODS ============================
     function getLottoById(uint256 _lottoId)
@@ -232,9 +233,11 @@ contract Grotto is GrottoInterface, Initializable {
             _controller = lottoController;
         } else if (potController.isPotId(_lottoId)) {
             _controller = potController;
-        } else if (singleWinnerPotController.isPotId(_lottoId)) {
-            _controller = singleWinnerPotController;
         }
+        // else if (singleWinnerPotController.isPotId(_lottoId)) {
+        //     _controller = singleWinnerPotController;
+        // }
+
         return _controller;
     }
 }

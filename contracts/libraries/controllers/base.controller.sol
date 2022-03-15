@@ -4,6 +4,7 @@ pragma solidity 0.8.4;
 import "./controller.interface.sol";
 import "../errors.sol";
 import "../models.sol";
+import "hardhat/console.sol";
 
 abstract contract BaseController is ControllerInterface {
     bytes32 public constant LOTTO_CREATOR = keccak256("LOTTO_CREATOR_ROLE");
@@ -14,7 +15,7 @@ abstract contract BaseController is ControllerInterface {
     mapping(uint256 => Lotto) lottos;
     mapping(uint256 => Pot) pots;
 
-    uint256 autoIncrementId;
+    uint256 private autoIncrementId;
     uint256[] completedIds;
     uint256[] allIds;
 
@@ -37,10 +38,7 @@ abstract contract BaseController is ControllerInterface {
 
     // ============================ MODIFIERS============================
     modifier is_valid_lotto(Lotto memory _lotto) {
-        Lotto memory _exists = lottos[_lotto.id];
-
         require(_lotto.betAmount > 0, ERROR_7);
-        require(_exists.creator != _lotto.creator, ERROR_4);
 
         if (_lotto.winningType == WinningType.TIME_BASED) {
             require(_lotto.startTime < _lotto.endTime, ERROR_6);
@@ -90,15 +88,15 @@ abstract contract BaseController is ControllerInterface {
         return _exists.stakes;
     }
 
-    function getCreatorFees() public view override returns (uint256) {
+    function getCreatorFees() external view override returns (uint256) {
         return creatorFees;
     }
 
-    function getAllLottos() public view override returns (uint256[] memory) {
+    function getAllLottos() external view override returns (uint256[] memory) {
         return allIds;
     }
 
-    function getCompletedLottos() public view override returns (uint256[] memory) {
+    function getCompletedLottos() external view override returns (uint256[] memory) {
         return completedIds;
     }    
 
@@ -144,4 +142,10 @@ abstract contract BaseController is ControllerInterface {
     {}
 
     function isPotId(uint256) external view virtual override returns (bool) {}
+
+
+    // ============================ PUBLIC METHODS ============================
+    function getAutoIncrementId() public virtual returns (uint256) {
+        return ++autoIncrementId;
+    }
 }

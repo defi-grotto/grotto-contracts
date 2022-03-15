@@ -20,7 +20,6 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         platformSharePercentage = 10;
         creatorFees = 0;
         creatorSharesPercentage = 20;
-        autoIncrementId = 0;
     }
 
     // ============================ GRANTS ============================
@@ -48,7 +47,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         is_valid_lotto(_lotto)
         returns (uint256)
     {
-        _lotto.id = ++autoIncrementId;
+        _lotto.id = getAutoIncrementId();
         _lotto.status.isPot = false;
 
         activeIdsMap[_lotto.id] = true;

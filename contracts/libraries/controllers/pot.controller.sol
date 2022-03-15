@@ -24,7 +24,6 @@ contract PotController is BaseController, AccessControlUpgradeable {
         platformSharePercentage = 10;
         creatorFees = 0;
         creatorSharesPercentage = 20;
-        autoIncrementId = 0;
     }
 
     // ============================ GRANTS ============================
@@ -50,8 +49,6 @@ contract PotController is BaseController, AccessControlUpgradeable {
 
     // ============================ MODIFIERS ============================
     modifier is_valid_pot(Pot memory _pot) {
-        Pot memory _exists = pots[_pot.lotto.id];
-        require(_exists.lotto.creator != _pot.lotto.creator, ERROR_4);
         require(_pot.potAmount > 0, ERROR_11);
         require(_pot.winningNumbers.length > 0, ERROR_12);
         require(_pot.winningNumbers.length <= 10, ERROR_33);
@@ -67,13 +64,15 @@ contract PotController is BaseController, AccessControlUpgradeable {
         is_valid_pot(_pot)
         returns (uint256)
     {
-        _pot.lotto.id = ++autoIncrementId;
+        _pot.lotto.id = getAutoIncrementId();
         for (uint256 i = 0; i < _pot.winningNumbers.length; i = i.add(1)) {
             winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
         }
-        _pot.lotto.status.isPot= true;
+        _pot.lotto.status.isPot = true;
         activeIdsMap[_pot.lotto.id] = true;
         allIds.push(_pot.lotto.id);
+
+        pots[_pot.lotto.id] = _pot;
         return _pot.lotto.id;
     }
 
@@ -100,6 +99,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
         }
 
         checkIfWinner(_potId, _player, _guesses);
+
+        pots[_potId] = _exists;
         return true;
     }
 
@@ -131,6 +132,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
             _exists.winners[_exists.winners.length] = _player;
             isWinner[_potId][_player] = true;
         }
+
+        pots[_potId] = _exists;
     }
 
     function claimWinning(uint256 _potId, address _claimer)
@@ -179,24 +182,26 @@ contract PotController is BaseController, AccessControlUpgradeable {
         completedIds.push(_potId);
 
         userClaims[_claimer].push(_potId);
+
+        pots[_potId] = _exists;
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
     function forceEnd(uint256 _potId)
         external
-        view
         override
         onlyRole(ADMIN)
         returns (bool)
     {
         Pot memory _exists = pots[_potId];
         _exists.lotto.endTime = block.timestamp;
+
+        pots[_potId] = _exists;
         return true;
     }
 
     function platformClaim(uint256 _potId)
         external
-        view
         override
         returns (Claim memory)
     {
@@ -206,13 +211,14 @@ contract PotController is BaseController, AccessControlUpgradeable {
         require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
 
         _exists.lotto.status.platformClaimed = true;
+
+        pots[_potId] = _exists;
         return
             Claim({winner: address(0), winning: _exists.lotto.platformShares});
     }
 
     function creatorClaim(uint256 _potId)
         external
-        view
         override
         returns (Claim memory)
     {
@@ -240,6 +246,9 @@ contract PotController is BaseController, AccessControlUpgradeable {
         }
 
         _exists.lotto.status.creatorClaimed = true;
+
+        pots[_potId] = _exists;
+
         return
             Claim({
                 winner: _exists.lotto.creator,
@@ -253,7 +262,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         return
             _exists.lotto.id > 0 &&
             _exists.lotto.creator != address(0) &&
-            _exists.lotto.status.isPot== true &&
+            _exists.lotto.status.isPot == true &&
             _exists.potType == PotType.MULTIPLE_WINNER;
     }
 
@@ -267,7 +276,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         require(
             _exists.lotto.id > 0 &&
                 _exists.lotto.creator != address(0) &&
-                _exists.lotto.status.isPot== true &&
+                _exists.lotto.status.isPot == true &&
                 _exists.potType == PotType.MULTIPLE_WINNER,
             ERROR_31
         );

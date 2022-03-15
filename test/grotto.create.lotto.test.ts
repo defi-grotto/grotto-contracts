@@ -67,7 +67,7 @@ describe("Grotto: Create Lotto Tests", () => {
 
       await expect(
         grotto.createLotto(0, 0, 0, WinningType.NUMBER_OF_PLAYERS, overrides)
-      ).to.be.revertedWith("Number of players must be greater than 0");
+      ).to.be.revertedWith("Inv. No. of players");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -78,7 +78,7 @@ describe("Grotto: Create Lotto Tests", () => {
     try {
       await expect(
         grotto.createLotto(0, 0, 10, WinningType.NUMBER_OF_PLAYERS)
-      ).to.be.revertedWith("Can not create a lotto with 0 bet amount");
+      ).to.be.revertedWith("Inv. lotto bet amount");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

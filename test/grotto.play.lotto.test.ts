@@ -7,7 +7,7 @@ import { platformOwner, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe.only("Grotto: Play Lotto Tests", () => {
+describe("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -25,9 +25,12 @@ describe.only("Grotto: Play Lotto Tests", () => {
     const LottoController = await ethers.getContractFactory("LottoController");
     const controller = await upgrades.deployProxy(LottoController);
 
+    const PotController = await ethers.getContractFactory("PotController");
+    const potController = await upgrades.deployProxy(PotController);
+
     grotto = await upgrades.deployProxy(Grotto, [
       controller.address,
-      address0,
+      potController.address,
       address0,
     ]);
 

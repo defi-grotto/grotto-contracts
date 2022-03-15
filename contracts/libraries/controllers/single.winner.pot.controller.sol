@@ -24,7 +24,6 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         platformSharePercentage = 10;
         creatorFees = 0;
         creatorSharesPercentage = 20;
-        autoIncrementId = 0;
     }
 
     // ============================ GRANTS ============================
@@ -67,7 +66,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         is_valid_pot(_pot)
         returns (uint256)
     {
-        _pot.lotto.id = ++autoIncrementId;
+        _pot.lotto.id = getAutoIncrementId();
         for (uint256 i = 0; i < _pot.winningNumbers.length; i = i.add(1)) {
             winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
         }

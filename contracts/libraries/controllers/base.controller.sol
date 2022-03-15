@@ -16,6 +16,7 @@ abstract contract BaseController is ControllerInterface {
 
     uint256 autoIncrementId;
     uint256[] completedIds;
+    uint256[] allIds;
 
     // games that the player played in
     mapping(address => mapping(uint256 => bool)) playedIn;
@@ -90,6 +91,14 @@ abstract contract BaseController is ControllerInterface {
     function getCreatorFees() public view override returns (uint256) {
         return creatorFees;
     }
+
+    function getAllLottos() public view override returns (uint256[] memory) {
+        return allIds;
+    }
+
+    function getCompletedLottos() public view override returns (uint256[] memory) {
+        return completedIds;
+    }    
 
     // ============================ VIRTUAL METHODS, NEEDS OVERRIDING ============================
     function addNewLotto(Lotto memory)

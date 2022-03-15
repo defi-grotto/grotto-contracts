@@ -52,8 +52,10 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         _lotto.status.isPot = false;
 
         activeIdsMap[_lotto.id] = true;
+        allIds.push(_lotto.id);
 
         lottos[_lotto.id] = _lotto;
+
         emit LottoCreated(_lotto.id);
 
         return _lotto.id;

@@ -73,6 +73,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         }
         _pot.lotto.status.isPot= true;
         activeIdsMap[_pot.lotto.id] = true;
+        allIds.push(_pot.lotto.id);
         return _pot.lotto.id;
     }
 

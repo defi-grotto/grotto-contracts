@@ -12,7 +12,7 @@ describe.only("Grotto: Create Lotto Tests", () => {
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
 
-  const lottoIds = [];
+  const lottoIds: Array<number> = [];
   before(async () => {
     accounts = await ethers.getSigners();
 
@@ -153,6 +153,13 @@ describe.only("Grotto: Create Lotto Tests", () => {
       expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.1");
       expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.1");
       expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);      
+
+      const allLottos: Array<BigNumber> = await grotto.getAllLottos();
+      let index = 0;
+      for(let l of allLottos) {
+        expect(l).to.be.eq(lottoIds[index]);
+        index++;
+      }
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

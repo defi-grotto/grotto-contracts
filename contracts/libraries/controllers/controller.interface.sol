@@ -44,6 +44,10 @@ interface ControllerInterface {
 
     function getTotalStaked(uint256 lottoId) external view returns (uint256);
 
+    function getAllLottos() external view returns (uint256[] memory);
+
+    function getCompletedLottos() external view returns (uint256[] memory);
+
     function getCreatorFees() external view returns (uint256);
 
     event LottoCreated(uint256 indexed lottoId);

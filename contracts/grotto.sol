@@ -192,6 +192,16 @@ contract Grotto is GrottoInterface, Initializable {
         require(_controller.forceEnd(_lottoId), ERROR_29);
     }
 
+    function getAllLottos() external view returns (uint256[] memory) {
+        ControllerInterface _controller = lottoController;
+        return _controller.getAllLottos();
+    }
+
+    function getCompletedLottos() external view returns (uint256[] memory) {
+        ControllerInterface _controller = lottoController;
+        return _controller.getCompletedLottos();
+    }    
+
     // ============================ EXTERNAL VIEW METHODS ============================
     function getLottoById(uint256 _lottoId)
         external

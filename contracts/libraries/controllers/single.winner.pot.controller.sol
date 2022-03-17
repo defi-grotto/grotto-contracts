@@ -4,6 +4,7 @@ pragma solidity 0.8.4;
 import "../models.sol";
 import "./base.controller.sol";
 import "../errors.sol";
+import "./interface/storage.interface.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -17,13 +18,15 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
     mapping(uint256 => mapping(address => bool)) private winningClaimed;
 
+    StorageInterface private storageController;
+    address private storageControllerAddress;
+
     // ============================ INITIALIZER ============================
-    function initialize() public initializer {
+    function initialize(address _storageControllerAddress) public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
-        platformSharePercentage = 10;
-        creatorFees = 0;
-        creatorSharesPercentage = 20;
+        storageControllerAddress = _storageControllerAddress;
+        storageController = StorageInterface(_storageControllerAddress);        
     }
 
     // ============================ GRANTS ============================
@@ -49,7 +52,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
     // ============================ MODIFIERS ============================
     modifier is_valid_pot(Pot memory _pot) {
-        Pot memory _exists = pots[_pot.lotto.id];
+        Pot memory _exists = storageController.getPotById(_pot.lotto.id);
         require(_exists.lotto.creator != _pot.lotto.creator, ERROR_4);
         require(_pot.potAmount > 0, ERROR_11);
         require(_pot.winningNumbers.length > 0, ERROR_12);
@@ -62,17 +65,32 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         external
         override
         onlyRole(LOTTO_CREATOR)
-        is_valid_lotto(_pot.lotto)
-        is_valid_pot(_pot)
         returns (uint256)
     {
-        _pot.lotto.id = getAutoIncrementId();
+        Lotto memory _lotto = _pot.lotto;
+        require(_lotto.betAmount > 0, ERROR_7);
+
+        if (_lotto.winningType == WinningType.TIME_BASED) {
+            require(_lotto.startTime < _lotto.endTime, ERROR_6);
+            require(_lotto.endTime > block.timestamp, ERROR_10);
+        }
+
+        if (_lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
+            require(_lotto.maxNumberOfPlayers > 0, ERROR_8);
+        }
+
+        require(_pot.potAmount > 0, ERROR_11);
+        require(_pot.winningNumbers.length > 0, ERROR_12);
+        require(_pot.winningNumbers.length <= 10, ERROR_33);
+
+        _pot.lotto.id = storageController.getAutoIncrementId();
         for (uint256 i = 0; i < _pot.winningNumbers.length; i = i.add(1)) {
             winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
         }
-        _pot.lotto.status.isPot= true;
-        activeIdsMap[_pot.lotto.id] = true;
-        allIds.push(_pot.lotto.id);
+        _pot.lotto.status.isPot = true;
+        storageController.setId(_pot.lotto.id);
+
+        storageController.setPot(_pot.lotto.id, _pot);
         return _pot.lotto.id;
     }
 
@@ -81,24 +99,28 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         uint256 _betPlaced,
         address _player,
         uint256[] memory _guesses
-    )
-        external
-        override
-        can_play_lotto(_potId, _betPlaced, _player)
-        still_running(_potId)
-        onlyRole(LOTTO_PLAYER)
-        returns (bool)
-    {
-        Pot memory _exists = pots[_potId];
-        _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
-        players[_potId].push(_player);
+    ) external override onlyRole(LOTTO_PLAYER) returns (bool) {
+        Pot memory _exists = storageController.getPotById(_potId);
 
-        if (!playedIn[_player][_potId]) {
-            participated[_player].push(_potId);
-            playedIn[_player][_potId] = true;
+        if (_exists.lotto.winningType == WinningType.TIME_BASED) {
+            require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
+        } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
+            require(
+                storageController.getPlayers(_potId).length < _exists.lotto.maxNumberOfPlayers,
+                ERROR_16
+            );
         }
+        require(_exists.lotto.creator != address(0), ERROR_19);
+        require(_exists.lotto.status.isFinished == false, ERROR_17);
+        require(_betPlaced >= _exists.lotto.betAmount, ERROR_18);
+        require(_player != _exists.lotto.creator, ERROR_21);
+
+        _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
+        storageController.setPlayer(_potId, _player);
 
         checkIfWinner(_potId, _player, _guesses);
+
+        storageController.setPot(_potId, _exists);
         return true;
     }
 
@@ -107,7 +129,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         address _player,
         uint256[] memory _guesses
     ) private {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         bool _won = true;
         if (_exists.potGuessType == PotGuessType.NUMBERS) {
             // just check that all guesses exists in winning numbers
@@ -128,7 +150,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
         if (_won) {
             _exists.lotto.winner = _player;
-            isWinner[_potId][_player] = true;
+            storageController.setIsWinner(_potId, _player, true);
             _exists.lotto.status.isFinished = true;
         }
     }
@@ -138,11 +160,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
 
-        require(isWinner[_potId][_claimer], ERROR_27);
+        require(storageController.getIsWinner(_potId, _claimer), ERROR_27);
         require(winningClaimed[_potId][_claimer] == false, ERROR_26);
 
         if (_exists.lotto.status.isClaimed == false) {
@@ -150,12 +172,12 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
             uint256 _totalStaked = _exists.lotto.stakes;
             // take platform's share
             uint256 _platformShare = _totalStaked
-                .mul(platformSharePercentage)
+                .mul(storageController.getPlatformSharePercentage())
                 .div(100);
 
             uint256 _totalWinners = 1;
             uint256 _creatorShare = _totalStaked
-                .mul(creatorSharesPercentage)
+                .mul(storageController.getCreatorSharesPercentage())
                 .div(100);
 
             if (_totalWinners <= 0) {
@@ -174,35 +196,31 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
         winningClaimed[_potId][_claimer] = true;
         _exists.lotto.status.isFinished = true;
+        
+        storageController.setCompletedId(_potId);
 
-        activeIdsMap[_potId] = false;
-        completedIds.push(_potId);
-
-        userClaims[_claimer].push(_potId);
-
-        return
-            Claim({winner: _claimer, winning: _exists.winningsPerWinner});
+        return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
     function forceEnd(uint256 _potId)
         external
-        override
         view
+        override
         onlyRole(ADMIN)
         returns (bool)
     {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         _exists.lotto.endTime = block.timestamp;
         return true;
     }
 
     function platformClaim(uint256 _potId)
         external
-        override
         view
+        override
         returns (Claim memory)
     {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         require(_exists.lotto.status.platformClaimed == false, ERROR_37);
         require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
@@ -214,11 +232,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
     function creatorClaim(uint256 _potId)
         external
-        override
         view
+        override
         returns (Claim memory)
     {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         require(_exists.lotto.status.creatorClaimed == false, ERROR_37);
         require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
@@ -228,11 +246,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         } else {
             uint256 _totalStaked = _exists.lotto.stakes;
             uint256 _platformShare = _totalStaked
-                .mul(platformSharePercentage)
+                .mul(storageController.getPlatformSharePercentage())
                 .div(100);
 
             uint256 _creatorShare = _totalStaked
-                .mul(creatorSharesPercentage)
+                .mul(storageController.getCreatorSharesPercentage())
                 .div(100);
 
             _creatorShare = _totalStaked.sub(_platformShare);
@@ -251,11 +269,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
     // ============================ EXTERNAL VIEW METHODS ============================
     function isPotId(uint256 _potId) external view override returns (bool) {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         return
             _exists.lotto.id > 0 &&
             _exists.lotto.creator != address(0) &&
-            _exists.lotto.status.isPot== true &&
+            _exists.lotto.status.isPot == true &&
             _exists.potType == PotType.SINGLE_WINNER;
     }
 
@@ -265,11 +283,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
         override
         returns (Pot memory)
     {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         require(
             _exists.lotto.id > 0 &&
                 _exists.lotto.creator != address(0) &&
-                _exists.lotto.status.isPot== true &&
+                _exists.lotto.status.isPot == true &&
                 _exists.potType == PotType.MULTIPLE_WINNER,
             ERROR_31
         );
@@ -277,7 +295,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
     }
 
     function getPotWinning(uint256 _potId) external view returns (uint256) {
-        Pot memory _exists = pots[_potId];
+        Pot memory _exists = storageController.getPotById(_potId);
         return _exists.winningsPerWinner;
     }
 }

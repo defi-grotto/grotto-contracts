@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.4;
-import "../models.sol";
+import "../../models.sol";
 
 interface ControllerInterface {
     function addNewLotto(Lotto memory lotto) external returns (uint256);
@@ -41,14 +41,6 @@ interface ControllerInterface {
     function creatorClaim(uint256 lottoId) external returns (Claim memory);
 
     function platformClaim(uint256 lottoId) external returns (Claim memory);
-
-    function getTotalStaked(uint256 lottoId) external view returns (uint256);
-
-    function getAllLottos() external view returns (uint256[] memory);
-
-    function getCompletedLottos() external view returns (uint256[] memory);
-
-    function getCreatorFees() external view returns (uint256);
 
     event LottoCreated(uint256 indexed lottoId);
 }

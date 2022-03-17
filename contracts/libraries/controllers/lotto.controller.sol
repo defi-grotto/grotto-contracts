@@ -4,6 +4,7 @@ pragma solidity 0.8.4;
 import "../models.sol";
 import "./base.controller.sol";
 import "../errors.sol";
+import "./interface/storage.interface.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -13,13 +14,15 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract LottoController is BaseController, AccessControlUpgradeable {
     using SafeMath for uint256;
 
+    StorageInterface private storageController;
+    address private storageControllerAddress;
+
     // ============================ INITIALIZER ============================
-    function initialize() public initializer {
+    function initialize(address _storageControllerAddress) public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
-        platformSharePercentage = 10;
-        creatorFees = 0;
-        creatorSharesPercentage = 20;
+        storageControllerAddress = _storageControllerAddress;
+        storageController = StorageInterface(_storageControllerAddress);
     }
 
     // ============================ GRANTS ============================
@@ -44,17 +47,26 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         external
         override
         onlyRole(LOTTO_CREATOR)
-        is_valid_lotto(_lotto)
         returns (uint256)
     {
-        _lotto.id = getAutoIncrementId();
+        require(_lotto.betAmount > 0, ERROR_7);
+
+        if (_lotto.winningType == WinningType.TIME_BASED) {
+            require(_lotto.startTime < _lotto.endTime, ERROR_6);
+            require(_lotto.endTime > block.timestamp, ERROR_10);
+        }
+
+        if (_lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
+            require(_lotto.maxNumberOfPlayers > 0, ERROR_8);
+        }
+
+        _lotto.id = storageController.getAutoIncrementId();
         _lotto.status.isPot = false;
+      
+        storageController.setId(_lotto.id);
 
-        activeIdsMap[_lotto.id] = true;
-        allIds.push(_lotto.id);
-
-        lottos[_lotto.id] = _lotto;
-
+        storageController.setLotto(_lotto.id, _lotto);
+        
         emit LottoCreated(_lotto.id);
 
         return _lotto.id;
@@ -62,7 +74,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
 
     // ============================ EXTERNAL VIEW METHODS ============================
     function isLottoId(uint256 _lottoId) external view override returns (bool) {
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         return
             _exists.id > 0 &&
             _exists.creator != address(0) &&
@@ -75,14 +87,14 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Lotto memory)
     {
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         require(
             _exists.id > 0 &&
                 _exists.creator != address(0) &&
                 _exists.status.isPot == false,
             ERROR_32
         );
-        _exists.players = players[_lottoId];
+        _exists.players = storageController.getPlayers(_lottoId);
         return _exists;
     }
 
@@ -92,18 +104,17 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         require(_exists.status.isFinished, ERROR_22);
         require(!_exists.status.isPot, ERROR_19);
-        require(isWinner[_lottoId][_claimer], ERROR_27);
-        require(isClaimed[_lottoId][_claimer] == false, ERROR_23);
+        require(storageController.getIsWinner(_lottoId, _claimer), ERROR_27);
+        require(storageController.getIsClaimed(_lottoId, _claimer) == false, ERROR_23);
         _exists.status.isPot = true;
 
-        activeIdsMap[_lottoId] = false;
-        completedIds.push(_lottoId);
+        
+        storageController.setCompletedId(_lottoId);
 
-        userClaims[_claimer].push(_lottoId);
-        isClaimed[_lottoId][_claimer] = true;
+        storageController.setIsClaimed(_lottoId, _claimer, true);
 
         return Claim({winner: _exists.winner, winning: _exists.winning});
     }
@@ -112,29 +123,25 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         uint256 _lottoId,
         uint256 _betPlaced,
         address _player
-    )
-        external
-        override
-        can_play_lotto(_lottoId, _betPlaced, _player)
-        still_running(_lottoId)
-        onlyRole(LOTTO_PLAYER)
-        returns (bool)
-    {        
-        Lotto memory _exists = lottos[_lottoId];
+    ) external override onlyRole(LOTTO_PLAYER) returns (bool) {
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
 
-        if (_exists.winningType == WinningType.TIME_BASED && _exists.endTime < block.timestamp) {
+        require(_exists.creator != address(0), ERROR_19);
+        require(_exists.status.isFinished == false, ERROR_17);
+        require(_betPlaced >= _exists.betAmount, ERROR_18);
+        require(_player != _exists.creator, ERROR_21);
+
+        if (
+            _exists.winningType == WinningType.TIME_BASED &&
+            _exists.endTime < block.timestamp
+        ) {
             findLottoWinner(_lottoId);
         } else {
             _exists.stakes = _exists.stakes.add(_betPlaced);
 
-            players[_lottoId].push(_player);
+            storageController.setPlayer(_lottoId, _player);
 
-            if (!playedIn[_player][_lottoId]) {
-                participated[_player].push(_lottoId);
-                playedIn[_player][_lottoId] = true;
-            }
-
-            lottos[_lottoId] = _exists;
+            storageController.setLotto(_lottoId, _exists);
             findLottoWinner(_lottoId);
         }
         return true;
@@ -146,9 +153,9 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         onlyRole(ADMIN)
         returns (bool)
     {
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         _exists.endTime = block.timestamp;
-        lottos[_lottoId] = _exists;
+        storageController.setLotto(_lottoId, _exists);
         return true;
     }
 
@@ -157,13 +164,13 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         require(_exists.status.platformClaimed == false, ERROR_37);
         require(_exists.startTime <= block.timestamp, ERROR_14);
         require(_exists.endTime <= block.timestamp, ERROR_22);
 
         _exists.status.platformClaimed = true;
-        lottos[_lottoId] = _exists;
+        storageController.setLotto(_lottoId, _exists);
         return Claim({winner: address(0), winning: _exists.platformShares});
     }
 
@@ -173,24 +180,24 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         override
         returns (Claim memory)
     {
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         require(_exists.status.creatorClaimed == false, ERROR_37);
         require(_exists.startTime <= block.timestamp, ERROR_14);
         require(_exists.endTime <= block.timestamp, ERROR_22);
         _exists.status.creatorClaimed = true;
-        lottos[_lottoId] = _exists;
+        storageController.setLotto(_lottoId, _exists);
         return Claim({winner: _exists.creator, winning: _exists.creatorShares});
     }
 
     // ============================ PRIVATE METHODS ============================
     function findLottoWinner(uint256 _lottoId) private {
         uint256 current = block.timestamp;
-        Lotto memory _exists = lottos[_lottoId];
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
         if (
             (!_exists.status.isFinished &&
                 !_exists.status.isPot &&
                 (_exists.winningType == WinningType.NUMBER_OF_PLAYERS &&
-                    players[_lottoId].length == _exists.maxNumberOfPlayers)) ||
+                    storageController.getPlayers(_lottoId).length == _exists.maxNumberOfPlayers)) ||
             (_exists.winningType == WinningType.TIME_BASED &&
                 _exists.endTime <= current)
         ) {
@@ -198,43 +205,43 @@ contract LottoController is BaseController, AccessControlUpgradeable {
 
             // take platform's share
             uint256 _platformShare = totalStaked
-                .mul(platformSharePercentage)
+                .mul(storageController.getPlatformSharePercentage())
                 .div(100);
             uint256 _creatorShares = totalStaked
-                .mul(creatorSharesPercentage)
+                .mul(storageController.getCreatorSharesPercentage())
                 .div(100);
 
             totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
 
-            bytes32 randBase = keccak256(abi.encode(players[_lottoId][0]));
+            bytes32 randBase = keccak256(abi.encode(storageController.getPlayers(_lottoId)[0]));
             randBase = keccak256(
                 abi.encode(
                     randBase,
-                    players[_lottoId][players[_lottoId].length.div(2)]
+                    storageController.getPlayers(_lottoId)[storageController.getPlayers(_lottoId).length.div(2)]
                 )
             );
             randBase = keccak256(
                 abi.encode(
                     randBase,
-                    players[_lottoId][players[_lottoId].length.sub(1)]
+                    storageController.getPlayers(_lottoId)[storageController.getPlayers(_lottoId).length.sub(1)]
                 )
             );
 
             uint256 winnerIndex = uint256(
                 keccak256(abi.encode(totalStaked, randBase))
-            ) % (players[_lottoId].length);
+            ) % (storageController.getPlayers(_lottoId).length);
 
-            address lottoWinner = players[_lottoId][winnerIndex];
+            address lottoWinner = storageController.getPlayers(_lottoId)[winnerIndex];
             _exists.winner = lottoWinner;
             _exists.winning = totalStaked;
             _exists.status.isFinished = true;
 
-            isWinner[_lottoId][lottoWinner] = true;
+            storageController.setIsWinner(_lottoId, lottoWinner, true);
 
             _exists.platformShares = _platformShare;
             _exists.creatorShares = _creatorShares;
 
-            lottos[_lottoId] = _exists;
+            storageController.setLotto(_lottoId, _exists);
             // TODO: Reward both winner and creator with grotto tokens
         }
     }

@@ -4,7 +4,8 @@ pragma solidity 0.8.4;
 pragma experimental ABIEncoderV2;
 import "hardhat/console.sol";
 import "./libraries/models.sol";
-import "./libraries/controllers/controller.interface.sol";
+import "./libraries/controllers/interface/controller.interface.sol";
+import "./libraries/controllers/interface/storage.interface.sol";
 import "./libraries/grotto.interface.sol";
 import "./libraries/errors.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -14,10 +15,12 @@ contract Grotto is GrottoInterface, Initializable {
     address private lottoControllerAddress;
     address private potControllerAddress;
     address private singleWinnerPotControllerAddress;
+    address private storageControllerAddress;
 
     ControllerInterface private lottoController;
     ControllerInterface private potController;
     ControllerInterface private singleWinnerPotController;
+    StorageInterface private storageController;
 
     address owner;
 
@@ -25,7 +28,8 @@ contract Grotto is GrottoInterface, Initializable {
     function initialize(
         address _lottoControllerAddress,
         address _potControllerAddress,
-        address _singleWinnerPotControllerAddress
+        address _singleWinnerPotControllerAddress,
+        address _storageControllerAddress
     ) public initializer {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
@@ -36,6 +40,8 @@ contract Grotto is GrottoInterface, Initializable {
         singleWinnerPotController = ControllerInterface(
             singleWinnerPotControllerAddress
         );
+        storageControllerAddress = _storageControllerAddress;
+        storageController = StorageInterface(_storageControllerAddress);
     }
 
     // ============================ EXTERNAL METHODS ============================
@@ -54,7 +60,7 @@ contract Grotto is GrottoInterface, Initializable {
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
         _lotto.winningType = _winningType;
 
-        uint256 creatorFees = lottoController.getCreatorFees();
+        uint256 creatorFees = storageController.getCreatorFees();
         _lotto.stakes = msg.value - creatorFees;
         bool sent = false;
         (sent, ) = payable(owner).call{value: creatorFees}("");
@@ -96,7 +102,7 @@ contract Grotto is GrottoInterface, Initializable {
         } else {
             _controller = singleWinnerPotController;
         }
-        uint256 creatorFees = _controller.getCreatorFees();
+        uint256 creatorFees = storageController.getCreatorFees();
         _pot.potAmount = msg.value - creatorFees;
         bool sent = false;
         (sent, ) = payable(owner).call{value: creatorFees}("");
@@ -194,13 +200,11 @@ contract Grotto is GrottoInterface, Initializable {
     }
 
     function getAllLottos() external view returns (uint256[] memory) {
-        ControllerInterface _controller = lottoController;
-        return _controller.getAllLottos();
+        return storageController.getAllIds();
     }
 
     function getCompletedLottos() external view returns (uint256[] memory) {
-        ControllerInterface _controller = lottoController;
-        return _controller.getCompletedLottos();
+        return storageController.getCompletedIds();
     }
 
     // ============================ EXTERNAL VIEW METHODS ============================
@@ -216,12 +220,6 @@ contract Grotto is GrottoInterface, Initializable {
         ControllerInterface _controller = _getController(_potId);
         return _controller.getPotById(_potId);
     }
-
-    function getTotalStaked(uint256 _lottoId) external view returns (uint256) {
-        ControllerInterface controller = _getController(_lottoId);
-        return controller.getTotalStaked(_lottoId);
-    }
-
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)
         private

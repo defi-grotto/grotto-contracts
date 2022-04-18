@@ -7,38 +7,49 @@ import { platformOwner, PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Create Pot Tests", () => {
+describe.only("Grotto: Create Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
   const potIds: Array<number> = [];
 
-  before(async () => {
-    
+  before(async () => {    
     accounts = await ethers.getSigners();
 
+    console.log("Creating Contracts: ", accounts[0].address);
+
+    const Storage = await ethers.getContractFactory("Storage");    
     const Grotto = await ethers.getContractFactory("Grotto");
-
     const LottoController = await ethers.getContractFactory("LottoController");
-    const lottoController = await upgrades.deployProxy(LottoController);
-
     const PotController = await ethers.getContractFactory("PotController");
-    const controller = await upgrades.deployProxy(PotController);
+    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
 
-    grotto = await upgrades.deployProxy(Grotto, [      
+    const storageController = await upgrades.deployProxy(Storage);
+    const controller = await upgrades.deployProxy(PotController, [storageController.address]);        
+    const lottoController = await upgrades.deployProxy(LottoController, [storageController.address]);
+    const swPotController = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);
+
+    grotto = await upgrades.deployProxy(Grotto, [
       lottoController.address,
       controller.address,
-      address0
-    ]);    
+      swPotController.address,
+      storageController.address
+    ]);
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
     await controller.grantAdmin(grotto.address);
 
+    await storageController.grantAdminRole(lottoController.address);
+    await storageController.grantAdminRole(controller.address);
+    await storageController.grantAdminRole(swPotController.address);
+
     console.log(`PotController Deployed to ${controller.address}`);
+
     expect(controller.address).to.not.eq(address0);
-    
+
     console.log(`Grotto Deployed to ${grotto.address}`);
+
   });
 
   it("should create grotto contract", async () => {

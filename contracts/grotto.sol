@@ -231,10 +231,9 @@ contract Grotto is GrottoInterface, Initializable {
             _controller = lottoController;
         } else if (potController.isPotId(_lottoId)) {
             _controller = potController;
+        } else if (singleWinnerPotController.isPotId(_lottoId)) {
+            _controller = singleWinnerPotController;
         }
-        // else if (singleWinnerPotController.isPotId(_lottoId)) {
-        //     _controller = singleWinnerPotController;
-        // }
 
         return _controller;
     }

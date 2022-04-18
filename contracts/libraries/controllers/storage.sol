@@ -26,13 +26,19 @@ contract Storage is StorageInterface, AccessControlUpgradeable {
     // games that the player has claimed
     // mapping(address => uint256[]) private userClaims;
 
-    uint256 private platformSharePercentage = 10;
-    uint256 private creatorFees = 0;
-    uint256 private creatorSharesPercentage = 20;
+    uint256 private platformSharePercentage;
+    uint256 private creatorFees;
+    uint256 private creatorSharesPercentage;
 
     function initialize() public initializer {
+        platformSharePercentage = 10;
+        creatorSharesPercentage = 20;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
+    }
+
+    function grantAdminRole(address who) external override onlyRole(ADMIN) {
+        _setupRole(ADMIN, who);
     }
 
     function getLottoById(uint256 lottoId)
@@ -79,7 +85,7 @@ contract Storage is StorageInterface, AccessControlUpgradeable {
     }
 
     function getAutoIncrementId()
-        external        
+        external
         override
         onlyRole(ADMIN)
         returns (uint256)
@@ -203,7 +209,7 @@ contract Storage is StorageInterface, AccessControlUpgradeable {
         override
         returns (uint256)
     {
-        return platformSharePercentage;
+        return creatorSharesPercentage;
     }
 
     function setCreatorSharesPercentage(uint256 csp)
@@ -211,7 +217,7 @@ contract Storage is StorageInterface, AccessControlUpgradeable {
         override
         onlyRole(ADMIN)
     {
-        platformSharePercentage = csp;
+        creatorSharesPercentage = csp;
     }
 
     function getCreatorFees() external view override returns (uint256) {

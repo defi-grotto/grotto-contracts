@@ -288,9 +288,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
             _exists.lotto.id > 0 &&
                 _exists.lotto.creator != address(0) &&
                 _exists.lotto.status.isPot == true &&
-                _exists.potType == PotType.MULTIPLE_WINNER,
+                _exists.potType == PotType.SINGLE_WINNER,
             ERROR_31
         );
+        
+        _exists.lotto.players = storageController.getPlayers(_potId);
         return _exists;
     }
 

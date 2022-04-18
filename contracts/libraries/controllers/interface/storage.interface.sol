@@ -4,6 +4,8 @@ pragma solidity 0.8.4;
 import "../../models.sol";
 
 interface StorageInterface {
+    function grantAdminRole(address who) external;
+    
     function getCompletedLottos() external view returns (uint256[] memory);
 
     function getLottoById(uint256 lottoId) external view returns (Lotto memory);

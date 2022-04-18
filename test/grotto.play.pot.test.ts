@@ -16,22 +16,33 @@ describe.only("Grotto: Play Pot Tests", () => {
   before(async () => {
     accounts = await ethers.getSigners();
 
-    const Grotto = await ethers.getContractFactory("Grotto");
-    const PotController = await ethers.getContractFactory("PotController");
-    const controller = await upgrades.deployProxy(PotController);
+    console.log("Creating Contracts: ", accounts[0].address);
 
+    const Storage = await ethers.getContractFactory("Storage");    
+    const Grotto = await ethers.getContractFactory("Grotto");
     const LottoController = await ethers.getContractFactory("LottoController");
-    const lottoController = await upgrades.deployProxy(LottoController);
+    const PotController = await ethers.getContractFactory("PotController");
+    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+
+    const storageController = await upgrades.deployProxy(Storage);
+    const controller = await upgrades.deployProxy(PotController, [storageController.address]);        
+    const lottoController = await upgrades.deployProxy(LottoController, [storageController.address]);
+    const swPotController = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);
 
     grotto = await upgrades.deployProxy(Grotto, [
       lottoController.address,
       controller.address,
-      address0,
+      swPotController.address,
+      storageController.address
     ]);
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
     await controller.grantAdmin(grotto.address);
+
+    await storageController.grantAdminRole(lottoController.address);
+    await storageController.grantAdminRole(controller.address);
+    await storageController.grantAdminRole(swPotController.address);
 
     console.log(`PotController Deployed to ${controller.address}`);
 
@@ -343,24 +354,23 @@ describe.only("Grotto: Play Pot Tests", () => {
       const overrides = {
         value: ethers.utils.parseEther("10"),
       };
-
       const betAmount = ethers.utils.parseEther("10");
+      const _startTime = Math.floor(new Date().getTime() / 1000);
+      const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
       await expect(
         grotto.createPot(
+          _startTime,
+          _endTime,
           0,
-          0,
-          10,
           betAmount,
-          WinningType.NUMBER_OF_PLAYERS,
+          WinningType.TIME_BASED,
           [3, 6, 9, 3],
           PotGuessType.ORDER,
           PotType.MULTIPLE_WINNER,
           overrides
         )
       ).to.emit(grotto, "PotCreated");
-
-      const lottos = await grotto.getAllLottos();
-      console.log(lottos);
+      potIds.push(potIds.length);
       
       // Numbers matched but not order
       let guesses = [3, 6, 3, 9];
@@ -396,6 +406,7 @@ describe.only("Grotto: Play Pot Tests", () => {
         accounts[0].address
       );
       await grotto.claimCreator(potIds.length);
+
       const balanceAfter = await ethers.provider.getBalance(
         accounts[0].address
       );

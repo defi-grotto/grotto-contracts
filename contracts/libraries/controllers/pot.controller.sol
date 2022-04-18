@@ -26,7 +26,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
         storageControllerAddress = _storageControllerAddress;
-        storageController = StorageInterface(_storageControllerAddress);        
+        storageController = StorageInterface(_storageControllerAddress);
     }
 
     // ============================ GRANTS ============================
@@ -96,7 +96,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
             require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                storageController.getPlayers(_potId).length < _exists.lotto.maxNumberOfPlayers,
+                storageController.getPlayers(_potId).length <
+                    _exists.lotto.maxNumberOfPlayers,
                 ERROR_16
             );
         }
@@ -108,9 +109,9 @@ contract PotController is BaseController, AccessControlUpgradeable {
         _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
         storageController.setPlayer(_potId, _player);
 
-        checkIfWinner(_potId, _player, _guesses);
+        storageController.setPot(_potId, _exists);
 
-        pots[_potId] = _exists;
+        checkIfWinner(_potId, _player, _guesses);
         return true;
     }
 
@@ -139,12 +140,11 @@ contract PotController is BaseController, AccessControlUpgradeable {
         }
 
         if (_won) {
-            winners[_potId].push(_player);
-            _exists.winners = winners[_potId];
             storageController.setIsWinner(_potId, _player, true);
+            storageController.setWinner(_potId, _player);
         }
 
-        pots[_potId] = _exists;
+        storageController.setPot(_potId, _exists);
     }
 
     function claimWinning(uint256 _potId, address _claimer)
@@ -158,7 +158,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
             require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                _exists.lotto.maxNumberOfPlayers == storageController.getPlayers(_potId).length,
+                _exists.lotto.maxNumberOfPlayers ==
+                    storageController.getPlayers(_potId).length,
                 ERROR_22
             );
         }
@@ -173,7 +174,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
                 .mul(storageController.getPlatformSharePercentage())
                 .div(100);
 
-            uint256 _totalWinners = winners[_potId].length;
+            uint256 _totalWinners = storageController.getWinners(_potId).length;
+
             uint256 _creatorShare = _totalStaked
                 .mul(storageController.getCreatorSharesPercentage())
                 .div(100);
@@ -195,12 +197,10 @@ contract PotController is BaseController, AccessControlUpgradeable {
         winningClaimed[_potId][_claimer] = true;
         _exists.lotto.status.isFinished = true;
 
-        activeIdsMap[_potId] = false;
         storageController.setCompletedId(_potId);
+        storageController.setIsClaimed(_potId, _claimer, true);
+        storageController.setPot(_potId, _exists);
 
-        userClaims[_claimer].push(_potId);
-
-        pots[_potId] = _exists;
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
@@ -215,7 +215,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
             _exists.lotto.endTime = block.timestamp;
         }
 
-        pots[_potId] = _exists;
+        storageController.setPot(_potId, _exists);
         return true;
     }
 
@@ -231,7 +231,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
             require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                _exists.lotto.maxNumberOfPlayers == storageController.getPlayers(_potId).length,
+                _exists.lotto.maxNumberOfPlayers ==
+                    storageController.getPlayers(_potId).length,
                 ERROR_22
             );
         }
@@ -240,7 +241,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
 
         _exists.lotto.status.platformClaimed = true;
 
-        pots[_potId] = _exists;
+        storageController.setPot(_potId, _exists);
         return
             Claim({winner: address(0), winning: _exists.lotto.platformShares});
     }
@@ -257,21 +258,25 @@ contract PotController is BaseController, AccessControlUpgradeable {
             require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                _exists.lotto.maxNumberOfPlayers == storageController.getPlayers(_potId).length,
+                _exists.lotto.maxNumberOfPlayers ==
+                    storageController.getPlayers(_potId).length,
                 ERROR_22
             );
         }
 
-        require(_exists.lotto.status.isClaimed, ERROR_36);
+        uint256 _totalWinners = storageController.getWinners(_potId).length;
+        if (_totalWinners > 0) {
+            require(_exists.lotto.status.isClaimed, ERROR_36);
+        }
 
         uint256 _totalStaked = _exists.lotto.stakes;
-        uint256 _platformShare = _totalStaked.mul(storageController.getPlatformSharePercentage()).div(
-            100
-        );
+        uint256 _platformShare = _totalStaked
+            .mul(storageController.getPlatformSharePercentage())
+            .div(100);
 
-        uint256 _creatorShare = _totalStaked.mul(storageController.getCreatorSharesPercentage()).div(
-            100
-        );
+        uint256 _creatorShare = _totalStaked
+            .mul(storageController.getCreatorSharesPercentage())
+            .div(100);
 
         _creatorShare = _totalStaked.sub(_platformShare);
 
@@ -280,7 +285,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
 
         _exists.lotto.status.creatorClaimed = true;
 
-        pots[_potId] = _exists;
+        storageController.setPot(_potId, _exists);
 
         return
             Claim({
@@ -313,7 +318,8 @@ contract PotController is BaseController, AccessControlUpgradeable {
                 _exists.potType == PotType.MULTIPLE_WINNER,
             ERROR_31
         );
-        _exists.winners = winners[_potId];
+        _exists.winners = storageController.getWinners(_potId);
+        _exists.lotto.players = storageController.getPlayers(_potId);
         return _exists;
     }
 

@@ -130,6 +130,7 @@ contract LottoController is BaseController, AccessControlUpgradeable {
         require(_exists.status.isFinished == false, ERROR_17);
         require(_betPlaced >= _exists.betAmount, ERROR_18);
         require(_player != _exists.creator, ERROR_21);
+        require(_exists.startTime < block.timestamp, ERROR_14);
 
         if (
             _exists.winningType == WinningType.TIME_BASED &&

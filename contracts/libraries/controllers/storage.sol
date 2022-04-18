@@ -137,7 +137,7 @@ contract Storage is StorageInterface, AccessControlUpgradeable {
         override
         returns (bool)
     {
-        return isWinner[lottoId][player];
+        return isClaimed[lottoId][player];
     }
 
     function setIsClaimed(

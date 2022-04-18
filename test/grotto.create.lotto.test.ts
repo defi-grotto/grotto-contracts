@@ -7,7 +7,7 @@ import { platformOwner, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Create Lotto Tests", () => {
+describe.only("Grotto: Create Lotto Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -16,19 +16,33 @@ describe("Grotto: Create Lotto Tests", () => {
   before(async () => {
     accounts = await ethers.getSigners();
 
+    const Storage = await ethers.getContractFactory("Storage");    
+    const PotController = await ethers.getContractFactory("PotController");
+    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+
+    const storageController = await upgrades.deployProxy(Storage);
+    const potController = await upgrades.deployProxy(PotController, [storageController.address]);        
+    const swPotController = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);
+
     const Grotto = await ethers.getContractFactory("Grotto");
     const LottoController = await ethers.getContractFactory("LottoController");
-    const controller = await upgrades.deployProxy(LottoController);
+    const controller = await upgrades.deployProxy(LottoController, [storageController.address]);
 
     grotto = await upgrades.deployProxy(Grotto, [
       controller.address,
-      address0,
-      address0,
+      potController.address,
+      swPotController.address,
+      storageController.address
     ]);
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
     await controller.grantAdmin(grotto.address);
+
+    await storageController.grantAdminRole(controller.address);
+    await storageController.grantAdminRole(potController.address);
+    await storageController.grantAdminRole(swPotController.address);
+
 
     console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);

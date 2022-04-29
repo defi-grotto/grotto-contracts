@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.4;
+pragma solidity ^0.8.4;
 
 import "../models.sol";
 import "./base.controller.sol";
@@ -203,15 +203,19 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
     }
 
     function forceEnd(uint256 _potId)
-        external
-        view
+        external        
         override
         onlyRole(ADMIN)
         returns (bool)
     {
+
         Pot memory _exists = storageController.getPotById(_potId);
-        _exists.lotto.endTime = block.timestamp;
-        return true;
+        if (_exists.lotto.winningType == WinningType.TIME_BASED) {
+            _exists.lotto.endTime = block.timestamp;
+        }
+
+        storageController.setPot(_potId, _exists);
+        return true;                
     }
 
     function platformClaim(uint256 _potId)

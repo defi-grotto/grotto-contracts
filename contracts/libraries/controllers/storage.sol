@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.4;
+pragma solidity ^0.8.4;
 
 import "./interface/storage.interface.sol";
 import "../models.sol";

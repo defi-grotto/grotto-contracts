@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.4;
+pragma solidity ^0.8.4;
 
 pragma experimental ABIEncoderV2;
 import "hardhat/console.sol";
@@ -101,7 +101,8 @@ contract Grotto is GrottoInterface, Initializable {
             _controller = potController;
         } else {
             _controller = singleWinnerPotController;
-        }
+        }        
+
         uint256 creatorFees = storageController.getCreatorFees();
         _pot.potAmount = msg.value - creatorFees;
         bool sent = false;

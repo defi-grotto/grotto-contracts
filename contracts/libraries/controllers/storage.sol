@@ -4,9 +4,9 @@ pragma solidity ^0.8.4;
 import "./interface/storage.interface.sol";
 import "../models.sol";
 import "hardhat/console.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Storage is StorageInterface, AccessControlUpgradeable {
+contract Storage is StorageInterface, AccessControl {
     bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
 
     mapping(uint256 => Lotto) private lottos;
@@ -30,7 +30,7 @@ contract Storage is StorageInterface, AccessControlUpgradeable {
     uint256 private creatorFees;
     uint256 private creatorSharesPercentage;
 
-    function initialize() public initializer {
+    constructor() {
         platformSharePercentage = 10;
         creatorSharesPercentage = 20;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);

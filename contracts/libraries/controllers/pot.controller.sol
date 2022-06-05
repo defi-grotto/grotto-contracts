@@ -7,10 +7,10 @@ import "../errors.sol";
 import "hardhat/console.sol";
 import "./interface/storage.interface.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract PotController is BaseController, AccessControlUpgradeable {
+
+contract PotController is BaseController, AccessControl {
     using SafeMath for uint256;
 
     // ============================ VARIABLES ============================
@@ -22,7 +22,7 @@ contract PotController is BaseController, AccessControlUpgradeable {
     address private storageControllerAddress;
 
     // ============================ INITIALIZER ============================
-    function initialize(address _storageControllerAddress) public initializer {
+    constructor(address _storageControllerAddress) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
         storageControllerAddress = _storageControllerAddress;

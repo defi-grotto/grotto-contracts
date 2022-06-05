@@ -16,24 +16,33 @@ describe("Grotto: Create Lotto Tests", () => {
   before(async () => {
     accounts = await ethers.getSigners();
 
-    const Storage = await ethers.getContractFactory("Storage");    
+    const Storage = await ethers.getContractFactory("Storage");
     const PotController = await ethers.getContractFactory("PotController");
-    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+    const SingleWinnerPotController = await ethers.getContractFactory(
+      "SingleWinnerPotController"
+    );
 
-    const storageController = await upgrades.deployProxy(Storage);
-    const potController = await upgrades.deployProxy(PotController, [storageController.address]);        
-    const swPotController = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);
+    const storageController = await Storage.deploy();
+    await storageController.deployed();
+
+    const potController = await PotController.deploy(storageController.address);
+    await potController.deployed();
+    const swPotController = await SingleWinnerPotController.deploy(
+      storageController.address
+    );
+    await swPotController.deployed();
 
     const Grotto = await ethers.getContractFactory("Grotto");
     const LottoController = await ethers.getContractFactory("LottoController");
-    const controller = await upgrades.deployProxy(LottoController, [storageController.address]);
+    const controller = await LottoController.deploy(storageController.address);
+    await controller.deployed();
 
-    grotto = await upgrades.deployProxy(Grotto, [
+    grotto = await Grotto.deploy(
       controller.address,
       potController.address,
       swPotController.address,
       storageController.address
-    ]);
+    );
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -42,7 +51,6 @@ describe("Grotto: Create Lotto Tests", () => {
     await storageController.grantAdminRole(controller.address);
     await storageController.grantAdminRole(potController.address);
     await storageController.grantAdminRole(swPotController.address);
-
 
     console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
@@ -160,17 +168,17 @@ describe("Grotto: Create Lotto Tests", () => {
       expect(lotto.creator).to.be.eq(accounts[0].address);
       expect(ethers.utils.formatEther(lotto.betAmount)).to.be.eq("0.01");
       expect(ethers.utils.formatEther(lotto.stakes)).to.be.eq("0.01");
-      expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);      
+      expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);
       const lotto2 = await grotto.getLottoById(2);
       expect(lotto2.id.toNumber()).to.be.eq(2);
       expect(lotto2.creator).to.be.eq(accounts[0].address);
       expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.1");
       expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.1");
-      expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);      
+      expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);
 
       const allLottos: Array<BigNumber> = await grotto.getAllLottos();
       let index = 0;
-      for(let l of allLottos) {
+      for (let l of allLottos) {
         expect(l).to.be.eq(lottoIds[index]);
         index++;
       }

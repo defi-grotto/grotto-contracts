@@ -13,28 +13,39 @@ describe("Grotto: Create Pot Tests", () => {
   let grotto: Contract;
   const potIds: Array<number> = [];
 
-  before(async () => {    
+  before(async () => {
     accounts = await ethers.getSigners();
 
     console.log("Creating Contracts: ", accounts[0].address);
 
-    const Storage = await ethers.getContractFactory("Storage");    
+    const Storage = await ethers.getContractFactory("Storage");
     const Grotto = await ethers.getContractFactory("Grotto");
     const LottoController = await ethers.getContractFactory("LottoController");
     const PotController = await ethers.getContractFactory("PotController");
-    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+    const SingleWinnerPotController = await ethers.getContractFactory(
+      "SingleWinnerPotController"
+    );
 
-    const storageController = await upgrades.deployProxy(Storage);
-    const controller = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);        
-    const lottoController = await upgrades.deployProxy(LottoController, [storageController.address]);
-    const potController = await upgrades.deployProxy(PotController, [storageController.address]);
+    const storageController = await Storage.deploy();
+    await storageController.deployed();
 
-    grotto = await upgrades.deployProxy(Grotto, [
-      lottoController.address,      
+    const controller = await SingleWinnerPotController.deploy(
+      storageController.address
+    );
+    await controller.deployed();
+    const lottoController = await LottoController.deploy(
+      storageController.address
+    );
+    await lottoController.deployed();
+    const potController = await PotController.deploy(storageController.address);
+    await potController.deployed();
+
+    grotto = await Grotto.deploy(
+      lottoController.address,
       potController.address,
       controller.address,
       storageController.address
-    ]);
+    );
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -49,7 +60,6 @@ describe("Grotto: Create Pot Tests", () => {
     expect(controller.address).to.not.eq(address0);
 
     console.log(`Grotto Deployed to ${grotto.address}`);
-
   });
 
   it("should create grotto contract", async () => {
@@ -68,13 +78,22 @@ describe("Grotto: Create Pot Tests", () => {
       // WinningType _winningType,
       // uint256[] memory _winningNumbers,
       // PotGuessType _pgt,
-      // PotType _potType   
-         
+      // PotType _potType
+
       const betAmount = ethers.utils.parseEther("0.01");
-      await expect(grotto.createPot(0, 0, 10, betAmount, WinningType.NUMBER_OF_PLAYERS, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.emit(
-        grotto,
-        "PotCreated"
-      );
+      await expect(
+        grotto.createPot(
+          0,
+          0,
+          10,
+          betAmount,
+          WinningType.NUMBER_OF_PLAYERS,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.emit(grotto, "PotCreated");
       potIds.push(1);
     } catch (error) {
       console.log(error);
@@ -89,9 +108,19 @@ describe("Grotto: Create Pot Tests", () => {
       };
 
       const betAmount = ethers.utils.parseEther("0.01");
-      await expect(grotto.createPot(0, 0, 0, betAmount, WinningType.NUMBER_OF_PLAYERS, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.be.revertedWith(
-        "Inv. No. of players"
-      );      
+      await expect(
+        grotto.createPot(
+          0,
+          0,
+          0,
+          betAmount,
+          WinningType.NUMBER_OF_PLAYERS,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.be.revertedWith("Inv. No. of players");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -104,9 +133,19 @@ describe("Grotto: Create Pot Tests", () => {
         value: ethers.utils.parseEther("1"),
       };
       const betAmount = BigNumber.from(0);
-      await expect(grotto.createPot(0, 0, 10, betAmount, WinningType.NUMBER_OF_PLAYERS, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.be.revertedWith(
-        "Inv. lotto bet amount"
-      );
+      await expect(
+        grotto.createPot(
+          0,
+          0,
+          10,
+          betAmount,
+          WinningType.NUMBER_OF_PLAYERS,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.be.revertedWith("Inv. lotto bet amount");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -116,9 +155,18 @@ describe("Grotto: Create Pot Tests", () => {
   it("should not create a pot if pot amount is not greater than 0", async () => {
     try {
       const betAmount = ethers.utils.parseEther("0.01");
-      await expect(grotto.createPot(0, 0, 10, betAmount, WinningType.NUMBER_OF_PLAYERS, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER)).to.be.revertedWith(
-        "Inv. Pot BetAmount"
-      );
+      await expect(
+        grotto.createPot(
+          0,
+          0,
+          10,
+          betAmount,
+          WinningType.NUMBER_OF_PLAYERS,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER
+        )
+      ).to.be.revertedWith("Inv. Pot BetAmount");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -132,9 +180,19 @@ describe("Grotto: Create Pot Tests", () => {
       };
 
       const betAmount = ethers.utils.parseEther("0.01");
-      await expect(grotto.createPot(1000, 200, 10, betAmount, WinningType.TIME_BASED, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.be.revertedWith(
-        "Start time must be less than end time"
-      );
+      await expect(
+        grotto.createPot(
+          1000,
+          200,
+          10,
+          betAmount,
+          WinningType.TIME_BASED,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.be.revertedWith("Start time must be less than end time");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -148,9 +206,19 @@ describe("Grotto: Create Pot Tests", () => {
       };
 
       const betAmount = ethers.utils.parseEther("0.01");
-      await expect(grotto.createPot(200, 1000, 10, betAmount, WinningType.TIME_BASED, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.be.revertedWith(
-        "End time must be in the future"
-      );
+      await expect(
+        grotto.createPot(
+          200,
+          1000,
+          10,
+          betAmount,
+          WinningType.TIME_BASED,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.be.revertedWith("End time must be in the future");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -166,10 +234,19 @@ describe("Grotto: Create Pot Tests", () => {
       const betAmount = ethers.utils.parseEther("0.01");
       const endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours;
       const startTime = Math.floor(new Date().getTime() / 1000);
-      await expect(grotto.createPot(startTime, endTime, 0, betAmount, WinningType.TIME_BASED, [3, 6, 9], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.emit(
-        grotto,
-        "PotCreated"
-      );
+      await expect(
+        grotto.createPot(
+          startTime,
+          endTime,
+          0,
+          betAmount,
+          WinningType.TIME_BASED,
+          [3, 6, 9],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.emit(grotto, "PotCreated");
       potIds.push(2);
     } catch (error) {
       console.log(error);
@@ -185,10 +262,20 @@ describe("Grotto: Create Pot Tests", () => {
 
       const betAmount = ethers.utils.parseEther("0.01");
       const endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours;
-      const startTime = Math.floor(new Date().getTime() / 1000);      
-      await expect(grotto.createPot(startTime, endTime, 10, betAmount, WinningType.TIME_BASED, [], PotGuessType.ORDER, PotType.SINGLE_WINNER, overrides)).to.be.revertedWith(
-        "'Inv. Winning Number"
-      );
+      const startTime = Math.floor(new Date().getTime() / 1000);
+      await expect(
+        grotto.createPot(
+          startTime,
+          endTime,
+          10,
+          betAmount,
+          WinningType.TIME_BASED,
+          [],
+          PotGuessType.ORDER,
+          PotType.SINGLE_WINNER,
+          overrides
+        )
+      ).to.be.revertedWith("'Inv. Winning Number");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

@@ -17,24 +17,29 @@ describe("Grotto: Play Lotto Tests", () => {
   before(async () => {
     accounts = await ethers.getSigners();
 
-    const Storage = await ethers.getContractFactory("Storage");    
+    const Storage = await ethers.getContractFactory("Storage");
     const PotController = await ethers.getContractFactory("PotController");
-    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+    const SingleWinnerPotController = await ethers.getContractFactory(
+      "SingleWinnerPotController"
+    );
 
-    const storageController = await upgrades.deployProxy(Storage);
-    const potController = await upgrades.deployProxy(PotController, [storageController.address]);        
-    const swPotController = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);
+    const storageController = await Storage.deploy();
+    await storageController.deployed();
+    const potController = await PotController.deploy(storageController.address);
+    const swPotController = await SingleWinnerPotController.deploy(
+      storageController.address
+    );
 
     const Grotto = await ethers.getContractFactory("Grotto");
     const LottoController = await ethers.getContractFactory("LottoController");
-    const controller = await upgrades.deployProxy(LottoController, [storageController.address]);
+    const controller = await LottoController.deploy(storageController.address);
 
-    grotto = await upgrades.deployProxy(Grotto, [
+    grotto = await Grotto.deploy(
       controller.address,
       potController.address,
       swPotController.address,
       storageController.address
-    ]);
+    );
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -43,7 +48,6 @@ describe("Grotto: Play Lotto Tests", () => {
     await storageController.grantAdminRole(controller.address);
     await storageController.grantAdminRole(potController.address);
     await storageController.grantAdminRole(swPotController.address);
-
 
     console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
@@ -60,10 +64,9 @@ describe("Grotto: Play Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
 
-      await expect(grotto.createLotto(0, 0, 3, WinningType.NUMBER_OF_PLAYERS, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      await expect(
+        grotto.createLotto(0, 0, 3, WinningType.NUMBER_OF_PLAYERS, overrides)
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
     } catch (error) {
       console.log(error);
@@ -92,9 +95,9 @@ describe("Grotto: Play Lotto Tests", () => {
       const overrides = {
         value: ethers.utils.parseEther("0.01"),
       };
-      await expect(grotto.playLotto(lottoIds.length, overrides)).to.be.revertedWith(
-        "Creator can not play"
-      );
+      await expect(
+        grotto.playLotto(lottoIds.length, overrides)
+      ).to.be.revertedWith("Creator can not play");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -107,9 +110,9 @@ describe("Grotto: Play Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
       const player1 = await grotto.connect(accounts[1]);
-      await expect(
-        player1.playLotto(1001, overrides)
-      ).to.be.revertedWith("Lotto does not exist");
+      await expect(player1.playLotto(1001, overrides)).to.be.revertedWith(
+        "Lotto does not exist"
+      );
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -154,12 +157,12 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      const lotto = await grotto.getLottoById(lottoIds.length);      
+      const lotto = await grotto.getLottoById(lottoIds.length);
 
       const player4 = await grotto.connect(accounts[4]);
-      await expect(player4.playLotto(lottoIds.length, overrides)).to.be.revertedWith("Lotto is finished");
-
-      
+      await expect(
+        player4.playLotto(lottoIds.length, overrides)
+      ).to.be.revertedWith("Lotto is finished");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
@@ -173,10 +176,9 @@ describe("Grotto: Play Lotto Tests", () => {
       };
 
       // create lotto
-      await expect(grotto.createLotto(0, 0, 3, WinningType.NUMBER_OF_PLAYERS, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      await expect(
+        grotto.createLotto(0, 0, 3, WinningType.NUMBER_OF_PLAYERS, overrides)
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
 
       // player 1
@@ -251,10 +253,9 @@ describe("Grotto: Play Lotto Tests", () => {
       };
 
       // create lotto
-      await expect(grotto.createLotto(0, 0, 3, WinningType.NUMBER_OF_PLAYERS, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      await expect(
+        grotto.createLotto(0, 0, 3, WinningType.NUMBER_OF_PLAYERS, overrides)
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
 
       // player 1
@@ -348,9 +349,7 @@ describe("Grotto: Play Lotto Tests", () => {
 
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
-      .map((account, index) =>
-        account.address === winnerAddress ? index : -1
-      )
+      .map((account, index) => (account.address === winnerAddress ? index : -1))
       .filter((index) => index >= 0);
     const winner = await grotto.connect(accounts[winnerAccountIndex[0]]);
 
@@ -358,7 +357,9 @@ describe("Grotto: Play Lotto Tests", () => {
       "Lotto is already claimed"
     );
 
-    await expect(grotto.claimPlatform(lottoIds.length)).to.be.revertedWith("Creator already claimed");
+    await expect(grotto.claimPlatform(lottoIds.length)).to.be.revertedWith(
+      "Creator already claimed"
+    );
   });
 
   it("should create a time based lotto winning type", async () => {
@@ -367,13 +368,18 @@ describe("Grotto: Play Lotto Tests", () => {
         value: ethers.utils.parseEther("0.01"),
       };
 
-    const _startTime = Math.floor(new Date().getTime() / 1000);
-    const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+      const _startTime = Math.floor(new Date().getTime() / 1000);
+      const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
 
-      await expect(grotto.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      await expect(
+        grotto.createLotto(
+          _startTime,
+          _endTime,
+          0,
+          WinningType.TIME_BASED,
+          overrides
+        )
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
     } catch (error) {
       console.log(error);
@@ -388,14 +394,18 @@ describe("Grotto: Play Lotto Tests", () => {
       };
 
       const _startTime = Math.floor(new Date().getTime() / 1000);
-      const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours  
-      await expect(grotto.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+      await expect(
+        grotto.createLotto(
+          _startTime,
+          _endTime,
+          0,
+          WinningType.TIME_BASED,
+          overrides
+        )
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
 
-    
       const player1 = await grotto.connect(accounts[1]);
       await expect(player1.playLotto(lottoIds.length, overrides)).to.emit(
         grotto,
@@ -422,10 +432,15 @@ describe("Grotto: Play Lotto Tests", () => {
       const startTime = new Date().getTime() + 100000000;
       const endTime = startTime + 1000000;
 
-      await expect(grotto.createLotto(startTime, endTime, 0, WinningType.TIME_BASED, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      await expect(
+        grotto.createLotto(
+          startTime,
+          endTime,
+          0,
+          WinningType.TIME_BASED,
+          overrides
+        )
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
 
       const player4 = await grotto.connect(accounts[4]);
@@ -446,11 +461,16 @@ describe("Grotto: Play Lotto Tests", () => {
 
       // create lotto
       const _startTime = Math.floor(new Date().getTime() / 1000);
-      const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours  
-      await expect(grotto.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides)).to.emit(
-        grotto,
-        "LottoCreated"
-      );
+      const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+      await expect(
+        grotto.createLotto(
+          _startTime,
+          _endTime,
+          0,
+          WinningType.TIME_BASED,
+          overrides
+        )
+      ).to.emit(grotto, "LottoCreated");
       lottoIds.push(lottoIds.length);
 
       // player 1
@@ -474,15 +494,15 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      await grotto.forceEnd(lottoIds.length);      
+      await grotto.forceEnd(lottoIds.length);
 
       const player4 = await grotto.connect(accounts[4]);
       await expect(player4.playLotto(lottoIds.length, overrides)).to.emit(
         grotto,
         "BetPlaced"
-      );      
-            
-      let lotto = await grotto.getLottoById(lottoIds.length);      
+      );
+
+      let lotto = await grotto.getLottoById(lottoIds.length);
 
       expect(lotto.winner).to.be.oneOf([
         accounts[1].address,

@@ -7,18 +7,18 @@ import "../errors.sol";
 import "./interface/storage.interface.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract LottoController is BaseController, AccessControlUpgradeable {
+
+contract LottoController is BaseController, AccessControl {
     using SafeMath for uint256;
 
     StorageInterface private storageController;
     address private storageControllerAddress;
 
     // ============================ INITIALIZER ============================
-    function initialize(address _storageControllerAddress) public initializer {
+    constructor(address _storageControllerAddress) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
         storageControllerAddress = _storageControllerAddress;

@@ -7,10 +7,9 @@ import "../errors.sol";
 import "./interface/storage.interface.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
+contract SingleWinnerPotController is BaseController, AccessControl {
     using SafeMath for uint256;
 
     // ============================ VARIABLES ============================
@@ -22,11 +21,11 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
     address private storageControllerAddress;
 
     // ============================ INITIALIZER ============================
-    function initialize(address _storageControllerAddress) public initializer {
+    constructor(address _storageControllerAddress) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
         storageControllerAddress = _storageControllerAddress;
-        storageController = StorageInterface(_storageControllerAddress);        
+        storageController = StorageInterface(_storageControllerAddress);
     }
 
     // ============================ GRANTS ============================
@@ -106,7 +105,8 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
             require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                storageController.getPlayers(_potId).length < _exists.lotto.maxNumberOfPlayers,
+                storageController.getPlayers(_potId).length <
+                    _exists.lotto.maxNumberOfPlayers,
                 ERROR_16
             );
         }
@@ -196,26 +196,25 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
 
         winningClaimed[_potId][_claimer] = true;
         _exists.lotto.status.isFinished = true;
-        
+
         storageController.setCompletedId(_potId);
 
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
     function forceEnd(uint256 _potId)
-        external        
+        external
         override
         onlyRole(ADMIN)
         returns (bool)
     {
-
         Pot memory _exists = storageController.getPotById(_potId);
         if (_exists.lotto.winningType == WinningType.TIME_BASED) {
             _exists.lotto.endTime = block.timestamp;
         }
 
         storageController.setPot(_potId, _exists);
-        return true;                
+        return true;
     }
 
     function platformClaim(uint256 _potId)
@@ -295,7 +294,7 @@ contract SingleWinnerPotController is BaseController, AccessControlUpgradeable {
                 _exists.potType == PotType.SINGLE_WINNER,
             ERROR_31
         );
-        
+
         _exists.lotto.players = storageController.getPlayers(_potId);
         return _exists;
     }

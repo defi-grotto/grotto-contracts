@@ -7,7 +7,7 @@ import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe.only("Grotto: Play Pot Tests", () => {
+describe("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -26,27 +26,30 @@ describe.only("Grotto: Play Pot Tests", () => {
       "SingleWinnerPotController"
     );
 
-    const storageController = await upgrades.deployProxy(Storage);
-    const controller = await upgrades.deployProxy(SingleWinnerPotController, [
-      storageController.address,
-    ]);
-    const lottoController = await upgrades.deployProxy(LottoController, [
-      storageController.address,
-    ]);
-    const potController = await upgrades.deployProxy(PotController, [
-      storageController.address,
-    ]);
+    const storageController = await Storage.deploy();
+    await storageController.deployed();
+    const controller = await SingleWinnerPotController.deploy(
+      storageController.address
+    );
+
+    const lottoController = await LottoController.deploy(
+      storageController.address
+    );
+    await lottoController.deployed();
+
+    const potController = await PotController.deploy(storageController.address);
+    await potController.deployed();
 
     await controller.deployed();
     await potController.deployed();
     await lottoController.deployed();
 
-    grotto = await upgrades.deployProxy(Grotto, [
+    grotto = await Grotto.deploy(
       lottoController.address,
       potController.address,
       controller.address,
-      storageController.address,
-    ]);
+      storageController.address
+    );
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -378,12 +381,10 @@ describe.only("Grotto: Play Pot Tests", () => {
 
       await expect(player3.claim(potIds[4])).to.emit(player3, "Claimed");
 
-      await expect(player3.claim(potIds[4])).to.be.revertedWith(
-        "Pot claimed"
-      );
+      await expect(player3.claim(potIds[4])).to.be.revertedWith("Pot claimed");
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);
     }
-  });  
+  });
 });

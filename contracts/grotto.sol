@@ -8,9 +8,8 @@ import "./libraries/controllers/interface/controller.interface.sol";
 import "./libraries/controllers/interface/storage.interface.sol";
 import "./libraries/grotto.interface.sol";
 import "./libraries/errors.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract Grotto is GrottoInterface, Initializable {
+contract Grotto is GrottoInterface {
     // ============================ VARIABLES ============================
     address private lottoControllerAddress;
     address private potControllerAddress;
@@ -25,12 +24,12 @@ contract Grotto is GrottoInterface, Initializable {
     address owner;
 
     // ============================ INITIALIZER ============================
-    function initialize(
+    constructor(
         address _lottoControllerAddress,
         address _potControllerAddress,
         address _singleWinnerPotControllerAddress,
         address _storageControllerAddress
-    ) public initializer {
+    ) {
         owner = msg.sender;
         lottoControllerAddress = _lottoControllerAddress;
         lottoController = ControllerInterface(lottoControllerAddress);
@@ -101,7 +100,7 @@ contract Grotto is GrottoInterface, Initializable {
             _controller = potController;
         } else {
             _controller = singleWinnerPotController;
-        }        
+        }
 
         uint256 creatorFees = storageController.getCreatorFees();
         _pot.potAmount = msg.value - creatorFees;
@@ -221,6 +220,7 @@ contract Grotto is GrottoInterface, Initializable {
         ControllerInterface _controller = _getController(_potId);
         return _controller.getPotById(_potId);
     }
+
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)
         private

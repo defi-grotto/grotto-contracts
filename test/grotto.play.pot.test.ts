@@ -18,23 +18,36 @@ describe("Grotto: Play Pot Tests", () => {
 
     console.log("Creating Contracts: ", accounts[0].address);
 
-    const Storage = await ethers.getContractFactory("Storage");    
+    const Storage = await ethers.getContractFactory("Storage");
     const Grotto = await ethers.getContractFactory("Grotto");
     const LottoController = await ethers.getContractFactory("LottoController");
     const PotController = await ethers.getContractFactory("PotController");
-    const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
+    const SingleWinnerPotController = await ethers.getContractFactory(
+      "SingleWinnerPotController"
+    );
 
-    const storageController = await upgrades.deployProxy(Storage);
-    const controller = await upgrades.deployProxy(PotController, [storageController.address]);        
-    const lottoController = await upgrades.deployProxy(LottoController, [storageController.address]);
-    const swPotController = await upgrades.deployProxy(SingleWinnerPotController, [storageController.address]);
+    const storageController = await Storage.deploy();
+    await storageController.deployed();
 
-    grotto = await upgrades.deployProxy(Grotto, [
+    const controller = await PotController.deploy(storageController.address);
+    controller.deployed();
+
+    const lottoController = await LottoController.deploy(
+      storageController.address
+    );
+    lottoController.deployed();
+    
+    const swPotController = await SingleWinnerPotController.deploy(
+      storageController.address
+    );
+    swPotController.deployed();
+
+    grotto = await Grotto.deploy(
       lottoController.address,
       controller.address,
       swPotController.address,
       storageController.address
-    ]);
+    );
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -117,7 +130,7 @@ describe("Grotto: Play Pot Tests", () => {
     const potWinnersIndex = [3, 5, 6, 7];
 
     for (const index of potWinnersIndex) {
-      const player = await grotto.connect(accounts[index]);      
+      const player = await grotto.connect(accounts[index]);
       const address = accounts[index].address;
       const balanceBefore = await ethers.provider.getBalance(address);
       await expect(player.claim(potId)).to.emit(player, "Claimed");
@@ -250,7 +263,7 @@ describe("Grotto: Play Pot Tests", () => {
       const betAmount = ethers.utils.parseEther("10");
       const _startTime = Math.floor(new Date().getTime() / 1000);
       const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
-  
+
       await expect(
         grotto.createPot(
           _startTime,
@@ -305,10 +318,10 @@ describe("Grotto: Play Pot Tests", () => {
 
   it("should claim by creator", async () => {
     try {
-      const potId = await playToWin();   
+      const potId = await playToWin();
       await expect(grotto.claimCreator(potId)).to.be.revertedWith(
         "Creator can't claim until at least one winner claimed"
-      );                  
+      );
       const balanceBefore = await ethers.provider.getBalance(
         accounts[0].address
       );
@@ -331,7 +344,7 @@ describe("Grotto: Play Pot Tests", () => {
       const potId = await playToWin();
       await expect(grotto.claimPlatform(potId)).to.be.revertedWith(
         "Creator can't claim until at least one winner claimed"
-      );      
+      );
       const balanceBefore = await ethers.provider.getBalance(
         accounts[0].address
       );
@@ -371,7 +384,7 @@ describe("Grotto: Play Pot Tests", () => {
         )
       ).to.emit(grotto, "PotCreated");
       potIds.push(potIds.length);
-      
+
       // Numbers matched but not order
       let guesses = [3, 6, 3, 9];
       const player3 = await grotto.connect(accounts[4]);

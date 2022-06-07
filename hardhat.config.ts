@@ -38,6 +38,10 @@ module.exports = {
       url: "https://rpc.xdaichain.com/",
       accounts: ["147d87ddd5baf71ed197ea4fee8710f7f039ec72d0e9ebe5711d13a04f4f92f4"],      
     },
+    fuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      accounts: ["498ea38b2b6408be76d6c45b2939c2f195a16ac4bca7e62772fc549c7a798176"]
+    },    
     sokol: {
       url: "https://sokol.poa.network",
       accounts: ["147d87ddd5baf71ed197ea4fee8710f7f039ec72d0e9ebe5711d13a04f4f92f4"],      

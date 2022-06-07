@@ -3,23 +3,36 @@ import { ethers, upgrades } from "hardhat";
 const main = async () => {
   const Grotto = await ethers.getContractFactory("Grotto");
 
+  const Storage = await ethers.getContractFactory("Storage");
+  const storageController = await Storage.deploy();
+  await storageController.deployed();
+
   const LottoController = await ethers.getContractFactory("LottoController");
-  const lottoController = await upgrades.deployProxy(LottoController);
+  const lottoController = await LottoController.deploy(
+    storageController.address
+  );
   console.log(`LottoController Deployed to ${lottoController.address}`);
 
   const PotController = await ethers.getContractFactory("PotController");
-  const potController = await upgrades.deployProxy(PotController);
+  const potController = await PotController.deploy(storageController.address);
   console.log(`PotController Deployed to ${potController.address}`);
 
-  const SingleWinnerPotController = await ethers.getContractFactory("SingleWinnerPotController");
-  const swPotController = await upgrades.deployProxy(SingleWinnerPotController);
-  console.log(`SingleWinnerPotController Deployed to ${swPotController.address}`);  
+  const SingleWinnerPotController = await ethers.getContractFactory(
+    "SingleWinnerPotController"
+  );
+  const swPotController = await SingleWinnerPotController.deploy(
+    storageController.address
+  );
+  console.log(
+    `SingleWinnerPotController Deployed to ${swPotController.address}`
+  );
 
-  const grotto = await upgrades.deployProxy(Grotto, [
+  const grotto = await Grotto.deploy(
     lottoController.address,
     potController.address,
     swPotController.address,
-  ]);
+    storageController.address
+  );
 
   console.log(`Grotto Deployed to ${grotto.address}`);
 
@@ -30,6 +43,14 @@ const main = async () => {
   await potController.grantLottoCreator(grotto.address);
   await potController.grantLottoPlayer(grotto.address);
   await potController.grantAdmin(grotto.address);
+
+  await swPotController.grantLottoCreator(grotto.address);
+  await swPotController.grantLottoPlayer(grotto.address);
+  await swPotController.grantAdmin(grotto.address);  
+
+  await storageController.grantAdminRole(lottoController.address);
+  await storageController.grantAdminRole(potController.address);
+  await storageController.grantAdminRole(swPotController.address);  
 };
 
 main().then(() => {

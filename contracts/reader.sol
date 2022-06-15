@@ -23,6 +23,8 @@ contract Reader {
 
     address owner;
 
+    uint256 private constant MAX_PAGE = 20;
+
     // ============================ INITIALIZER ============================
     constructor(
         address _lottoControllerAddress,
@@ -41,6 +43,69 @@ contract Reader {
         );
         storageControllerAddress = _storageControllerAddress;
         storageController = StorageInterface(_storageControllerAddress);
+    }
+
+    function getLottosPaginated(uint256 page, uint256 count)
+        external
+        view
+        returns (Lotto[] memory)
+    {
+        if (count > MAX_PAGE) {
+            count = MAX_PAGE;
+        }
+
+        uint256[] memory lottoIds = lottoController.getAllLottos();
+        uint256 startIndex = lottoIds.length - (page * count);
+        uint256 endIndex = lottoIds.length - (count * (page - 1));
+        Lotto[] memory lottos = new Lotto[](count);
+
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            lottos[i] = lottoController.getLottoById(lottoIds[i]);
+        }
+
+        return lottos;
+    }
+
+    function getPotsPaginated(uint256 page, uint256 count)
+        external
+        view
+        returns (Lotto[] memory)
+    {
+        if (count > MAX_PAGE) {
+            count = MAX_PAGE;
+        }
+
+        uint256[] memory lottoIds = potController.getAllPots();
+        uint256 startIndex = lottoIds.length - (page * count);
+        uint256 endIndex = lottoIds.length - (count * (page - 1));
+        Lotto[] memory lottos = new Lotto[](count);
+
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            lottos[i] = potController.getLottoById(lottoIds[i]);
+        }
+
+        return lottos;
+    }
+
+    function getSingleWinnerPotsPaginated(uint256 page, uint256 count)
+        external
+        view
+        returns (Lotto[] memory)
+    {
+        if (count > MAX_PAGE) {
+            count = MAX_PAGE;
+        }
+
+        uint256[] memory lottoIds = singleWinnerPotController.getAllPots();
+        uint256 startIndex = lottoIds.length - (page * count);
+        uint256 endIndex = lottoIds.length - (count * (page - 1));
+        Lotto[] memory lottos = new Lotto[](count);
+
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            lottos[i] = singleWinnerPotController.getLottoById(lottoIds[i]);
+        }
+
+        return lottos;
     }
 
     function getLottos() external view returns (uint256[] memory) {
@@ -62,10 +127,14 @@ contract Reader {
     function getSingleWinnerPots() external view returns (uint256[] memory) {
         return singleWinnerPotController.getAllPots();
     }
- 
-    function getSingleWinnerCompletedPots() external view returns (uint256[] memory) {
+
+    function getSingleWinnerCompletedPots()
+        external
+        view
+        returns (uint256[] memory)
+    {
         return singleWinnerPotController.getCompletedPots();
-    }    
+    }
 
     function getLottoById(uint256 _lottoId)
         external
@@ -79,8 +148,6 @@ contract Reader {
         ControllerInterface _controller = _getController(_potId);
         return _controller.getPotById(_potId);
     }
-
-    
 
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)

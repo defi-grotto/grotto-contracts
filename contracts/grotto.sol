@@ -43,6 +43,9 @@ contract Grotto is GrottoInterface {
         storageController = StorageInterface(_storageControllerAddress);
     }
 
+    // TODO: Delete lotto admin call
+    // TODO: Auto send to platform after every game play
+
     // ============================ EXTERNAL METHODS ============================
     function createLotto(
         uint256 _startTime,
@@ -51,21 +54,31 @@ contract Grotto is GrottoInterface {
         WinningType _winningType
     ) external payable {
         Lotto memory _lotto;
-        _lotto.betAmount = msg.value;
-        _lotto.stakes = msg.value;
+        Statistics memory stats = storageController.getStats();
+        _lotto.betAmount = (msg.value -
+            ((msg.value * storageController.getPlatformSharePercentage()) /
+                100));
         _lotto.creator = msg.sender;
         _lotto.startTime = _startTime;
         _lotto.endTime = _endTime;
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
         _lotto.winningType = _winningType;
 
-        uint256 creatorFees = storageController.getCreatorFees();
+        uint256 creatorFees = (msg.value *
+            storageController.getCreatorFeesPercentage()) / 100;
         _lotto.stakes = msg.value - creatorFees;
-        bool sent = false;
-        (sent, ) = payable(owner).call{value: creatorFees}("");
+        (bool sent, ) = payable(owner).call{value: creatorFees}("");
         require(sent, "CANCL");
+        stats.totalPlatformShares += creatorFees;
 
         uint256 _lottoId = lottoController.addNewLotto(_lotto);
+
+        if (!storageController.isCreator(msg.sender)) {
+            stats.totalCreators += 1;
+            storageController.setCreator(msg.sender);
+        }
+        stats.totalGames += 1;
+        storageController.setStats(stats);
 
         emit LottoCreated(_lottoId);
     }
@@ -81,6 +94,7 @@ contract Grotto is GrottoInterface {
         PotType _potType
     ) external payable {
         Lotto memory _lotto;
+        Statistics memory stats = storageController.getStats();
         Pot memory _pot;
         _lotto.creator = msg.sender;
         _pot.potAmount = msg.value;
@@ -89,7 +103,9 @@ contract Grotto is GrottoInterface {
         _lotto.endTime = _endTime;
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
         _lotto.winningType = _winningType;
-        _lotto.betAmount = _betAmount;
+        _lotto.betAmount = (_betAmount -
+            ((_betAmount * storageController.getPlatformSharePercentage()) /
+                100));
         _pot.lotto = _lotto;
         _pot.winningNumbers = _winningNumbers;
         _pot.potGuessType = _pgt;
@@ -98,26 +114,52 @@ contract Grotto is GrottoInterface {
         ControllerInterface _controller;
         if (_pot.potType == PotType.MULTIPLE_WINNER) {
             _controller = potController;
+            stats.totalPot += 1;
         } else {
             _controller = singleWinnerPotController;
+            stats.totalSingleWinnerPot += 1;
         }
 
-        uint256 creatorFees = storageController.getCreatorFees();
-        _pot.potAmount = msg.value - creatorFees;
-        bool sent = false;
-        (sent, ) = payable(owner).call{value: creatorFees}("");
+        uint256 creatorFees = (msg.value *
+            storageController.getCreatorFeesPercentage()) / 100;
+        _pot.potAmount =
+            (msg.value * storageController.getCreatorFeesPercentage()) /
+            100;
+        (bool sent, ) = payable(owner).call{value: creatorFees}("");
         require(sent, "CANCL");
+        stats.totalPlatformShares += creatorFees;
 
         uint256 _potId = _controller.addNewPot(_pot);
+
+        if (!storageController.isCreator(msg.sender)) {
+            stats.totalCreators += 1;
+            storageController.setCreator(msg.sender);
+        }
+        stats.totalGames += 1;
+        stats.totalPot += 1;
+
+        storageController.setStats(stats);
         emit PotCreated(_potId);
     }
 
     function playLotto(uint256 _lottoId) external payable {
+        Statistics memory stats = storageController.getStats();
+
+        uint256 platformShares = (msg.value *
+            storageController.getPlatformSharePercentage()) / 100;
+        (bool sent, ) = payable(owner).call{value: platformShares}("");
+        require(sent, "CANCL");
+        stats.totalPlatformShares += platformShares;
+
         bool _result = lottoController.playLotto(
             _lottoId,
-            msg.value,
+            msg.value - platformShares,
             msg.sender
         );
+
+        stats.totalPlayed += msg.value;
+        stats.totalPlayers += 1;
+        storageController.setStats(stats);
         require(_result, ERROR_20);
         emit BetPlaced(_lottoId, msg.value, msg.sender);
     }
@@ -126,13 +168,24 @@ contract Grotto is GrottoInterface {
         external
         payable
     {
+        Statistics memory stats = storageController.getStats();
+
+        uint256 platformShares = (msg.value *
+            storageController.getPlatformSharePercentage()) / 100;
+        (bool sent, ) = payable(owner).call{value: platformShares}("");
+        require(sent, "CANCL");
+        stats.totalPlatformShares += platformShares;
+
         ControllerInterface _controller = singleWinnerPotController;
         bool _result = _controller.playPot(
             _potId,
-            msg.value,
+            msg.value - platformShares,
             msg.sender,
             _guesses
         );
+        stats.totalPlayed += msg.value;
+        stats.totalPlayers += 1;
+        storageController.setStats(stats);
         require(_result, ERROR_24);
         emit BetPlaced(_potId, msg.value, msg.sender);
     }
@@ -141,13 +194,25 @@ contract Grotto is GrottoInterface {
         external
         payable
     {
+        Statistics memory stats = storageController.getStats();
+
+        uint256 platformShares = (msg.value *
+            storageController.getPlatformSharePercentage()) / 100;
+        (bool sent, ) = payable(owner).call{value: platformShares}("");
+        require(sent, "CANCL");
+        stats.totalPlatformShares += platformShares;
+
         ControllerInterface _controller = potController;
         bool _result = _controller.playPot(
             _potId,
-            msg.value,
+            msg.value - platformShares,
             msg.sender,
             _guesses
         );
+
+        stats.totalPlayed += msg.value;
+        stats.totalPlayers += 1;
+        storageController.setStats(stats);
         require(_result, ERROR_24);
         emit BetPlaced(_potId, msg.value, msg.sender);
     }
@@ -163,20 +228,11 @@ contract Grotto is GrottoInterface {
         (sent, ) = payable(_claim.winner).call{value: _claim.winning}("");
         require(sent, "CANCL");
 
+        Statistics memory stats = storageController.getStats();
+        stats.totalCreatorShares += _claim.winning;
+        storageController.setStats(stats);
+
         emit CreatorClaimed(_lottoId);
-    }
-
-    function claimPlatform(uint256 _lottoId) external payable {
-        ControllerInterface _controller = _getController(_lottoId);
-        Claim memory _claim = _controller.platformClaim(_lottoId);
-
-        require(_claim.winning != 0, ERROR_35);
-
-        bool sent = false;
-        (sent, ) = payable(owner).call{value: _claim.winning}("");
-        require(sent, "CANCL");
-
-        emit PlatformClaimed(_lottoId);
     }
 
     function claim(uint256 _lottoId) external payable {
@@ -190,6 +246,10 @@ contract Grotto is GrottoInterface {
             require(sent, "CANCL");
         }
 
+        Statistics memory stats = storageController.getStats();
+        stats.totalPlayerShares += _claim.winning;
+        storageController.setStats(stats);
+
         emit Claimed(_lottoId);
     }
 
@@ -198,7 +258,6 @@ contract Grotto is GrottoInterface {
         ControllerInterface _controller = _getController(_lottoId);
         require(_controller.forceEnd(_lottoId), ERROR_29);
     }
-
 
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)

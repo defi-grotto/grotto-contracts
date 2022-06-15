@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-
 contract LottoController is BaseController, AccessControl {
     using SafeMath for uint256;
 
@@ -64,11 +63,11 @@ contract LottoController is BaseController, AccessControl {
         }
 
         _lotto.id = storageController.getAutoIncrementId();
-        _lotto.status.isPot = false;    
+        _lotto.status.isPot = false;
 
         storageController.setLotto(_lotto.id, _lotto);
-        
-        lottoIds.push(_lotto.id);    
+
+        lottoIds.push(_lotto.id);
 
         return _lotto.id;
     }
@@ -86,9 +85,14 @@ contract LottoController is BaseController, AccessControl {
         return lottoIds;
     }
 
-    function getCompletedLottos() external view override returns (uint256[] memory) {
+    function getCompletedLottos()
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
         return completedLottoIds;
-    }    
+    }
 
     function getLottoById(uint256 _lottoId)
         external
@@ -117,9 +121,12 @@ contract LottoController is BaseController, AccessControl {
         require(_exists.status.isFinished, ERROR_22);
         require(!_exists.status.isPot, ERROR_19);
         require(storageController.getIsWinner(_lottoId, _claimer), ERROR_27);
-        require(storageController.getIsClaimed(_lottoId, _claimer) == false, ERROR_23);
+        require(
+            storageController.getIsClaimed(_lottoId, _claimer) == false,
+            ERROR_23
+        );
         _exists.status.isPot = true;
-    
+
         completedLottoIds.push(_lottoId);
 
         storageController.setIsClaimed(_lottoId, _claimer, true);
@@ -168,21 +175,6 @@ contract LottoController is BaseController, AccessControl {
         return true;
     }
 
-    function platformClaim(uint256 _lottoId)
-        external
-        override
-        returns (Claim memory)
-    {
-        Lotto memory _exists = storageController.getLottoById(_lottoId);
-        require(_exists.status.platformClaimed == false, ERROR_37);
-        require(_exists.startTime <= block.timestamp, ERROR_14);
-        require(_exists.endTime <= block.timestamp, ERROR_22);
-
-        _exists.status.platformClaimed = true;
-        storageController.setLotto(_lottoId, _exists);
-        return Claim({winner: address(0), winning: _exists.platformShares});
-    }
-
     function creatorClaim(uint256 _lottoId)
         external
         virtual
@@ -206,33 +198,36 @@ contract LottoController is BaseController, AccessControl {
             (!_exists.status.isFinished &&
                 !_exists.status.isPot &&
                 (_exists.winningType == WinningType.NUMBER_OF_PLAYERS &&
-                    storageController.getPlayers(_lottoId).length == _exists.maxNumberOfPlayers)) ||
+                    storageController.getPlayers(_lottoId).length ==
+                    _exists.maxNumberOfPlayers)) ||
             (_exists.winningType == WinningType.TIME_BASED &&
                 _exists.endTime <= current)
         ) {
             uint256 totalStaked = _exists.stakes;
 
-            // take platform's share
-            uint256 _platformShare = totalStaked
-                .mul(storageController.getPlatformSharePercentage())
-                .div(100);
             uint256 _creatorShares = totalStaked
                 .mul(storageController.getCreatorSharesPercentage())
                 .div(100);
 
-            totalStaked = totalStaked.sub(_platformShare).sub(_creatorShares);
+            totalStaked = totalStaked.sub(_creatorShares);
 
-            bytes32 randBase = keccak256(abi.encode(storageController.getPlayers(_lottoId)[0]));
+            bytes32 randBase = keccak256(
+                abi.encode(storageController.getPlayers(_lottoId)[0])
+            );
             randBase = keccak256(
                 abi.encode(
                     randBase,
-                    storageController.getPlayers(_lottoId)[storageController.getPlayers(_lottoId).length.div(2)]
+                    storageController.getPlayers(_lottoId)[
+                        storageController.getPlayers(_lottoId).length.div(2)
+                    ]
                 )
             );
             randBase = keccak256(
                 abi.encode(
                     randBase,
-                    storageController.getPlayers(_lottoId)[storageController.getPlayers(_lottoId).length.sub(1)]
+                    storageController.getPlayers(_lottoId)[
+                        storageController.getPlayers(_lottoId).length.sub(1)
+                    ]
                 )
             );
 
@@ -240,14 +235,15 @@ contract LottoController is BaseController, AccessControl {
                 keccak256(abi.encode(totalStaked, randBase))
             ) % (storageController.getPlayers(_lottoId).length);
 
-            address lottoWinner = storageController.getPlayers(_lottoId)[winnerIndex];
+            address lottoWinner = storageController.getPlayers(_lottoId)[
+                winnerIndex
+            ];
             _exists.winner = lottoWinner;
             _exists.winning = totalStaked;
             _exists.status.isFinished = true;
 
             storageController.setIsWinner(_lottoId, lottoWinner, true);
 
-            _exists.platformShares = _platformShare;
             _exists.creatorShares = _creatorShares;
 
             storageController.setLotto(_lottoId, _exists);

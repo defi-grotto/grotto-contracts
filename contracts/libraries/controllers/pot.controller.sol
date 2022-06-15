@@ -173,10 +173,6 @@ contract PotController is BaseController, AccessControl {
         if (_exists.lotto.status.isClaimed == false) {
             // no one has claimed, calculate winners claims
             uint256 _totalStaked = _exists.lotto.stakes;
-            // take platform's share
-            uint256 _platformShare = _totalStaked
-                .mul(storageController.getPlatformSharePercentage())
-                .div(100);
 
             uint256 _totalWinners = storageController.getWinners(_potId).length;
 
@@ -185,15 +181,14 @@ contract PotController is BaseController, AccessControl {
                 .div(100);
 
             if (_totalWinners <= 0) {
-                _creatorShare = _totalStaked.sub(_platformShare);
+                _creatorShare = _totalStaked;
             } else {
                 _exists.winningsPerWinner = (
-                    _totalStaked.sub(_platformShare).sub(_creatorShare)
+                    _totalStaked.sub(_creatorShare)
                 ).div(_totalWinners);
             }
 
             _exists.lotto.creatorShares = _creatorShare;
-            _exists.lotto.platformShares = _platformShare;
 
             _exists.lotto.status.isClaimed = true;
         }
@@ -224,33 +219,6 @@ contract PotController is BaseController, AccessControl {
         return true;
     }
 
-    function platformClaim(uint256 _potId)
-        external
-        override
-        returns (Claim memory)
-    {
-        Pot memory _exists = storageController.getPotById(_potId);
-        require(_exists.lotto.status.platformClaimed == false, ERROR_37);
-        if (_exists.lotto.winningType == WinningType.TIME_BASED) {
-            require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
-            require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
-        } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
-            require(
-                _exists.lotto.maxNumberOfPlayers ==
-                    storageController.getPlayers(_potId).length,
-                ERROR_22
-            );
-        }
-
-        require(_exists.lotto.status.isClaimed, ERROR_36);
-
-        _exists.lotto.status.platformClaimed = true;
-
-        storageController.setPot(_potId, _exists);
-        return
-            Claim({winner: address(0), winning: _exists.lotto.platformShares});
-    }
-
     function creatorClaim(uint256 _potId)
         external
         override
@@ -275,18 +243,12 @@ contract PotController is BaseController, AccessControl {
         }
 
         uint256 _totalStaked = _exists.lotto.stakes;
-        uint256 _platformShare = _totalStaked
-            .mul(storageController.getPlatformSharePercentage())
-            .div(100);
 
         uint256 _creatorShare = _totalStaked
             .mul(storageController.getCreatorSharesPercentage())
             .div(100);
 
-        _creatorShare = _totalStaked.sub(_platformShare);
-
         _exists.lotto.creatorShares = _creatorShare;
-        _exists.lotto.platformShares = _platformShare;
 
         _exists.lotto.status.creatorClaimed = true;
 

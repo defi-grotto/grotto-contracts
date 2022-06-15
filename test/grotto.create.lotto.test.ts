@@ -60,6 +60,7 @@ describe("Grotto: Create Lotto Tests", () => {
     await storageController.grantAdminRole(controller.address);
     await storageController.grantAdminRole(potController.address);
     await storageController.grantAdminRole(swPotController.address);
+    await storageController.grantAdminRole(grotto.address);
 
     console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
@@ -175,14 +176,14 @@ describe("Grotto: Create Lotto Tests", () => {
       const lotto = await reader.getLottoById(1);
       expect(lotto.id.toNumber()).to.be.eq(1);
       expect(lotto.creator).to.be.eq(accounts[0].address);
-      expect(ethers.utils.formatEther(lotto.betAmount)).to.be.eq("0.01");
-      expect(ethers.utils.formatEther(lotto.stakes)).to.be.eq("0.01");
+      expect(ethers.utils.formatEther(lotto.betAmount)).to.be.eq("0.009");
+      expect(ethers.utils.formatEther(lotto.stakes)).to.be.eq("0.009");
       expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);
       const lotto2 = await reader.getLottoById(2);
       expect(lotto2.id.toNumber()).to.be.eq(2);
       expect(lotto2.creator).to.be.eq(accounts[0].address);
-      expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.1");
-      expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.1");
+      expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.09");
+      expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.09");
       expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);
 
       const allLottos: Array<BigNumber> = await reader.getLottos();
@@ -196,4 +197,18 @@ describe("Grotto: Create Lotto Tests", () => {
       expect(error).to.equal(undefined);
     }
   });
+
+  it('should get some stats', async () => {
+    const stats = await reader.getStats();
+    console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
+    console.log("Total Players: ", stats.totalPlayers.toString());
+    console.log("Total Games: ", stats.totalGames.toString());
+    console.log("Total Lotto: ", stats.totalLotto.toString());
+    console.log("Total Pot: ", stats.totalPot.toString());
+    console.log("Total SingleWinnerPot: ", stats.totalSingleWinnerPot.toString());
+    console.log("Total totalCreators: ", stats.totalCreators.toString());
+    console.log("Total Creator Shares: ", ethers.utils.formatEther(stats.totalCreatorShares.toString()));
+    console.log("Total Platform Shares: ", ethers.utils.formatEther(stats.totalPlatformShares.toString()));
+    console.log("Total Players Shares: ", ethers.utils.formatEther(stats.totalPlayerShares.toString()));    
+  });  
 });

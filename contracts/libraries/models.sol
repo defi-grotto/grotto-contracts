@@ -16,6 +16,19 @@ enum PotType {
     SINGLE_WINNER    
 }
 
+struct Statistics {
+    uint256 totalPlayed;
+    uint256 totalPlayers;
+    uint256 totalGames;
+    uint256 totalLotto;
+    uint256 totalPot;
+    uint256 totalSingleWinnerPot;
+    uint256 totalCreators;
+    uint256 totalCreatorShares;
+    uint256 totalPlatformShares;
+    uint256 totalPlayerShares;
+}
+
 struct Lotto {
     uint256 id;    
     uint256 creatorShares;

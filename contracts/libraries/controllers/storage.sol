@@ -26,12 +26,29 @@ contract Storage is StorageInterface, AccessControl {
     // mapping(address => uint256[]) private userClaims;
 
     uint256 private platformSharePercentage;
-    uint256 private creatorFees;
+    uint256 private creatorFeesPercentage;
     uint256 private creatorSharesPercentage;
+
+    mapping(address => bool) creators;
+
+    Statistics private stats;
 
     constructor() {
         platformSharePercentage = 10;
         creatorSharesPercentage = 20;
+        creatorFeesPercentage = 10;
+        stats = Statistics({
+            totalPlayed: 0,
+            totalPlayers: 0,
+            totalGames: 0,
+            totalLotto: 0,
+            totalPot: 0,
+            totalSingleWinnerPot: 0,
+            totalCreators: 0,
+            totalCreatorShares: 0,
+            totalPlatformShares: 0,
+            totalPlayerShares: 0
+        });
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN, msg.sender);
     }
@@ -189,11 +206,41 @@ contract Storage is StorageInterface, AccessControl {
         creatorSharesPercentage = csp;
     }
 
-    function getCreatorFees() external view override returns (uint256) {
-        return creatorFees;
+    function getCreatorFeesPercentage()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return creatorFeesPercentage;
     }
 
-    function setCreatorFees(uint256 cf) external override onlyRole(ADMIN) {
-        creatorFees = cf;
+    function setCreatorFeesPercentage(uint256 cf)
+        external
+        override
+        onlyRole(ADMIN)
+    {
+        creatorFeesPercentage = cf;
     }
+
+    function getStats() external view override returns (Statistics memory) {
+        return stats;
+    }
+
+    function setStats(Statistics memory _stats)
+        external
+        override
+        onlyRole(ADMIN)
+    {
+        stats = _stats;
+    }
+
+    function isCreator(address _creator) external view override returns (bool) {
+        return creators[_creator];
+    }
+
+    function setCreator(address _creator) external override onlyRole(ADMIN) {
+        creators[_creator] = true;
+    }
+
 }

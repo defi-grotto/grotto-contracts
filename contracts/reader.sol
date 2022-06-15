@@ -149,6 +149,10 @@ contract Reader {
         return _controller.getPotById(_potId);
     }
 
+    function getStats() external view returns (Statistics memory) {
+        return storageController.getStats();
+    }
+
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)
         private

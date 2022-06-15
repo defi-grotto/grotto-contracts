@@ -56,6 +56,7 @@ describe("Grotto: Play Lotto Tests", () => {
     await storageController.grantAdminRole(controller.address);
     await storageController.grantAdminRole(potController.address);
     await storageController.grantAdminRole(swPotController.address);
+    await storageController.grantAdminRole(grotto.address);
 
     console.log(`LottoController Deployed to ${controller.address}`);
     expect(controller.address).to.not.eq(address0);
@@ -211,17 +212,17 @@ describe("Grotto: Play Lotto Tests", () => {
       );
       const lotto = await reader.getLottoById(lottoIds.length);
       expect(lotto.winner).to.be.oneOf([
+        accounts[1].address,
         accounts[2].address,
         accounts[3].address,
-        accounts[4].address,
       ]);
 
       const totalStaked = ethers.utils
-        .parseEther("0.01")
-        .add(ethers.utils.parseEther("0.01"))
-        .add(ethers.utils.parseEther("0.01"))
-        .add(ethers.utils.parseEther("0.01"));
-      const winnerShare = totalStaked.mul(70).div(100);
+        .parseEther("0.009")
+        .add(ethers.utils.parseEther("0.009"))
+        .add(ethers.utils.parseEther("0.009"))
+        .add(ethers.utils.parseEther("0.009"));
+      const winnerShare = totalStaked.mul(80).div(100);
       expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
         ethers.utils.formatEther(lotto.winning)
       );
@@ -294,11 +295,11 @@ describe("Grotto: Play Lotto Tests", () => {
       ]);
 
       const totalStaked = ethers.utils
-        .parseEther("0.01")
-        .add(ethers.utils.parseEther("0.01"))
-        .add(ethers.utils.parseEther("0.01"))
-        .add(ethers.utils.parseEther("0.01"));
-      const winnerShare = totalStaked.mul(70).div(100);
+        .parseEther("0.009")
+        .add(ethers.utils.parseEther("0.009"))
+        .add(ethers.utils.parseEther("0.009"))
+        .add(ethers.utils.parseEther("0.009"));
+      const winnerShare = totalStaked.mul(80).div(100);
       expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
         ethers.utils.formatEther(lotto.winning)
       );
@@ -331,21 +332,6 @@ describe("Grotto: Play Lotto Tests", () => {
       expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
         +ethers.utils.formatEther(balanceAfter)
       );
-
-      // claim by platform too
-      const balanceBeforeP = await ethers.provider.getBalance(
-        accounts[0].address
-      );
-      await expect(grotto.claimPlatform(lottoIds.length)).to.emit(
-        grotto,
-        "PlatformClaimed"
-      );
-      const balanceAfterP = await ethers.provider.getBalance(
-        accounts[0].address
-      );
-      expect(+ethers.utils.formatEther(balanceBeforeP)).to.be.lessThan(
-        +ethers.utils.formatEther(balanceAfterP)
-      );
     } catch (error) {
       console.log("Errored: ", error);
       expect(error).to.equal(undefined);
@@ -365,7 +351,7 @@ describe("Grotto: Play Lotto Tests", () => {
       "Lotto is already claimed"
     );
 
-    await expect(grotto.claimPlatform(lottoIds.length)).to.be.revertedWith(
+    await expect(grotto.claimCreator(lottoIds.length)).to.be.revertedWith(
       "Creator already claimed"
     );
   });
@@ -519,11 +505,11 @@ describe("Grotto: Play Lotto Tests", () => {
       ]);
 
       const totalStaked = ethers.utils
-        .parseEther("0.01")
-        .add(ethers.utils.parseEther("0.01"))
-        .add(ethers.utils.parseEther("0.01"))
-        .add(ethers.utils.parseEther("0.01"));
-      const winnerShare = totalStaked.mul(70).div(100);
+        .parseEther("0.009")
+        .add(ethers.utils.parseEther("0.009"))
+        .add(ethers.utils.parseEther("0.009"))
+        .add(ethers.utils.parseEther("0.009"));
+      const winnerShare = totalStaked.mul(80).div(100);
       expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
         ethers.utils.formatEther(lotto.winning)
       );
@@ -551,5 +537,19 @@ describe("Grotto: Play Lotto Tests", () => {
     expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
       +ethers.utils.formatEther(balanceAfter)
     );
+  });
+
+  it('should get some stats', async () => {
+    const stats = await reader.getStats();
+    console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
+    console.log("Total Players: ", stats.totalPlayers.toString());
+    console.log("Total Games: ", stats.totalGames.toString());
+    console.log("Total Lotto: ", stats.totalLotto.toString());
+    console.log("Total Pot: ", stats.totalPot.toString());
+    console.log("Total SingleWinnerPot: ", stats.totalSingleWinnerPot.toString());
+    console.log("Total totalCreators: ", stats.totalCreators.toString());
+    console.log("Total Creator Shares: ", ethers.utils.formatEther(stats.totalCreatorShares.toString()));
+    console.log("Total Platform Shares: ", ethers.utils.formatEther(stats.totalPlatformShares.toString()));
+    console.log("Total Players Shares: ", ethers.utils.formatEther(stats.totalPlayerShares.toString()));    
   });
 });

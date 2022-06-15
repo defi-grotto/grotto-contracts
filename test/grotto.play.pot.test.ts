@@ -64,6 +64,7 @@ describe("Grotto: Play Pot Tests", () => {
     await storageController.grantAdminRole(lottoController.address);
     await storageController.grantAdminRole(controller.address);
     await storageController.grantAdminRole(swPotController.address);
+    await storageController.grantAdminRole(grotto.address);
 
     console.log(`PotController Deployed to ${controller.address}`);
 
@@ -147,7 +148,7 @@ describe("Grotto: Play Pot Tests", () => {
       expect(pot.lotto.creator).to.equal(accounts[0].address);
       const totalStaked = pot.lotto.stakes;
       const winners = pot.winners;
-      const winnerShare = totalStaked.mul(70).div(100).div(winners.length);
+      const winnerShare = totalStaked.mul(80).div(100).div(winners.length);
       expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
         +ethers.utils.formatEther(balanceAfter)
       );
@@ -347,29 +348,6 @@ describe("Grotto: Play Pot Tests", () => {
     }
   });
 
-  it("should claim by platform", async () => {
-    try {
-      const potId = await playToWin();
-      await expect(grotto.claimPlatform(potId)).to.be.revertedWith(
-        "Creator can't claim until at least one winner claimed"
-      );
-      const balanceBefore = await ethers.provider.getBalance(
-        accounts[0].address
-      );
-      await validateWinners(potId);
-      await grotto.claimPlatform(potId);
-      const balanceAfter = await ethers.provider.getBalance(
-        accounts[0].address
-      );
-      expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
-        +ethers.utils.formatEther(balanceAfter)
-      );
-    } catch (error) {
-      console.log(error);
-      expect(error).to.equal(undefined);
-    }
-  });
-
   it("should send everything to creator if no winner found", async () => {
     try {
       const overrides = {
@@ -439,4 +417,18 @@ describe("Grotto: Play Pot Tests", () => {
       expect(error).to.equal(undefined);
     }
   });
+
+  it('should get some stats', async () => {
+    const stats = await reader.getStats();
+    console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
+    console.log("Total Players: ", stats.totalPlayers.toString());
+    console.log("Total Games: ", stats.totalGames.toString());
+    console.log("Total Lotto: ", stats.totalLotto.toString());
+    console.log("Total Pot: ", stats.totalPot.toString());
+    console.log("Total SingleWinnerPot: ", stats.totalSingleWinnerPot.toString());
+    console.log("Total totalCreators: ", stats.totalCreators.toString());
+    console.log("Total Creator Shares: ", ethers.utils.formatEther(stats.totalCreatorShares.toString()));
+    console.log("Total Platform Shares: ", ethers.utils.formatEther(stats.totalPlatformShares.toString()));
+    console.log("Total Players Shares: ", ethers.utils.formatEther(stats.totalPlayerShares.toString()));    
+  });  
 });

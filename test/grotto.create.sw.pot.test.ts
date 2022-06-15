@@ -63,6 +63,7 @@ describe("Grotto: Create Pot Tests", () => {
     await storageController.grantAdminRole(lottoController.address);
     await storageController.grantAdminRole(controller.address);
     await storageController.grantAdminRole(potController.address);
+    await storageController.grantAdminRole(grotto.address);
 
     console.log(`SWPotController Deployed to ${controller.address}`);
 
@@ -305,4 +306,18 @@ describe("Grotto: Create Pot Tests", () => {
       expect(error).to.equal(undefined);
     }
   });
+
+  it('should get some stats', async () => {
+    const stats = await reader.getStats();
+    console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
+    console.log("Total Players: ", stats.totalPlayers.toString());
+    console.log("Total Games: ", stats.totalGames.toString());
+    console.log("Total Lotto: ", stats.totalLotto.toString());
+    console.log("Total Pot: ", stats.totalPot.toString());
+    console.log("Total SingleWinnerPot: ", stats.totalSingleWinnerPot.toString());
+    console.log("Total totalCreators: ", stats.totalCreators.toString());
+    console.log("Total Creator Shares: ", ethers.utils.formatEther(stats.totalCreatorShares.toString()));
+    console.log("Total Platform Shares: ", ethers.utils.formatEther(stats.totalPlatformShares.toString()));
+    console.log("Total Players Shares: ", ethers.utils.formatEther(stats.totalPlayerShares.toString()));    
+  });  
 });

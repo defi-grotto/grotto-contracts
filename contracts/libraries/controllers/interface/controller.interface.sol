@@ -7,6 +7,14 @@ interface ControllerInterface {
 
     function addNewPot(Pot memory pot) external returns (uint256);
 
+    function getAllLottos() external view returns (uint256[] memory);
+
+    function getCompletedLottos() external view returns (uint256[] memory);
+
+    function getAllPots() external view returns (uint256[] memory);
+
+    function getCompletedPots() external view returns (uint256[] memory);    
+
     function getLottoById(uint256 lottoId) external view returns (Lotto memory);
 
     function getPotById(uint256 lottoId) external view returns (Pot memory);

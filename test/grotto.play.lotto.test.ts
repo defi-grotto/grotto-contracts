@@ -1,16 +1,16 @@
 import { Contract } from "@ethersproject/contracts";
-import { ethers, waffle, upgrades } from "hardhat";
+import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { platformOwner, WinningType } from "./models";
+import { WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "@ethersproject/bignumber";
 
 describe("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
+  let reader: Contract;
 
   const lottoIds: Array<number> = [];
 
@@ -31,6 +31,7 @@ describe("Grotto: Play Lotto Tests", () => {
     );
 
     const Grotto = await ethers.getContractFactory("Grotto");
+    const Reader = await ethers.getContractFactory("Reader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const controller = await LottoController.deploy(storageController.address);
 
@@ -40,6 +41,13 @@ describe("Grotto: Play Lotto Tests", () => {
       swPotController.address,
       storageController.address
     );
+
+    reader = await Reader.deploy(
+      controller.address,
+      potController.address,
+      swPotController.address,
+      storageController.address
+    );    
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -157,7 +165,7 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      const lotto = await grotto.getLottoById(lottoIds.length);
+      const lotto = await reader.getLottoById(lottoIds.length);
 
       const player4 = await grotto.connect(accounts[4]);
       await expect(
@@ -201,7 +209,7 @@ describe("Grotto: Play Lotto Tests", () => {
         grotto,
         "BetPlaced"
       );
-      const lotto = await grotto.getLottoById(lottoIds.length);
+      const lotto = await reader.getLottoById(lottoIds.length);
       expect(lotto.winner).to.be.oneOf([
         accounts[2].address,
         accounts[3].address,
@@ -229,7 +237,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it("should claim winnings", async () => {
-    const lotto = await grotto.getLottoById(lottoIds.length);
+    const lotto = await reader.getLottoById(lottoIds.length);
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
       .map((account, index) => (account.address === winnerAddress ? index : -1))
@@ -278,7 +286,7 @@ describe("Grotto: Play Lotto Tests", () => {
         grotto,
         "BetPlaced"
       );
-      const lotto = await grotto.getLottoById(lottoIds.length);
+      const lotto = await reader.getLottoById(lottoIds.length);
       expect(lotto.winner).to.be.oneOf([
         accounts[1].address,
         accounts[2].address,
@@ -345,7 +353,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it("should not claim winnings twice", async () => {
-    const lotto = await grotto.getLottoById(lottoIds.length);
+    const lotto = await reader.getLottoById(lottoIds.length);
 
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
@@ -502,7 +510,7 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      let lotto = await grotto.getLottoById(lottoIds.length);
+      let lotto = await reader.getLottoById(lottoIds.length);
 
       expect(lotto.winner).to.be.oneOf([
         accounts[1].address,
@@ -531,7 +539,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it("should claim winnings", async () => {
-    const lotto = await grotto.getLottoById(lottoIds.length);
+    const lotto = await reader.getLottoById(lottoIds.length);
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
       .map((account, index) => (account.address === winnerAddress ? index : -1))

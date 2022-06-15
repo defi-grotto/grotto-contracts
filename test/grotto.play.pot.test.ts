@@ -1,16 +1,16 @@
 import { Contract } from "@ethersproject/contracts";
-import { ethers, waffle, upgrades } from "hardhat";
+import { ethers, waffle } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
 import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "@ethersproject/bignumber";
 
 describe("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
+  let reader: Contract;
 
   const potIds: Array<number> = [];
   before(async () => {
@@ -20,6 +20,7 @@ describe("Grotto: Play Pot Tests", () => {
 
     const Storage = await ethers.getContractFactory("Storage");
     const Grotto = await ethers.getContractFactory("Grotto");
+    const Reader = await ethers.getContractFactory("Reader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const PotController = await ethers.getContractFactory("PotController");
     const SingleWinnerPotController = await ethers.getContractFactory(
@@ -48,6 +49,13 @@ describe("Grotto: Play Pot Tests", () => {
       swPotController.address,
       storageController.address
     );
+
+    reader = await Reader.deploy(
+      lottoController.address,
+      controller.address,
+      swPotController.address,
+      storageController.address
+    );    
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -135,7 +143,7 @@ describe("Grotto: Play Pot Tests", () => {
       const balanceBefore = await ethers.provider.getBalance(address);
       await expect(player.claim(potId)).to.emit(player, "Claimed");
       const balanceAfter = await ethers.provider.getBalance(address);
-      let pot = await grotto.getPotById(potId);
+      let pot = await reader.getPotById(potId);
       expect(pot.lotto.creator).to.equal(accounts[0].address);
       const totalStaked = pot.lotto.stakes;
       const winners = pot.winners;
@@ -411,7 +419,7 @@ describe("Grotto: Play Pot Tests", () => {
 
       await grotto.forceEnd(potIds.length);
 
-      let pot = await grotto.getPotById(potIds.length);
+      let pot = await reader.getPotById(potIds.length);
 
       expect(pot.lotto.creator).to.equal(accounts[0].address);
 

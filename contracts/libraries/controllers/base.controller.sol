@@ -27,6 +27,38 @@ abstract contract BaseController is ControllerInterface {
         returns (Lotto memory)
     {}
 
+    function getCompletedLottos()
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {}
+
+    function getAllLottos()
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {}
+
+    function getAllPots()
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {}
+
+    function getCompletedPots()
+        external
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {}
+
     function playLotto(
         uint256,
         uint256,

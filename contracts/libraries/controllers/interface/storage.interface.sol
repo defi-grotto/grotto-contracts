@@ -5,8 +5,6 @@ import "../../models.sol";
 
 interface StorageInterface {
     function grantAdminRole(address who) external;
-    
-    function getCompletedLottos() external view returns (uint256[] memory);
 
     function getLottoById(uint256 lottoId) external view returns (Lotto memory);
 
@@ -17,14 +15,6 @@ interface StorageInterface {
     function setPot(uint256 potId, Pot memory pot) external;
 
     function getAutoIncrementId() external returns (uint256);
-
-    function getCompletedIds() external view returns (uint256[] memory);
-
-    function setId(uint256 lottoId) external;
-
-    function setCompletedId(uint256 lottoId) external;
-
-    function getAllIds() external view returns (uint256[] memory);
 
     function getIsWinner(uint256 lottoId, address player)
         external

@@ -20,6 +20,9 @@ contract SingleWinnerPotController is BaseController, AccessControl {
     StorageInterface private storageController;
     address private storageControllerAddress;
 
+    uint256[] private potIds;
+    uint256[] private completedPotIds;    
+
     // ============================ INITIALIZER ============================
     constructor(address _storageControllerAddress) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -87,9 +90,10 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
         }
         _pot.lotto.status.isPot = true;
-        storageController.setId(_pot.lotto.id);
 
         storageController.setPot(_pot.lotto.id, _pot);
+
+        potIds.push(_pot.lotto.id);
         return _pot.lotto.id;
     }
 
@@ -197,7 +201,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         winningClaimed[_potId][_claimer] = true;
         _exists.lotto.status.isFinished = true;
 
-        storageController.setCompletedId(_potId);
+        completedPotIds.push(_potId);
 
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
@@ -279,6 +283,14 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             _exists.lotto.status.isPot == true &&
             _exists.potType == PotType.SINGLE_WINNER;
     }
+
+    function getAllPots() external view override returns (uint256[] memory) {
+        return potIds;
+    }
+
+    function getCompletedPots() external view override returns (uint256[] memory) {
+        return completedPotIds;
+    }    
 
     function getPotById(uint256 _potId)
         external

@@ -17,6 +17,9 @@ contract LottoController is BaseController, AccessControl {
     StorageInterface private storageController;
     address private storageControllerAddress;
 
+    uint256[] private lottoIds;
+    uint256[] private completedLottoIds;
+
     // ============================ INITIALIZER ============================
     constructor(address _storageControllerAddress) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -61,13 +64,11 @@ contract LottoController is BaseController, AccessControl {
         }
 
         _lotto.id = storageController.getAutoIncrementId();
-        _lotto.status.isPot = false;
-      
-        storageController.setId(_lotto.id);
+        _lotto.status.isPot = false;    
 
         storageController.setLotto(_lotto.id, _lotto);
         
-        emit LottoCreated(_lotto.id);
+        lottoIds.push(_lotto.id);    
 
         return _lotto.id;
     }
@@ -80,6 +81,14 @@ contract LottoController is BaseController, AccessControl {
             _exists.creator != address(0) &&
             _exists.status.isPot == false;
     }
+
+    function getAllLottos() external view override returns (uint256[] memory) {
+        return lottoIds;
+    }
+
+    function getCompletedLottos() external view override returns (uint256[] memory) {
+        return completedLottoIds;
+    }    
 
     function getLottoById(uint256 _lottoId)
         external
@@ -110,9 +119,8 @@ contract LottoController is BaseController, AccessControl {
         require(storageController.getIsWinner(_lottoId, _claimer), ERROR_27);
         require(storageController.getIsClaimed(_lottoId, _claimer) == false, ERROR_23);
         _exists.status.isPot = true;
-
-        
-        storageController.setCompletedId(_lottoId);
+    
+        completedLottoIds.push(_lottoId);
 
         storageController.setIsClaimed(_lottoId, _claimer, true);
 

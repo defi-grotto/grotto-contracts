@@ -14,7 +14,6 @@ contract Storage is StorageInterface, AccessControl {
 
     uint256 private autoIncrementId;
     uint256[] private completedIds;
-    uint256[] private allIds;
 
     // games that the player played in
     mapping(uint256 => mapping(address => bool)) private isWinner;
@@ -75,15 +74,6 @@ contract Storage is StorageInterface, AccessControl {
         pots[potId] = pot;
     }
 
-    function getCompletedLottos()
-        external
-        view
-        override
-        returns (uint256[] memory)
-    {
-        return completedIds;
-    }
-
     function getAutoIncrementId()
         external
         override
@@ -91,27 +81,6 @@ contract Storage is StorageInterface, AccessControl {
         returns (uint256)
     {
         return ++autoIncrementId;
-    }
-
-    function getCompletedIds()
-        external
-        view
-        override
-        returns (uint256[] memory)
-    {
-        return completedIds;
-    }
-
-    function setCompletedId(uint256 lottoId) external override onlyRole(ADMIN) {
-        completedIds.push(lottoId);
-    }
-
-    function setId(uint256 lottoId) external override onlyRole(ADMIN) {
-        allIds.push(lottoId);
-    }
-
-    function getAllIds() external view override returns (uint256[] memory) {
-        return allIds;
     }
 
     function getIsWinner(uint256 lottoId, address player)

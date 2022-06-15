@@ -11,6 +11,7 @@ describe("Grotto: Create Lotto Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
+  let reader: Contract;
 
   const lottoIds: Array<number> = [];
   before(async () => {
@@ -33,6 +34,7 @@ describe("Grotto: Create Lotto Tests", () => {
     await swPotController.deployed();
 
     const Grotto = await ethers.getContractFactory("Grotto");
+    const Reader = await ethers.getContractFactory("Reader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const controller = await LottoController.deploy(storageController.address);
     await controller.deployed();
@@ -43,6 +45,13 @@ describe("Grotto: Create Lotto Tests", () => {
       swPotController.address,
       storageController.address
     );
+
+    reader = await Reader.deploy(
+      controller.address,
+      potController.address,
+      swPotController.address,
+      storageController.address
+    );    
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -163,20 +172,20 @@ describe("Grotto: Create Lotto Tests", () => {
 
   it("should get running lottos", async () => {
     try {
-      const lotto = await grotto.getLottoById(1);
+      const lotto = await reader.getLottoById(1);
       expect(lotto.id.toNumber()).to.be.eq(1);
       expect(lotto.creator).to.be.eq(accounts[0].address);
       expect(ethers.utils.formatEther(lotto.betAmount)).to.be.eq("0.01");
       expect(ethers.utils.formatEther(lotto.stakes)).to.be.eq("0.01");
       expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);
-      const lotto2 = await grotto.getLottoById(2);
+      const lotto2 = await reader.getLottoById(2);
       expect(lotto2.id.toNumber()).to.be.eq(2);
       expect(lotto2.creator).to.be.eq(accounts[0].address);
       expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.1");
       expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.1");
       expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);
 
-      const allLottos: Array<BigNumber> = await grotto.getAllLottos();
+      const allLottos: Array<BigNumber> = await reader.getLottos();
       let index = 0;
       for (let l of allLottos) {
         expect(l).to.be.eq(lottoIds[index]);

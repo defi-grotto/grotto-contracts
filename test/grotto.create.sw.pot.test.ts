@@ -7,10 +7,11 @@ import { platformOwner, PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 
-describe("Grotto: Create Pot Tests", () => {
+describe.only("Grotto: Create Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
+  let reader: Contract;
   const potIds: Array<number> = [];
 
   before(async () => {
@@ -20,6 +21,7 @@ describe("Grotto: Create Pot Tests", () => {
 
     const Storage = await ethers.getContractFactory("Storage");
     const Grotto = await ethers.getContractFactory("Grotto");
+    const Reader = await ethers.getContractFactory("Reader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const PotController = await ethers.getContractFactory("PotController");
     const SingleWinnerPotController = await ethers.getContractFactory(
@@ -46,6 +48,13 @@ describe("Grotto: Create Pot Tests", () => {
       controller.address,
       storageController.address
     );
+
+    reader = await Reader.deploy(
+      lottoController.address,
+      potController.address,
+      controller.address,
+      storageController.address
+    );    
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -284,7 +293,7 @@ describe("Grotto: Create Pot Tests", () => {
 
   it("should get pot by id", async () => {
     try {
-      const pot = await grotto.getPotById(1);
+      const pot = await reader.getPotById(1);
       expect(pot.lotto.id.toNumber()).to.be.eq(1);
       expect(pot.lotto.creator).to.be.eq(accounts[0].address);
       expect(pot.winningNumbers).to.be.an("array");

@@ -98,14 +98,11 @@ contract Grotto is GrottoInterface {
         Pot memory _pot;
         _lotto.creator = msg.sender;
         _pot.potAmount = msg.value;
-        _lotto.stakes = msg.value;
         _lotto.startTime = _startTime;
         _lotto.endTime = _endTime;
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
         _lotto.winningType = _winningType;
-        _lotto.betAmount = (_betAmount -
-            ((_betAmount * storageController.getPlatformSharePercentage()) /
-                100));
+        _lotto.betAmount = _betAmount;
         _pot.lotto = _lotto;
         _pot.winningNumbers = _winningNumbers;
         _pot.potGuessType = _pgt;
@@ -122,9 +119,8 @@ contract Grotto is GrottoInterface {
 
         uint256 creatorFees = (msg.value *
             storageController.getCreatorFeesPercentage()) / 100;
-        _pot.potAmount =
-            (msg.value * storageController.getCreatorFeesPercentage()) /
-            100;
+        _pot.potAmount = _pot.potAmount - creatorFees;
+        _lotto.stakes = _pot.potAmount;
         (bool sent, ) = payable(owner).call{value: creatorFees}("");
         require(sent, "CANCL");
         stats.totalPlatformShares += creatorFees;

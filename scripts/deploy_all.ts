@@ -2,6 +2,7 @@ import { ethers, upgrades } from "hardhat";
 
 const main = async () => {
   const Grotto = await ethers.getContractFactory("Grotto");
+  const Reader = await ethers.getContractFactory("Reader");
 
   const Storage = await ethers.getContractFactory("Storage");
   const storageController = await Storage.deploy();
@@ -36,6 +37,15 @@ const main = async () => {
 
   console.log(`Grotto Deployed to ${grotto.address}`);
 
+  const reader = await Reader.deploy(
+    lottoController.address,
+    potController.address,
+    swPotController.address,
+    storageController.address
+  );
+
+  console.log(`Reader Deployed to ${reader.address}`);
+
   await lottoController.grantLottoCreator(grotto.address);
   await lottoController.grantLottoPlayer(grotto.address);
   await lottoController.grantAdmin(grotto.address);
@@ -46,11 +56,12 @@ const main = async () => {
 
   await swPotController.grantLottoCreator(grotto.address);
   await swPotController.grantLottoPlayer(grotto.address);
-  await swPotController.grantAdmin(grotto.address);  
+  await swPotController.grantAdmin(grotto.address);
 
   await storageController.grantAdminRole(lottoController.address);
   await storageController.grantAdminRole(potController.address);
-  await storageController.grantAdminRole(swPotController.address);  
+  await storageController.grantAdminRole(swPotController.address);
+  await storageController.grantAdminRole(grotto.address);
 };
 
 main().then(() => {

@@ -1,12 +1,14 @@
 import { ethers, upgrades } from "hardhat";
 
 const main = async () => {
+  console.log(new Date());
   const Grotto = await ethers.getContractFactory("Grotto");
   const Reader = await ethers.getContractFactory("Reader");
 
   const Storage = await ethers.getContractFactory("Storage");
   const storageController = await Storage.deploy();
   await storageController.deployed();
+  console.log(`Storage Deployed to ${storageController.address}`);
 
   const LottoController = await ethers.getContractFactory("LottoController");
   const lottoController = await LottoController.deploy(
@@ -65,5 +67,5 @@ const main = async () => {
 };
 
 main().then(() => {
-  console.log(new Date());
+  console.log("------------------------------------------------------------------------------------")
 });

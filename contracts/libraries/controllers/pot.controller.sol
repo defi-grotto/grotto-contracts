@@ -293,6 +293,9 @@ contract PotController is BaseController, AccessControl {
                 _exists.potType == PotType.MULTIPLE_WINNER,
             ERROR_31
         );
+        for(uint256 i = 0; i < _exists.winningNumbers.length; i++) {
+            _exists.winningNumbers[i] = 0;
+        }
         _exists.winners = storageController.getWinners(_potId);
         _exists.lotto.players = storageController.getPlayers(_potId);
         return _exists;

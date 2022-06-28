@@ -78,6 +78,7 @@ contract Storage is StorageInterface, AccessControl {
         external
         view
         override
+        onlyRole(ADMIN)
         returns (Pot memory)
     {
         return pots[potId];

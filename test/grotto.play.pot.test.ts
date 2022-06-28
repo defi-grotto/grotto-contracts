@@ -214,7 +214,7 @@ describe("Grotto: Play Pot Tests", () => {
   it("should not play pot by creator", async () => {
     try {
       const overrides = {
-        value: ethers.utils.parseEther("10"),
+        value: ethers.utils.parseEther("11"),
       };
       const guesses = [3, 6, 9, 1];
       await expect(
@@ -419,7 +419,9 @@ describe("Grotto: Play Pot Tests", () => {
   });
 
   it('should get some stats', async () => {
-    const stats = await reader.getStats();
+    const lottosPaginated = await reader.getPotsPaginated(1, 10);
+    console.log("Paginated: ", lottosPaginated.length);
+    const stats = await reader.getStats();    
     console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
     console.log("Total Players: ", stats.totalPlayers.toString());
     console.log("Total Games: ", stats.totalGames.toString());

@@ -540,6 +540,8 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it('should get some stats', async () => {
+    const lottosPaginated = await reader.getLottosPaginated(2, 5);
+    console.log("Paginated: ", lottosPaginated.length);
     const stats = await reader.getStats();
     console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
     console.log("Total Players: ", stats.totalPlayers.toString());

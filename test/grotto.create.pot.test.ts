@@ -297,9 +297,10 @@ describe("Grotto: Create Pot Tests", () => {
       expect(pot.lotto.id.toNumber()).to.be.eq(1);
       expect(pot.lotto.creator).to.be.eq(accounts[0].address);
       expect(pot.winningNumbers).to.be.an("array");
-      expect(pot.winningNumbers[0]).to.eq(3);
-      expect(pot.winningNumbers[1]).to.eq(6);
-      expect(pot.winningNumbers[2]).to.eq(9);
+      // UI should never see the winning numbers
+      expect(pot.winningNumbers[0]).to.eq(0);
+      expect(pot.winningNumbers[1]).to.eq(0);
+      expect(pot.winningNumbers[2]).to.eq(0);
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

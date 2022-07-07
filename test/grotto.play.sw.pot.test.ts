@@ -5,8 +5,9 @@ import { expect } from "chai";
 chai.use(waffle.solidity);
 import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -325,8 +326,6 @@ describe("Grotto: Play Pot Tests", () => {
 
       let pot = await reader.getPotById(potIds[3]);
 
-      expect(pot.lotto.creator).to.equal(accounts[0].address);
-
       const balanceBefore = await ethers.provider.getBalance(
         accounts[0].address
       );
@@ -335,6 +334,16 @@ describe("Grotto: Play Pot Tests", () => {
       const balanceAfter = await ethers.provider.getBalance(
         accounts[0].address
       );
+            
+      const pots = await reader.getSingleWinnerPots();
+      expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds[3]);
+  
+      const completed = await reader.getSingleWinnerCompletedPots();
+      expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds[3]);                    
+
+      expect(pot.lotto.creator).to.equal(accounts[0].address);
+
+
       expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
         +ethers.utils.formatEther(balanceAfter)
       );

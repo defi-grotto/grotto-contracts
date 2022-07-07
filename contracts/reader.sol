@@ -55,7 +55,6 @@ contract Reader {
         }
 
         uint256[] memory lottoIds = lottoController.getAllLottos();
-        console.log("LIDS: ", lottoIds.length);
         uint256 startIndex = 0;
         uint256 endIndex = lottoIds.length;
         

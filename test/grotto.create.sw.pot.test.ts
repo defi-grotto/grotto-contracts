@@ -297,10 +297,6 @@ describe("Grotto: Create Pot Tests", () => {
       const pot = await reader.getPotById(1);
       expect(pot.lotto.id.toNumber()).to.be.eq(1);
       expect(pot.lotto.creator).to.be.eq(accounts[0].address);
-      expect(pot.winningNumbers).to.be.an("array");
-      expect(pot.winningNumbers[0]).to.eq(3);
-      expect(pot.winningNumbers[1]).to.eq(6);
-      expect(pot.winningNumbers[2]).to.eq(9);
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

@@ -21,7 +21,8 @@ contract SingleWinnerPotController is BaseController, AccessControl {
     address private storageControllerAddress;
 
     uint256[] private potIds;
-    uint256[] private completedPotIds;    
+    mapping(uint256 => int256) potIdIndex;
+    uint256[] private completedPotIds;
 
     // ============================ INITIALIZER ============================
     constructor(address _storageControllerAddress) {
@@ -94,6 +95,8 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         storageController.setPot(_pot.lotto.id, _pot);
 
         potIds.push(_pot.lotto.id);
+        potIdIndex[_lotto.id] = int256(potIds.length - 1);
+
         return _pot.lotto.id;
     }
 
@@ -154,8 +157,12 @@ contract SingleWinnerPotController is BaseController, AccessControl {
 
         if (_won) {
             _exists.lotto.winner = _player;
+            storageController.setWinner(_potId, _player);
             storageController.setIsWinner(_potId, _player, true);
             _exists.lotto.status.isFinished = true;
+            removeFromPotIds(_potId);
+
+            storageController.setPot(_potId, _exists);
         }
     }
 
@@ -182,9 +189,8 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             if (_totalWinners <= 0) {
                 _creatorShare = _totalStaked;
             } else {
-                _exists.winningsPerWinner = (
-                    _totalStaked.sub(_creatorShare)
-                ).div(_totalWinners);
+                _exists.winningsPerWinner = (_totalStaked.sub(_creatorShare))
+                    .div(_totalWinners);
             }
 
             _exists.lotto.creatorShares = _creatorShare;
@@ -195,8 +201,8 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         winningClaimed[_potId][_claimer] = true;
         _exists.lotto.status.isFinished = true;
 
-        completedPotIds.push(_potId);
-
+        removeFromPotIds(_potId);
+        
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
@@ -217,7 +223,6 @@ contract SingleWinnerPotController is BaseController, AccessControl {
 
     function creatorClaim(uint256 _potId)
         external
-        view
         override
         returns (Claim memory)
     {
@@ -238,6 +243,9 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         }
 
         _exists.lotto.status.creatorClaimed = true;
+
+        removeFromPotIds(_potId);
+
         return
             Claim({
                 winner: _exists.lotto.creator,
@@ -259,9 +267,14 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         return potIds;
     }
 
-    function getCompletedPots() external view override returns (uint256[] memory) {
+    function getCompletedPots()
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
         return completedPotIds;
-    }    
+    }
 
     function getPotById(uint256 _potId)
         external
@@ -278,7 +291,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             ERROR_31
         );
 
-        for(uint256 i = 0; i < _exists.winningNumbers.length; i++) {
+        for (uint256 i = 0; i < _exists.winningNumbers.length; i++) {
             _exists.winningNumbers[i] = 0;
         }
         _exists.lotto.players = storageController.getPlayers(_potId);
@@ -288,5 +301,18 @@ contract SingleWinnerPotController is BaseController, AccessControl {
     function getPotWinning(uint256 _potId) external view returns (uint256) {
         Pot memory _exists = storageController.getPotById(_potId);
         return _exists.winningsPerWinner;
+    }
+
+    // ============================ PRIVATE METHODS ============================
+    function removeFromPotIds(uint256 _potId) private {
+        int256 index = potIdIndex[_potId];
+        if (index >= 0) {
+            uint256 lastId = potIds[potIds.length - 1];
+            potIds[uint256(index)] = lastId;
+            potIdIndex[lastId] = index;
+            potIdIndex[_potId] = -1;
+            potIds.pop();
+            completedPotIds.push(_potId);
+        }
     }
 }

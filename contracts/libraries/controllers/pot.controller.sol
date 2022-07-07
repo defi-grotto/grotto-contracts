@@ -9,7 +9,6 @@ import "./interface/storage.interface.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-
 contract PotController is BaseController, AccessControl {
     using SafeMath for uint256;
 
@@ -22,7 +21,8 @@ contract PotController is BaseController, AccessControl {
     address private storageControllerAddress;
 
     uint256[] private potIds;
-    uint256[] private completedPotIds;    
+    mapping(uint256 => int256) potIdIndex;
+    uint256[] private completedPotIds;
 
     // ============================ INITIALIZER ============================
     constructor(address _storageControllerAddress) {
@@ -85,6 +85,8 @@ contract PotController is BaseController, AccessControl {
         storageController.setPot(_pot.lotto.id, _pot);
 
         potIds.push(_pot.lotto.id);
+        potIdIndex[_lotto.id] = int256(potIds.length - 1);
+
         return _pot.lotto.id;
     }
 
@@ -105,6 +107,7 @@ contract PotController is BaseController, AccessControl {
                 ERROR_16
             );
         }
+
         require(_exists.lotto.creator != address(0), ERROR_19);
         require(_exists.lotto.status.isFinished == false, ERROR_17);
         require(_betPlaced >= _exists.lotto.betAmount, ERROR_18);
@@ -112,6 +115,19 @@ contract PotController is BaseController, AccessControl {
 
         _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
         storageController.setPlayer(_potId, _player);
+
+        if (
+            _exists.lotto.winningType == WinningType.TIME_BASED &&
+            _exists.lotto.endTime <= block.timestamp
+        ) {
+            finishPot(_potId);
+        } else if (
+            _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS &&
+            storageController.getPlayers(_potId).length >=
+            _exists.lotto.maxNumberOfPlayers
+        ) {
+            finishPot(_potId);
+        }
 
         storageController.setPot(_potId, _exists);
 
@@ -183,9 +199,8 @@ contract PotController is BaseController, AccessControl {
             if (_totalWinners <= 0) {
                 _creatorShare = _totalStaked;
             } else {
-                _exists.winningsPerWinner = (
-                    _totalStaked.sub(_creatorShare)
-                ).div(_totalWinners);
+                _exists.winningsPerWinner = (_totalStaked.sub(_creatorShare))
+                    .div(_totalWinners);
             }
 
             _exists.lotto.creatorShares = _creatorShare;
@@ -193,13 +208,12 @@ contract PotController is BaseController, AccessControl {
             _exists.lotto.status.isClaimed = true;
         }
 
-        winningClaimed[_potId][_claimer] = true;
-        _exists.lotto.status.isFinished = true;
-
-        completedPotIds.push(_potId);
+        winningClaimed[_potId][_claimer] = true;        
 
         storageController.setIsClaimed(_potId, _claimer, true);
         storageController.setPot(_potId, _exists);
+
+        finishPot(_potId);
 
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
@@ -252,6 +266,8 @@ contract PotController is BaseController, AccessControl {
 
         _exists.lotto.status.creatorClaimed = true;
 
+        finishPot(_potId);
+
         storageController.setPot(_potId, _exists);
 
         return
@@ -275,9 +291,14 @@ contract PotController is BaseController, AccessControl {
         return potIds;
     }
 
-    function getCompletedPots() external view override returns (uint256[] memory) {
+    function getCompletedPots()
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
         return completedPotIds;
-    }    
+    }
 
     function getPotById(uint256 _potId)
         external
@@ -293,7 +314,7 @@ contract PotController is BaseController, AccessControl {
                 _exists.potType == PotType.MULTIPLE_WINNER,
             ERROR_31
         );
-        for(uint256 i = 0; i < _exists.winningNumbers.length; i++) {
+        for (uint256 i = 0; i < _exists.winningNumbers.length; i++) {
             _exists.winningNumbers[i] = 0;
         }
         _exists.winners = storageController.getWinners(_potId);
@@ -304,5 +325,27 @@ contract PotController is BaseController, AccessControl {
     function getPotWinning(uint256 _potId) external view returns (uint256) {
         Pot memory _exists = storageController.getPotById(_potId);
         return _exists.winningsPerWinner;
+    }
+
+    // ============================ PRIVATE METHODS ============================
+    function removeFromPotIds(uint256 _potId) private {
+        int256 index = potIdIndex[_potId];
+
+        if (index >= 0) {
+            uint256 lastId = potIds[potIds.length - 1];
+            potIds[uint256(index)] = lastId;
+            potIdIndex[lastId] = index;
+            potIdIndex[_potId] = -1;
+            potIds.pop();
+            completedPotIds.push(_potId);
+        }
+    }
+
+    function finishPot(uint256 _potId) private {
+        Pot memory _exists = storageController.getPotById(_potId);
+        _exists.lotto.status.isFinished = true;
+        removeFromPotIds(_potId);        
+        
+        storageController.setPot(_potId, _exists);
     }
 }

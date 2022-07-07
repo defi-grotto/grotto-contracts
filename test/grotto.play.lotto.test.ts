@@ -5,6 +5,7 @@ import { expect } from "chai";
 chai.use(waffle.solidity);
 import { WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 
 describe("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];
@@ -166,7 +167,11 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      const lotto = await reader.getLottoById(lottoIds.length);
+      const lottos = await reader.getLottos();
+      expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(lottoIds.length);
+
+      const completed = await reader.getCompletedLottos();
+      expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(lottoIds.length);
 
       const player4 = await grotto.connect(accounts[4]);
       await expect(

@@ -68,5 +68,5 @@ struct Pot {
 
 struct Claim {
     address winner;
-    uint256 winning;
+    uint256 winning;    
 }

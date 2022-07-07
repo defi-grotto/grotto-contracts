@@ -17,6 +17,8 @@ contract LottoController is BaseController, AccessControl {
     address private storageControllerAddress;
 
     uint256[] private lottoIds;
+    mapping(uint256 => int256) lottoIdIndex;
+
     uint256[] private completedLottoIds;
 
     // ============================ INITIALIZER ============================
@@ -66,8 +68,10 @@ contract LottoController is BaseController, AccessControl {
         _lotto.status.isPot = false;
 
         storageController.setLotto(_lotto.id, _lotto);
+        storageController.addCreatorGame(_lotto.id, _lotto.creator);
 
         lottoIds.push(_lotto.id);
+        lottoIdIndex[_lotto.id] = int256(lottoIds.length - 1);
 
         return _lotto.id;
     }
@@ -127,10 +131,9 @@ contract LottoController is BaseController, AccessControl {
         );
         _exists.status.isPot = true;
 
-        completedLottoIds.push(_lottoId);
-
         storageController.setIsClaimed(_lottoId, _claimer, true);
 
+        removeFromLottoIds(_lottoId);
         return Claim({winner: _exists.winner, winning: _exists.winning});
     }
 
@@ -160,6 +163,8 @@ contract LottoController is BaseController, AccessControl {
             storageController.setLotto(_lottoId, _exists);
             findLottoWinner(_lottoId);
         }
+
+        storageController.addPlayerGame(_lottoId, _player);
         return true;
     }
 
@@ -186,11 +191,36 @@ contract LottoController is BaseController, AccessControl {
         require(_exists.startTime <= block.timestamp, ERROR_14);
         require(_exists.endTime <= block.timestamp, ERROR_22);
         _exists.status.creatorClaimed = true;
+
+        removeFromLottoIds(_lottoId);
+
         storageController.setLotto(_lottoId, _exists);
         return Claim({winner: _exists.creator, winning: _exists.creatorShares});
     }
 
     // ============================ PRIVATE METHODS ============================
+    function removeFromLottoIds(uint256 _lottoId) private {
+        /**
+            Say we have lottoIds = [3,4,5,6], lottoIdIndex = [3:0, 4:1, 5:2, 6:3]
+            Say we want to remove _lottoId = 5
+            index = 2
+            lastIndex = 3
+            lastId = 6
+            lottoIds[2] = 6
+            lottoIdIndex[6] = 2;
+            lottoIds.pop = [3, 4, 6], lottoIdIndex = [3:0, 4:1, 6:2, 6:3]
+         */
+        int256 index = lottoIdIndex[_lottoId];
+        if (index >= 0) {
+            uint256 lastId = lottoIds[lottoIds.length - 1];
+            lottoIds[uint256(index)] = lastId;
+            lottoIdIndex[lastId] = index;
+            lottoIdIndex[_lottoId] = -1;
+            lottoIds.pop();
+            completedLottoIds.push(_lottoId);
+        }
+    }
+
     function findLottoWinner(uint256 _lottoId) private {
         uint256 current = block.timestamp;
         Lotto memory _exists = storageController.getLottoById(_lottoId);
@@ -243,8 +273,11 @@ contract LottoController is BaseController, AccessControl {
             _exists.status.isFinished = true;
 
             storageController.setIsWinner(_lottoId, lottoWinner, true);
+            storageController.setWinner(_lottoId, lottoWinner);
 
             _exists.creatorShares = _creatorShares;
+
+            removeFromLottoIds(_lottoId);            
 
             storageController.setLotto(_lottoId, _exists);
             // TODO: Reward both winner and creator with grotto tokens

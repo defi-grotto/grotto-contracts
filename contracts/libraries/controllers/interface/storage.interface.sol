@@ -79,4 +79,6 @@ interface StorageInterface {
     function getPlayerGames(address player) external view returns (uint256[] memory);
 
     function getCreatorGames(address player) external view returns (uint256[] memory);
+
+    function isPlayer(address player, uint256 lottoId) external view returns (bool);
 }

@@ -168,6 +168,40 @@ contract LottoController is BaseController, AccessControl {
         return true;
     }
 
+    function endLotto(uint256 _lottoId, address _caller)
+        external
+        override
+        onlyRole(ADMIN)
+        returns (bool)
+    {
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
+        // lotto must have ended
+        require(
+            _exists.winningType == WinningType.TIME_BASED &&
+                _exists.endTime < block.timestamp,
+            ERROR_22
+        );
+        
+        bool _canEndLotto = false;
+        if(_caller == _exists.creator) {
+            _canEndLotto = true;
+        } else if(storageController.isPlayer(_caller, _lottoId)) {
+            _canEndLotto = true;
+        }
+        
+        if(_canEndLotto) {
+            if(storageController.getPlayers(_lottoId).length <= 0) {
+                removeFromLottoIds(_lottoId);
+                return true;
+            }
+
+            findLottoWinner(_lottoId);
+            return true;
+        }
+
+        return false;
+    }
+
     function forceEnd(uint256 _lottoId)
         external
         override
@@ -277,7 +311,7 @@ contract LottoController is BaseController, AccessControl {
 
             _exists.creatorShares = _creatorShares;
 
-            removeFromLottoIds(_lottoId);            
+            removeFromLottoIds(_lottoId);
 
             storageController.setLotto(_lottoId, _exists);
             // TODO: Reward both winner and creator with grotto tokens

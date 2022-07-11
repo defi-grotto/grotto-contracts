@@ -218,6 +218,35 @@ contract PotController is BaseController, AccessControl {
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
+    function endLotto(uint256 _potId, address _caller)
+        external
+        override
+        onlyRole(ADMIN)
+        returns (bool)
+    {
+        Pot memory _exists = storageController.getPotById(_potId);
+        // lotto must have ended
+        require(
+            _exists.lotto.winningType == WinningType.TIME_BASED &&
+                _exists.lotto.endTime < block.timestamp,
+            ERROR_22
+        );
+        
+        bool _canEndLotto = false;
+        if(_caller == _exists.lotto.creator) {
+            _canEndLotto = true;
+        } else if(storageController.isPlayer(_caller, _potId)) {
+            _canEndLotto = true;
+        }
+        
+        if(_canEndLotto) {
+            finishPot(_potId);
+            return true;
+        }
+
+        return false;
+    }
+
     function forceEnd(uint256 _potId)
         external
         override

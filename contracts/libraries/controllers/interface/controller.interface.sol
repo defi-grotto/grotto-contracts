@@ -34,6 +34,8 @@ interface ControllerInterface {
 
     function forceEnd(uint256 lottoId) external returns (bool);
 
+    function endLotto(uint256 lottoId, address caller) external returns (bool);
+
     function isLottoId(uint256 lottoId) external view returns (bool);
 
     function isPotId(uint256 potId) external view returns (bool);

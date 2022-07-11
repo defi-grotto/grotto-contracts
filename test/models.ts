@@ -1,5 +1,3 @@
-import { BigNumber } from "@ethersproject/bignumber";
-
 export enum WinningType {
   TIME_BASED,
   NUMBER_OF_PLAYERS,

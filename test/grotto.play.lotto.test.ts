@@ -1,13 +1,11 @@
 import { Contract } from "@ethersproject/contracts";
 import { ethers, waffle } from "hardhat";
-import chai from "chai";
 import { expect } from "chai";
-chai.use(waffle.solidity);
 import { WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-describe("Grotto: Play Lotto Tests", () => {
+describe.only("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -48,7 +46,7 @@ describe("Grotto: Play Lotto Tests", () => {
       potController.address,
       swPotController.address,
       storageController.address
-    );    
+    );
 
     await controller.grantLottoCreator(grotto.address);
     await controller.grantLottoPlayer(grotto.address);
@@ -168,10 +166,14 @@ describe("Grotto: Play Lotto Tests", () => {
       );
 
       const lottos = await reader.getLottos();
-      expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(lottoIds.length);
+      expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(
+        lottoIds.length
+      );
 
       const completed = await reader.getCompletedLottos();
-      expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(lottoIds.length);
+      expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
+        lottoIds.length
+      );
 
       const player4 = await grotto.connect(accounts[4]);
       await expect(
@@ -544,19 +546,157 @@ describe("Grotto: Play Lotto Tests", () => {
     );
   });
 
-  it('should get some stats', async () => {
+  it("should end a lotto by owner if time has passed", async () => {
+    // create lotto
+    const overrides = {
+      value: ethers.utils.parseEther("0.01"),
+    };
+
+    // create lotto
+    const player1 = await grotto.connect(accounts[1]);
+    const _startTime = Math.floor(new Date().getTime() / 1000);
+    const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+    await expect(
+      player1.createLotto(
+        _startTime,
+        _endTime,
+        0,
+        WinningType.TIME_BASED,
+        overrides
+      )
+    ).to.emit(grotto, "LottoCreated");
+    lottoIds.push(lottoIds.length);
+
+    // try to end, should get an error
+    await expect(player1.endLotto(lottoIds.length)).to.be.revertedWith(
+      "Lotto is not finished"
+    );
+
+    // lottoId should still be in lottoIds
+    let lottos = await reader.getLottos();
+    expect(lottos.map((l: BigNumber) => l.toNumber())).to.contain(
+      lottoIds.length
+    );
+
+    let completed = await reader.getCompletedLottos();
+    expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(
+      lottoIds.length
+    );
+
+    await grotto.forceEnd(lottoIds.length);
+    // lottoIds should not be in lottoIds anymore
+
+    try {
+      await player1.endLotto(lottoIds.length);
+    } catch (error) {
+      console.log(error);
+      expect(error).to.be.undefined;
+    }
+
+    lottos = await reader.getLottos();
+    expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(
+      lottoIds.length
+    );
+
+    completed = await reader.getCompletedLottos();
+    expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
+      lottoIds.length
+    );
+  });
+
+  it("should end a lotto by player if time has passed", async () => {
+    // create lotto
+    let overrides = {
+      value: ethers.utils.parseEther("0.01"),
+    };
+
+    // create lotto
+    const player1 = await grotto.connect(accounts[1]);
+    const _startTime = Math.floor(new Date().getTime() / 1000);
+    const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+    await expect(
+      player1.createLotto(
+        _startTime,
+        _endTime,
+        0,
+        WinningType.TIME_BASED,
+        overrides
+      )
+    ).to.emit(grotto, "LottoCreated");
+    lottoIds.push(lottoIds.length);
+
+    // try to end, should get an error
+    await expect(player1.endLotto(lottoIds.length)).to.be.revertedWith(
+      "Lotto is not finished"
+    );
+    
+    // lottoId should still be in lottoIds
+    let lottos = await reader.getLottos();
+    expect(lottos.map((l: BigNumber) => l.toNumber())).to.contain(
+      lottoIds.length
+    );
+
+    let completed = await reader.getCompletedLottos();
+    expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(
+      lottoIds.length
+    );
+
+    overrides = {
+      value: ethers.utils.parseEther("0.02"),
+    };
+
+    const player2 = grotto.connect(accounts[2]);
+    await player2.playLotto(lottoIds.length, overrides);
+
+    await grotto.forceEnd(lottoIds.length);
+    // lottoIds should not be in lottoIds anymore
+
+    try {
+      await player2.endLotto(lottoIds.length);
+    } catch (error) {
+      console.log(error);
+      expect(error).to.be.undefined;
+    }
+
+    lottos = await reader.getLottos();
+    expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(
+      lottoIds.length
+    );
+
+    completed = await reader.getCompletedLottos();
+    expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
+      lottoIds.length
+    );
+  });  
+
+  it("should get some stats", async () => {
     const lottosPaginated = await reader.getLottosPaginated(2, 5);
     console.log("Paginated: ", lottosPaginated.length);
     const stats = await reader.getStats();
-    console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
+    console.log(
+      "Total Played: ",
+      ethers.utils.formatEther(stats.totalPlayed.toString())
+    );
     console.log("Total Players: ", stats.totalPlayers.toString());
     console.log("Total Games: ", stats.totalGames.toString());
     console.log("Total Lotto: ", stats.totalLotto.toString());
     console.log("Total Pot: ", stats.totalPot.toString());
-    console.log("Total SingleWinnerPot: ", stats.totalSingleWinnerPot.toString());
+    console.log(
+      "Total SingleWinnerPot: ",
+      stats.totalSingleWinnerPot.toString()
+    );
     console.log("Total totalCreators: ", stats.totalCreators.toString());
-    console.log("Total Creator Shares: ", ethers.utils.formatEther(stats.totalCreatorShares.toString()));
-    console.log("Total Platform Shares: ", ethers.utils.formatEther(stats.totalPlatformShares.toString()));
-    console.log("Total Players Shares: ", ethers.utils.formatEther(stats.totalPlayerShares.toString()));    
+    console.log(
+      "Total Creator Shares: ",
+      ethers.utils.formatEther(stats.totalCreatorShares.toString())
+    );
+    console.log(
+      "Total Platform Shares: ",
+      ethers.utils.formatEther(stats.totalPlatformShares.toString())
+    );
+    console.log(
+      "Total Players Shares: ",
+      ethers.utils.formatEther(stats.totalPlayerShares.toString())
+    );
   });
 });

@@ -181,21 +181,16 @@ contract LottoController is BaseController, AccessControl {
                 _exists.endTime < block.timestamp,
             ERROR_22
         );
-        
+
         bool _canEndLotto = false;
-        if(_caller == _exists.creator) {
+        if (_caller == _exists.creator) {
             _canEndLotto = true;
-        } else if(storageController.isPlayer(_caller, _lottoId)) {
+        } else if (storageController.isPlayer(_caller, _lottoId)) {
             _canEndLotto = true;
         }
-        
-        if(_canEndLotto) {
-            if(storageController.getPlayers(_lottoId).length <= 0) {
-                removeFromLottoIds(_lottoId);
-                return true;
-            }
 
-            findLottoWinner(_lottoId);
+        if (_canEndLotto) {
+            removeFromLottoIds(_lottoId);
             return true;
         }
 

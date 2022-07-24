@@ -122,7 +122,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         require(_betPlaced >= _exists.lotto.betAmount, ERROR_18);
         require(_player != _exists.lotto.creator, ERROR_21);
 
-        _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);        
+        _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
         storageController.setPlayer(_potId, _player);
 
         checkIfWinner(_potId, _player, _guesses);
@@ -202,7 +202,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         _exists.lotto.status.isFinished = true;
 
         removeFromPotIds(_potId);
-        
+
         return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
     }
 
@@ -219,15 +219,15 @@ contract SingleWinnerPotController is BaseController, AccessControl {
                 _exists.lotto.endTime < block.timestamp,
             ERROR_22
         );
-        
+
         bool _canEndLotto = false;
-        if(_caller == _exists.lotto.creator) {
+        if (_caller == _exists.lotto.creator) {
             _canEndLotto = true;
-        } else if(storageController.isPlayer(_caller, _potId)) {
+        } else if (storageController.isPlayer(_caller, _potId)) {
             _canEndLotto = true;
         }
-        
-        if(_canEndLotto) {
+
+        if (_canEndLotto) {
             removeFromPotIds(_potId);
             return true;
         }

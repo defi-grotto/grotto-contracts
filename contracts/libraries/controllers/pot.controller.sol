@@ -223,7 +223,7 @@ contract PotController is BaseController, AccessControl {
         override
         onlyRole(ADMIN)
         returns (bool)
-    {
+    {       
         Pot memory _exists = storageController.getPotById(_potId);
         // lotto must have ended
         require(
@@ -261,6 +261,7 @@ contract PotController is BaseController, AccessControl {
         storageController.setPot(_potId, _exists);
         return true;
     }
+
 
     function creatorClaim(uint256 _potId)
         external

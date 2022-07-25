@@ -670,7 +670,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });  
 
   it("should get some stats", async () => {
-    const lottosPaginated = await reader.getLottosPaginated(2, 5);
+    const lottosPaginated = await reader.getLottosPaginated(2, 5, address0);
     console.log("Paginated: ", lottosPaginated.length);
     const stats = await reader.getStats();
     console.log(

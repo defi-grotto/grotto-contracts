@@ -45,24 +45,31 @@ contract Reader {
         storageController = StorageInterface(_storageControllerAddress);
     }
 
-    function getLottosPaginated(uint256 page, uint256 count)
-        external
-        view
-        returns (Lotto[] memory)
-    {
+    function getLottosPaginated(
+        uint256 page,
+        uint256 count,
+        address creator
+    ) external view returns (Lotto[] memory) {
         if (count > MAX_PAGE) {
             count = MAX_PAGE;
         }
 
-        uint256[] memory lottoIds = lottoController.getAllLottos();
+        uint256[] memory lottoIds;
+
+        if (creator == address(0)) {
+            lottoIds = lottoController.getAllLottos();
+        } else {
+            lottoIds = storageController.getCreatorGames(creator, "LOTTO");
+        }
+
         uint256 startIndex = 0;
         uint256 endIndex = lottoIds.length;
-        
-        if(lottoIds.length >= (page * count)) {
+
+        if (lottoIds.length >= (page * count)) {
             startIndex = lottoIds.length - (page * count);
-        } 
-        
-        if(lottoIds.length >= (count * (page - 1))) {
+        }
+
+        if (lottoIds.length >= (count * (page - 1))) {
             endIndex = lottoIds.length - (count * (page - 1));
         }
 
@@ -76,20 +83,27 @@ contract Reader {
         return lottos;
     }
 
-    function getPotsPaginated(uint256 page, uint256 count)
-        external
-        view
-        returns (Pot[] memory)
-    {
-        return _getPotsPaginated(potController, page, count);
+    function getPotsPaginated(
+        uint256 page,
+        uint256 count,
+        address creator
+    ) external view returns (Pot[] memory) {
+        return _getPotsPaginated(potController, page, count, creator, "POT");
     }
 
-    function getSingleWinnerPotsPaginated(uint256 page, uint256 count)
-        external
-        view
-        returns (Pot[] memory)
-    {
-        return _getPotsPaginated(singleWinnerPotController, page, count);
+    function getSingleWinnerPotsPaginated(
+        uint256 page,
+        uint256 count,
+        address creator
+    ) external view returns (Pot[] memory) {
+        return
+            _getPotsPaginated(
+                singleWinnerPotController,
+                page,
+                count,
+                creator,
+                "SW_POT"
+            );
     }
 
     function getLottos() external view returns (uint256[] memory) {
@@ -155,20 +169,38 @@ contract Reader {
         return _controller;
     }
 
-    function _getPotsPaginated(ControllerInterface controller, uint256 page, uint256 count) private view returns (Pot[] memory) {
+    function _getPotsPaginated(
+        ControllerInterface controller,
+        uint256 page,
+        uint256 count,
+        address creator,
+        string memory gameType
+    ) private view returns (Pot[] memory) {
         if (count > MAX_PAGE) {
             count = MAX_PAGE;
         }
 
-        uint256[] memory potIds = controller.getAllPots();
+        // if (creator == address(0)) {
+        //     lottoIds = lottoController.getAllLottos();
+        // } else {
+        //     lottoIds = storageController.getCreatorGames(creator, "LOTTO");
+        // }
+        uint256[] memory potIds;
+
+        if (creator == address(0)) {
+            potIds = controller.getAllPots();
+        } else {
+            potIds = storageController.getCreatorGames(creator, gameType);
+        }
+
         uint256 startIndex = 0;
         uint256 endIndex = potIds.length;
-        
-        if(potIds.length >= (page * count)) {
-            startIndex = potIds.length - (page * count);
-        } 
 
-        if(potIds.length >= (count * (page - 1))) {
+        if (potIds.length >= (page * count)) {
+            startIndex = potIds.length - (page * count);
+        }
+
+        if (potIds.length >= (count * (page - 1))) {
             endIndex = potIds.length - (count * (page - 1));
         }
 
@@ -179,6 +211,6 @@ contract Reader {
             pots[counter++] = controller.getPotById(potIds[i]);
         }
 
-        return pots;        
-    }    
+        return pots;
+    }
 }

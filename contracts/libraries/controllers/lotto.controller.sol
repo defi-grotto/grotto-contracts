@@ -68,7 +68,7 @@ contract LottoController is BaseController, AccessControl {
         _lotto.status.isPot = false;
 
         storageController.setLotto(_lotto.id, _lotto);
-        storageController.addCreatorGame(_lotto.id, _lotto.creator);
+        storageController.addCreatorGame(_lotto.id, _lotto.creator, "LOTTO");
 
         lottoIds.push(_lotto.id);
         lottoIdIndex[_lotto.id] = int256(lottoIds.length - 1);

@@ -18,7 +18,8 @@ contract Storage is StorageInterface, AccessControl {
     // games that the player played in
     mapping(address => uint256[]) private playerGames;
     // games that the player created
-    mapping(address => uint256[]) private creatorGames;
+    // creatorGames[creatorAddress][type] e.g creatorGames[0x0]["LOTTO];
+    mapping(address => mapping(string => uint256[])) private creatorGames;
 
     mapping(uint256 => mapping(address => bool)) private isWinner;
     mapping(uint256 => mapping(address => bool)) private isClaimed;
@@ -80,16 +81,16 @@ contract Storage is StorageInterface, AccessControl {
         _isPlayer[player][lottoId] = true;
     }
 
-    function addCreatorGame(uint256 lottoId, address creator) external override onlyRole(ADMIN) {
-        creatorGames[creator].push(lottoId);
+    function addCreatorGame(uint256 lottoId, address creator, string memory gameType) external override onlyRole(ADMIN) {
+        creatorGames[creator][gameType].push(lottoId);
     } 
 
     function getPlayerGames(address player) external override view returns (uint256[] memory) {
         return playerGames[player];
     } 
 
-    function getCreatorGames(address creator) external override view returns (uint256[] memory) {
-        return creatorGames[creator];
+    function getCreatorGames(address creator, string memory gameType) external override view returns (uint256[] memory) {
+        return creatorGames[creator][gameType];
     }     
 
     function setLotto(uint256 lottoId, Lotto memory lotto)

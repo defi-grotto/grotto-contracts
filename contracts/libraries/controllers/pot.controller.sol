@@ -83,6 +83,7 @@ contract PotController is BaseController, AccessControl {
         _pot.lotto.status.isPot = true;
 
         storageController.setPot(_pot.lotto.id, _pot);
+        storageController.addCreatorGame(_pot.lotto.id, _pot.lotto.creator, "POT");
 
         potIds.push(_pot.lotto.id);
         potIdIndex[_lotto.id] = int256(potIds.length - 1);

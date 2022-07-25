@@ -74,11 +74,11 @@ interface StorageInterface {
 
     function addPlayerGame(uint256 lottoId, address player) external;
 
-    function addCreatorGame(uint256 lottoId, address player) external;
+    function addCreatorGame(uint256 lottoId, address creator, string memory gameType) external;
 
     function getPlayerGames(address player) external view returns (uint256[] memory);
 
-    function getCreatorGames(address player) external view returns (uint256[] memory);
+    function getCreatorGames(address creator, string memory gameType) external view returns (uint256[] memory);
 
     function isPlayer(address player, uint256 lottoId) external view returns (bool);
 }

@@ -523,7 +523,7 @@ describe("Grotto: Play Pot Tests", () => {
   });  
 
   it('should get some stats', async () => {
-    const lottosPaginated = await reader.getPotsPaginated(1, 10);
+    const lottosPaginated = await reader.getPotsPaginated(1, 10, address0);
     console.log("Paginated: ", lottosPaginated.length);
     const stats = await reader.getStats();    
     console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));

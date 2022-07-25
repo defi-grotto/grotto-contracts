@@ -7,7 +7,7 @@ import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-describe.only("Grotto: Play Pot Tests", () => {
+describe("Grotto: Play Pot Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
@@ -465,7 +465,7 @@ describe.only("Grotto: Play Pot Tests", () => {
 
     it("should get some stats", async () => {
         const stats = await reader.getStats();
-        const lottosPaginated = await reader.getSingleWinnerPotsPaginated(1, 10);
+        const lottosPaginated = await reader.getSingleWinnerPotsPaginated(1, 10, address0);
         console.log("Paginated: ", lottosPaginated.length);
 
         console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));

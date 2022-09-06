@@ -151,6 +151,14 @@ contract Reader {
         return storageController.getStats();
     }
 
+    function getPlayerGames(address player, string memory gameType) external view returns (uint256[] memory) {
+        return storageController.getPlayerGames(player, gameType);
+    }
+
+    function getCreatorGames(address creator, string memory gameType) external view returns (uint256[] memory) {
+        return storageController.getCreatorGames(creator, gameType);        
+    }
+
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)
         private

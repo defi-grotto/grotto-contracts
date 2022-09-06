@@ -1,3 +1,29 @@
+2022-09-06T22:36:07.877Z
+Accounts: 0x729F19e4C405758C93F59E5f098190cB2382d883
+Storage Deployed to 0x31b83Dd7729Ce679eC10e755Bf1AdD67134C5E43
+LottoController Deployed to 0x6d2fcA55F558C082c5946427Ceb40740a763c9B7
+PotController Deployed to 0xE79FB51C6460DA9687d5091A5f9525646103d206
+SingleWinnerPotController Deployed to 0xf48344E82d2Aa8eac828106bf8aC3b6259dF2f0a
+Grotto Deployed to 0xEB821F1c4f84bB9a3E93a39b8319A3941db76Ddf
+Reader Deployed to 0x5AaD5f3062DDa654ce188DC58e7d07C5E0089097
+------------------------------------------------------------------------------------
+2022-08-02T20:27:04.986Z
+Storage Deployed to 0xE41EdB91dfF17693dB42c0B29eA6Db60711E24B7
+LottoController Deployed to 0x03Cd7f9a23060a0Ce385EA6d5635d25B521da037
+PotController Deployed to 0x5d35dACe606DBefBB2D66db044AB2090Ac5ee34A
+SingleWinnerPotController Deployed to 0xa4CEdd960F8C72F83677B3769940731E9087D357
+Grotto Deployed to 0xa7E2806ED0284fc4BE8D1aAe0df262dB5a70FF32
+Reader Deployed to 0xD2caF64092b521dcA10AE22b76FF34a647b7B235
+------------------------------------------------------------------------------------
+✨  Done in 110.28s.
+2022-07-25T09:55:30.563Z - Local
+Storage Deployed to 0x5FbDB2315678afecb367f032d93F642f64180aa3
+LottoController Deployed to 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+PotController Deployed to 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+SingleWinnerPotController Deployed to 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+Grotto Deployed to 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+Reader Deployed to 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+------------------------------------------------------------------------------------
 2022-07-24T19:00:29.687Z
 Storage Deployed to 0x1D73Ef4d0a8DF200B89357faaAedaD4B2D38d541
 LottoController Deployed to 0x391e02Ed223771cdd68c9a7D8cAe044f77d38D10

@@ -16,7 +16,7 @@ contract Storage is StorageInterface, AccessControl {
     uint256[] private completedIds;
 
     // games that the player played in
-    mapping(address => uint256[]) private playerGames;
+    mapping(address => mapping(string => uint256[])) private playerGames;
     // games that the player created
     // creatorGames[creatorAddress][type] e.g creatorGames[0x0]["LOTTO];
     mapping(address => mapping(string => uint256[])) private creatorGames;
@@ -76,8 +76,8 @@ contract Storage is StorageInterface, AccessControl {
         return _isPlayer[player][lottoId];
     }
 
-    function addPlayerGame(uint256 lottoId, address player) external override onlyRole(ADMIN) {
-        playerGames[player].push(lottoId);
+    function addPlayerGame(uint256 lottoId, address player, string memory gameType) external override onlyRole(ADMIN) {
+        playerGames[player][gameType].push(lottoId);
         _isPlayer[player][lottoId] = true;
     }
 
@@ -85,8 +85,8 @@ contract Storage is StorageInterface, AccessControl {
         creatorGames[creator][gameType].push(lottoId);
     } 
 
-    function getPlayerGames(address player) external override view returns (uint256[] memory) {
-        return playerGames[player];
+    function getPlayerGames(address player, string memory gameType) external override view returns (uint256[] memory) {
+        return playerGames[player][gameType];
     } 
 
     function getCreatorGames(address creator, string memory gameType) external override view returns (uint256[] memory) {
@@ -171,13 +171,13 @@ contract Storage is StorageInterface, AccessControl {
         return players[lottoId];
     }
 
-    function setPlayer(uint256 lottoId, address player)
+    function setPlayer(uint256 lottoId, address player, string memory gameType)
         external
         override
         onlyRole(ADMIN)
     {
         players[lottoId].push(player);
-        playerGames[player].push(lottoId);
+        playerGames[player][gameType].push(lottoId);
         _isPlayer[player][lottoId] = true;
     }
 

@@ -158,13 +158,13 @@ contract LottoController is BaseController, AccessControl {
         } else {
             _exists.stakes = _exists.stakes.add(_betPlaced);
 
-            storageController.setPlayer(_lottoId, _player);
+            storageController.setPlayer(_lottoId, _player, "LOTTO");
 
             storageController.setLotto(_lottoId, _exists);
             findLottoWinner(_lottoId);
         }
 
-        storageController.addPlayerGame(_lottoId, _player);
+        storageController.addPlayerGame(_lottoId, _player, "LOTTO");
         return true;
     }
 

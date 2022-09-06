@@ -115,7 +115,7 @@ contract PotController is BaseController, AccessControl {
         require(_player != _exists.lotto.creator, ERROR_21);
 
         _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
-        storageController.setPlayer(_potId, _player);
+        storageController.setPlayer(_potId, _player, "POT");
 
         if (
             _exists.lotto.winningType == WinningType.TIME_BASED &&

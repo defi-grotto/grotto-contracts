@@ -1,1 +1,5 @@
-Reader: Get Games By Creator Paginated
+Deploy New Smart Contract
+Test that you can pull user games
+Test that if user is a winner, you can claim winning
+Test that you can pull creator games
+Test that if creator game is ended you can claim winning

@@ -30,8 +30,11 @@ module.exports = {
     strict: true
   },
   networks: {
+    local: {
+      url: "http://localhost:8545/",
+    },
     tbsc: {
-      url: "https://data-seed-prebsc-2-s3.binance.org:8545/",
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts: ["147d87ddd5baf71ed197ea4fee8710f7f039ec72d0e9ebe5711d13a04f4f92f4"],
     },
     xdai: {

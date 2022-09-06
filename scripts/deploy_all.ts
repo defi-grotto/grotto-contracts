@@ -1,7 +1,10 @@
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers, upgrades } from "hardhat";
 
 const main = async () => {
   console.log(new Date());
+  let accounts: SignerWithAddress[] = await ethers.getSigners();
+  console.log("Accounts:", accounts[0].address);
   const Grotto = await ethers.getContractFactory("Grotto");
   const Reader = await ethers.getContractFactory("Reader");
 

@@ -7,7 +7,8 @@
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
     "deploy:all": "npx hardhat run ./scripts/deploy_all.ts",
-    "deploy:reader": "npx hardhat run ./scripts/deploy_reader.ts"
+    "deploy:reader": "npx hardhat run ./scripts/deploy_reader.ts",
+    "start:node": "npx hardhat node"
   },
   "keywords": [
     "lotto",

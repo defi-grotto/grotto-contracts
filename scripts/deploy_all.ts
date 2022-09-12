@@ -6,7 +6,8 @@ const main = async () => {
   let accounts: SignerWithAddress[] = await ethers.getSigners();
   console.log("Accounts:", accounts[0].address);
   const Grotto = await ethers.getContractFactory("Grotto");
-  const Reader = await ethers.getContractFactory("Reader");
+  const LottoReader = await ethers.getContractFactory("LottoReader");
+  const PotReader = await ethers.getContractFactory("PotReader");
 
   const Storage = await ethers.getContractFactory("Storage");
   const storageController = await Storage.deploy();
@@ -42,14 +43,21 @@ const main = async () => {
 
   console.log(`Grotto Deployed to ${grotto.address}`);
 
-  const reader = await Reader.deploy(
+  const lottoReader = await LottoReader.deploy(
     lottoController.address,
+    storageController.address
+  );
+
+  console.log(`Lotto Reader Deployed to ${lottoReader.address}`);
+
+
+  const potReader = await PotReader.deploy(
     potController.address,
     swPotController.address,
     storageController.address
   );
 
-  console.log(`Reader Deployed to ${reader.address}`);
+  console.log(`Reader Deployed to ${potReader.address}`);
 
   await lottoController.grantLottoCreator(grotto.address);
   await lottoController.grantLottoPlayer(grotto.address);

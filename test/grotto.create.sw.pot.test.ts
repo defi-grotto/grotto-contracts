@@ -11,7 +11,7 @@ describe("Grotto: Create Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
-  let reader: Contract;
+  let potReader: Contract;
   const potIds: Array<number> = [];
 
   before(async () => {
@@ -21,7 +21,7 @@ describe("Grotto: Create Pot Tests", () => {
 
     const Storage = await ethers.getContractFactory("Storage");
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Reader = await ethers.getContractFactory("Reader");
+    const PotReader = await ethers.getContractFactory("PotReader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const PotController = await ethers.getContractFactory("PotController");
     const SingleWinnerPotController = await ethers.getContractFactory(
@@ -49,8 +49,7 @@ describe("Grotto: Create Pot Tests", () => {
       storageController.address
     );
 
-    reader = await Reader.deploy(
-      lottoController.address,
+    potReader = await PotReader.deploy(
       potController.address,
       controller.address,
       storageController.address
@@ -294,7 +293,7 @@ describe("Grotto: Create Pot Tests", () => {
 
   it("should get pot by id", async () => {
     try {
-      const pot = await reader.getPotById(1);
+      const pot = await potReader.getById(1);
       expect(pot.lotto.id.toNumber()).to.be.eq(1);
       expect(pot.lotto.creator).to.be.eq(accounts[0].address);
     } catch (error) {
@@ -304,7 +303,7 @@ describe("Grotto: Create Pot Tests", () => {
   });
 
   it('should get some stats', async () => {
-    const stats = await reader.getStats();
+    const stats = await potReader.getStats();
     console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
     console.log("Total Players: ", stats.totalPlayers.toString());
     console.log("Total Games: ", stats.totalGames.toString());

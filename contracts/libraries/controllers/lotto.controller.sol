@@ -116,6 +116,24 @@ contract LottoController is BaseController, AccessControl {
     }
 
     // ============================ EXTERNAL METHODS ============================
+    function creatorClaim(uint256 _lottoId)
+        external
+        virtual
+        override
+        returns (Claim memory)
+    {
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
+        require(_exists.status.creatorClaimed == false, ERROR_37);
+        require(_exists.startTime <= block.timestamp, ERROR_14);
+        require(_exists.endTime <= block.timestamp, ERROR_22);
+        _exists.status.creatorClaimed = true;
+
+        removeFromLottoIds(_lottoId);
+
+        storageController.setLotto(_lottoId, _exists);
+        return Claim({winner: _exists.creator, winning: _exists.creatorShares});
+    }
+
     function claimWinning(uint256 _lottoId, address _claimer)
         external
         override
@@ -207,24 +225,6 @@ contract LottoController is BaseController, AccessControl {
         _exists.endTime = block.timestamp;
         storageController.setLotto(_lottoId, _exists);
         return true;
-    }
-
-    function creatorClaim(uint256 _lottoId)
-        external
-        virtual
-        override
-        returns (Claim memory)
-    {
-        Lotto memory _exists = storageController.getLottoById(_lottoId);
-        require(_exists.status.creatorClaimed == false, ERROR_37);
-        require(_exists.startTime <= block.timestamp, ERROR_14);
-        require(_exists.endTime <= block.timestamp, ERROR_22);
-        _exists.status.creatorClaimed = true;
-
-        removeFromLottoIds(_lottoId);
-
-        storageController.setLotto(_lottoId, _exists);
-        return Claim({winner: _exists.creator, winning: _exists.creatorShares});
     }
 
     // ============================ PRIVATE METHODS ============================

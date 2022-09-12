@@ -11,7 +11,7 @@ describe("Grotto: Play Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
-  let reader: Contract;
+  let potReader: Contract;
 
   const potIds: Array<number> = [];
   before(async () => {
@@ -21,7 +21,7 @@ describe("Grotto: Play Pot Tests", () => {
 
     const Storage = await ethers.getContractFactory("Storage");
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Reader = await ethers.getContractFactory("Reader");
+    const PotReader = await ethers.getContractFactory("PotReader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const PotController = await ethers.getContractFactory("PotController");
     const SingleWinnerPotController = await ethers.getContractFactory(
@@ -51,8 +51,7 @@ describe("Grotto: Play Pot Tests", () => {
       storageController.address
     );
 
-    reader = await Reader.deploy(
-      lottoController.address,
+    potReader = await PotReader.deploy(
       controller.address,
       swPotController.address,
       storageController.address
@@ -133,10 +132,10 @@ describe("Grotto: Play Pot Tests", () => {
       "BetPlaced"
     );
 
-    const pots = await reader.getPots();
+    const pots = await potReader.getAll(false);
     expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potId);
 
-    const completed = await reader.getCompletedPots();
+    const completed = await potReader.getCompleted(false);
     expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potId);    
     
     return potId;
@@ -151,7 +150,7 @@ describe("Grotto: Play Pot Tests", () => {
       const balanceBefore = await ethers.provider.getBalance(address);
       await expect(player.claim(potId)).to.emit(player, "Claimed");
       const balanceAfter = await ethers.provider.getBalance(address);
-      let pot = await reader.getPotById(potId);
+      let pot = await potReader.getById(potId);
       expect(pot.lotto.creator).to.equal(accounts[0].address);
       const totalStaked = pot.lotto.stakes;
       const winners = pot.winners;
@@ -404,7 +403,7 @@ describe("Grotto: Play Pot Tests", () => {
 
       await grotto.forceEnd(potIds.length);
 
-      let pot = await reader.getPotById(potIds.length);
+      let pot = await potReader.getById(potIds.length);
 
       expect(pot.lotto.creator).to.equal(accounts[0].address);
 
@@ -491,12 +490,12 @@ describe("Grotto: Play Pot Tests", () => {
     );
 
     // potId should still be in potIds
-    let pots = await reader.getPots();
+    let pots = await potReader.getAll(false);
     expect(pots.map((l: BigNumber) => l.toNumber())).to.contain(
       potIds.length
     );
 
-    let completed = await reader.getCompletedPots();
+    let completed = await potReader.getCompleted(false);
     expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(
       potIds.length
     );
@@ -511,21 +510,21 @@ describe("Grotto: Play Pot Tests", () => {
       expect(error).to.be.undefined;
     }
 
-    pots = await reader.getPots();
+    pots = await potReader.getAll(false);
     expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(
       potIds.length
     );
 
-    completed = await reader.getCompletedPots();
+    completed = await potReader.getCompleted(false);
     expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
       potIds.length
     );    
   });  
 
   it('should get some stats', async () => {
-    const lottosPaginated = await reader.getPotsPaginated(1, 10, address0);
+    const lottosPaginated = await potReader.getPaginated(1, 10, address0, false, false);
     console.log("Paginated: ", lottosPaginated.length);
-    const stats = await reader.getStats();    
+    const stats = await potReader.getStats();    
     console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));
     console.log("Total Players: ", stats.totalPlayers.toString());
     console.log("Total Games: ", stats.totalGames.toString());

@@ -9,7 +9,7 @@ describe("Grotto: Play Lotto Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
-  let reader: Contract;
+  let lottoReader: Contract;
 
   const lottoIds: Array<number> = [];
 
@@ -30,7 +30,7 @@ describe("Grotto: Play Lotto Tests", () => {
     );
 
     const Grotto = await ethers.getContractFactory("Grotto");
-    const Reader = await ethers.getContractFactory("Reader");
+    const LottoReader = await ethers.getContractFactory("LottoReader");
     const LottoController = await ethers.getContractFactory("LottoController");
     const controller = await LottoController.deploy(storageController.address);
 
@@ -41,10 +41,8 @@ describe("Grotto: Play Lotto Tests", () => {
       storageController.address
     );
 
-    reader = await Reader.deploy(
+    lottoReader = await LottoReader.deploy(
       controller.address,
-      potController.address,
-      swPotController.address,
       storageController.address
     );
 
@@ -165,12 +163,12 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      const lottos = await reader.getLottos();
+      const lottos = await lottoReader.getAll();
       expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(
         lottoIds.length
       );
 
-      const completed = await reader.getCompletedLottos();
+      const completed = await lottoReader.getCompleted();
       expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
         lottoIds.length
       );
@@ -217,7 +215,7 @@ describe("Grotto: Play Lotto Tests", () => {
         grotto,
         "BetPlaced"
       );
-      const lotto = await reader.getLottoById(lottoIds.length);
+      const lotto = await lottoReader.getById(lottoIds.length);
       expect(lotto.winner).to.be.oneOf([
         accounts[1].address,
         accounts[2].address,
@@ -245,7 +243,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it("should claim winnings", async () => {
-    const lotto = await reader.getLottoById(lottoIds.length);
+    const lotto = await lottoReader.getById(lottoIds.length);
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
       .map((account, index) => (account.address === winnerAddress ? index : -1))
@@ -294,7 +292,7 @@ describe("Grotto: Play Lotto Tests", () => {
         grotto,
         "BetPlaced"
       );
-      const lotto = await reader.getLottoById(lottoIds.length);
+      const lotto = await lottoReader.getById(lottoIds.length);
       expect(lotto.winner).to.be.oneOf([
         accounts[1].address,
         accounts[2].address,
@@ -346,7 +344,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it("should not claim winnings twice", async () => {
-    const lotto = await reader.getLottoById(lottoIds.length);
+    const lotto = await lottoReader.getById(lottoIds.length);
 
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
@@ -503,7 +501,7 @@ describe("Grotto: Play Lotto Tests", () => {
         "BetPlaced"
       );
 
-      let lotto = await reader.getLottoById(lottoIds.length);
+      let lotto = await lottoReader.getById(lottoIds.length);
 
       expect(lotto.winner).to.be.oneOf([
         accounts[1].address,
@@ -532,7 +530,7 @@ describe("Grotto: Play Lotto Tests", () => {
   });
 
   it("should claim winnings", async () => {
-    const lotto = await reader.getLottoById(lottoIds.length);
+    const lotto = await lottoReader.getById(lottoIds.length);
     const winnerAddress = lotto.winner;
     const winnerAccountIndex = accounts
       .map((account, index) => (account.address === winnerAddress ? index : -1))
@@ -573,12 +571,12 @@ describe("Grotto: Play Lotto Tests", () => {
     );
 
     // lottoId should still be in lottoIds
-    let lottos = await reader.getLottos();
+    let lottos = await lottoReader.getAll();
     expect(lottos.map((l: BigNumber) => l.toNumber())).to.contain(
       lottoIds.length
     );
 
-    let completed = await reader.getCompletedLottos();
+    let completed = await lottoReader.getCompleted();
     expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(
       lottoIds.length
     );
@@ -593,12 +591,12 @@ describe("Grotto: Play Lotto Tests", () => {
       expect(error).to.be.undefined;
     }
 
-    lottos = await reader.getLottos();
+    lottos = await lottoReader.getAll();
     expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(
       lottoIds.length
     );
 
-    completed = await reader.getCompletedLottos();
+    completed = await lottoReader.getCompleted();
     expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
       lottoIds.length
     );
@@ -631,12 +629,12 @@ describe("Grotto: Play Lotto Tests", () => {
     );
     
     // lottoId should still be in lottoIds
-    let lottos = await reader.getLottos();
+    let lottos = await lottoReader.getAll();
     expect(lottos.map((l: BigNumber) => l.toNumber())).to.contain(
       lottoIds.length
     );
 
-    let completed = await reader.getCompletedLottos();
+    let completed = await lottoReader.getCompleted();
     expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(
       lottoIds.length
     );
@@ -658,21 +656,21 @@ describe("Grotto: Play Lotto Tests", () => {
       expect(error).to.be.undefined;
     }
 
-    lottos = await reader.getLottos();
+    lottos = await lottoReader.getAll();
     expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(
       lottoIds.length
     );
 
-    completed = await reader.getCompletedLottos();
+    completed = await lottoReader.getCompleted();
     expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(
       lottoIds.length
     );
   });  
 
   it("should get some stats", async () => {
-    const lottosPaginated = await reader.getLottosPaginated(2, 5, address0);
+    const lottosPaginated = await lottoReader.getPaginated(2, 5, address0, false);
     console.log("Paginated: ", lottosPaginated.length);
-    const stats = await reader.getStats();
+    const stats = await lottoReader.getStats();
     console.log(
       "Total Played: ",
       ethers.utils.formatEther(stats.totalPlayed.toString())

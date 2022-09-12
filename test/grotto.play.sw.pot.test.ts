@@ -7,11 +7,11 @@ import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
-    let reader: Contract;
+    let potReader: Contract;
 
     const potIds: Array<number> = [];
     before(async () => {
@@ -21,7 +21,7 @@ describe("Grotto: Play Pot Tests", () => {
 
         const Storage = await ethers.getContractFactory("Storage");
         const Grotto = await ethers.getContractFactory("Grotto");
-        const Reader = await ethers.getContractFactory("Reader");
+        const PotReader = await ethers.getContractFactory("PotReader");
         const LottoController = await ethers.getContractFactory("LottoController");
         const PotController = await ethers.getContractFactory("PotController");
         const SingleWinnerPotController = await ethers.getContractFactory(
@@ -49,8 +49,7 @@ describe("Grotto: Play Pot Tests", () => {
             storageController.address,
         );
 
-        reader = await Reader.deploy(
-            lottoController.address,
+        potReader = await PotReader.deploy(
             potController.address,
             controller.address,
             storageController.address,
@@ -321,17 +320,18 @@ describe("Grotto: Play Pot Tests", () => {
 
             await grotto.forceEnd(potIds[3]);
 
-            let pot = await reader.getPotById(potIds[3]);
+            let pot = await potReader.getById(potIds[3]);
 
             const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
             await grotto.claimCreator(potIds.length);
 
             const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
 
-            const pots = await reader.getSingleWinnerPots();
+            const pots = await potReader.getAll(true);
             expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds[3]);
 
-            const completed = await reader.getSingleWinnerCompletedPots();
+            const completed = await potReader.getCompleted(true);
+
             expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds[3]);
 
             expect(pot.lotto.creator).to.equal(accounts[0].address);
@@ -440,10 +440,10 @@ describe("Grotto: Play Pot Tests", () => {
         await expect(player2.endLotto(potIds.length)).to.be.revertedWith("Lotto is not finished");
 
         // potId should still be in potIds
-        let pots = await reader.getSingleWinnerPots();
+        let pots = await potReader.getAll(true);
         expect(pots.map((l: BigNumber) => l.toNumber())).to.contain(potIds.length);
 
-        let completed = await reader.getSingleWinnerCompletedPots();
+        let completed = await potReader.getCompleted(true);
         expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(potIds.length);
 
         await grotto.forceEnd(potIds.length);
@@ -456,16 +456,16 @@ describe("Grotto: Play Pot Tests", () => {
             expect(error).to.be.undefined;
         }
 
-        pots = await reader.getSingleWinnerPots();
+        pots = await potReader.getAll(true);
         expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds.length);
 
-        completed = await reader.getSingleWinnerCompletedPots();
+        completed = await potReader.getCompleted(true);
         expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds.length);
     });
 
     it("should get some stats", async () => {
-        const stats = await reader.getStats();
-        const lottosPaginated = await reader.getSingleWinnerPotsPaginated(1, 10, address0);
+        const stats = await potReader.getStats();
+        const lottosPaginated = await potReader.getPaginated(1, 10, address0, false, true);
         console.log("Paginated: ", lottosPaginated.length);
 
         console.log("Total Played: ", ethers.utils.formatEther(stats.totalPlayed.toString()));

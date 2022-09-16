@@ -282,4 +282,11 @@ contract Grotto is GrottoInterface {
 
         return _controller;
     }
+
+    // !!! This method can not go live. I repeat, this method can not go live. !!!
+    function withdraw () external {
+        require(msg.sender == owner, ERROR_30);
+        (bool sent, ) = payable(owner).call{value: address(this).balance}("");
+        require(sent, "CANCL");
+    }
 }

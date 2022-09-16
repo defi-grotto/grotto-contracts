@@ -182,7 +182,6 @@ contract LottoController is BaseController, AccessControl {
             findLottoWinner(_lottoId);
         }
 
-        storageController.addPlayerGame(_lottoId, _player, "LOTTO");
         return true;
     }
 

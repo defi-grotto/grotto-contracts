@@ -25,7 +25,7 @@ contract Storage is StorageInterface, AccessControl {
     mapping(uint256 => mapping(address => bool)) private isClaimed;
 
     mapping(uint256 => address[]) private players;
-    mapping(address => mapping (uint256 => bool)) private _isPlayer;
+    mapping(address => mapping(uint256 => bool)) private _isPlayer;
     mapping(uint256 => address[]) private winners;
 
     // games that the player has claimed
@@ -72,26 +72,40 @@ contract Storage is StorageInterface, AccessControl {
         return lottos[lottoId];
     }
 
-    function isPlayer(address player, uint256 lottoId) external override view returns (bool) {
+    function isPlayer(address player, uint256 lottoId)
+        external
+        view
+        override
+        returns (bool)
+    {
         return _isPlayer[player][lottoId];
     }
 
-    function addPlayerGame(uint256 lottoId, address player, string memory gameType) external override onlyRole(ADMIN) {
-        playerGames[player][gameType].push(lottoId);
-        _isPlayer[player][lottoId] = true;
+    function addCreatorGame(
+        uint256 lottoId,
+        address creator,
+        string memory gameType
+    ) external override onlyRole(ADMIN) {
+        creatorGames[creator][gameType].push(lottoId);
     }
 
-    function addCreatorGame(uint256 lottoId, address creator, string memory gameType) external override onlyRole(ADMIN) {
-        creatorGames[creator][gameType].push(lottoId);
-    } 
-
-    function getPlayerGames(address player, string memory gameType) external override view returns (uint256[] memory) {
+    function getPlayerGames(address player, string memory gameType)
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
         return playerGames[player][gameType];
-    } 
+    }
 
-    function getCreatorGames(address creator, string memory gameType) external override view returns (uint256[] memory) {
+    function getCreatorGames(address creator, string memory gameType)
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
         return creatorGames[creator][gameType];
-    }     
+    }
 
     function setLotto(uint256 lottoId, Lotto memory lotto)
         external
@@ -171,13 +185,15 @@ contract Storage is StorageInterface, AccessControl {
         return players[lottoId];
     }
 
-    function setPlayer(uint256 lottoId, address player, string memory gameType)
-        external
-        override
-        onlyRole(ADMIN)
-    {
+    function setPlayer(
+        uint256 lottoId,
+        address player,
+        string memory gameType
+    ) external override onlyRole(ADMIN) {
         players[lottoId].push(player);
-        playerGames[player][gameType].push(lottoId);
+        if (_isPlayer[player][lottoId] == false) {
+            playerGames[player][gameType].push(lottoId);
+        }
         _isPlayer[player][lottoId] = true;
     }
 
@@ -272,5 +288,4 @@ contract Storage is StorageInterface, AccessControl {
     function setCreator(address _creator) external override onlyRole(ADMIN) {
         creators[_creator] = true;
     }
-
 }

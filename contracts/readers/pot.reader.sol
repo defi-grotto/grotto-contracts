@@ -47,9 +47,11 @@ contract PotReader {
         bool isSingleWinner
     ) external view returns (Pot[] memory) {
         ControllerInterface _controller = potController;
+        string memory gameType = "POT";
 
         if (isSingleWinner) {
             _controller = singleWinnerPotController;
+            gameType = "SW_POT";
         }
 
         return
@@ -59,7 +61,7 @@ contract PotReader {
                 count,
                 creator,
                 isPlayer,
-                "POT"
+                gameType
             );
     }
 

@@ -81,14 +81,6 @@ describe("Grotto: Create Pot Tests", () => {
         value: ethers.utils.parseEther("1"),
       };
 
-      // uint256 _startTime,
-      // uint256 _endTime,
-      // uint256 _maxNumberOfPlayers,
-      // WinningType _winningType,
-      // uint256[] memory _winningNumbers,
-      // PotGuessType _pgt,
-      // PotType _potType
-
       const betAmount = ethers.utils.parseEther("0.01");
       await expect(
         grotto.createPot(
@@ -104,6 +96,11 @@ describe("Grotto: Create Pot Tests", () => {
         )
       ).to.emit(grotto, "PotCreated");
       potIds.push(1);
+
+      // make sure pot was created
+      const result = await potReader.getPaginated(1, 10, accounts[0].address, false, true);
+      expect(result.length).to.eq(1);
+      expect(result[0].lotto.creator).to.eq(accounts[0].address);      
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

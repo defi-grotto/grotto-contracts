@@ -57,7 +57,7 @@ const main = async () => {
     storageController.address
   );
 
-  console.log(`Reader Deployed to ${potReader.address}`);
+  console.log(`Pot Reader Deployed to ${potReader.address}`);
 
   await lottoController.grantLottoCreator(grotto.address);
   await lottoController.grantLottoPlayer(grotto.address);

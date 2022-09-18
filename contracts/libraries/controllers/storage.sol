@@ -32,7 +32,6 @@ contract Storage is StorageInterface, AccessControl {
     // mapping(address => uint256[]) private userClaims;
 
     uint256 private platformSharePercentage;
-    uint256 private creatorFeesPercentage;
     uint256 private creatorSharesPercentage;
 
     mapping(address => bool) creators;
@@ -42,7 +41,6 @@ contract Storage is StorageInterface, AccessControl {
     constructor() {
         platformSharePercentage = 10;
         creatorSharesPercentage = 20;
-        creatorFeesPercentage = 10;
         stats = Statistics({
             totalPlayed: 0,
             totalPlayers: 0,
@@ -250,23 +248,6 @@ contract Storage is StorageInterface, AccessControl {
         onlyRole(ADMIN)
     {
         creatorSharesPercentage = csp;
-    }
-
-    function getCreatorFeesPercentage()
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return creatorFeesPercentage;
-    }
-
-    function setCreatorFeesPercentage(uint256 cf)
-        external
-        override
-        onlyRole(ADMIN)
-    {
-        creatorFeesPercentage = cf;
     }
 
     function getStats() external view override returns (Statistics memory) {

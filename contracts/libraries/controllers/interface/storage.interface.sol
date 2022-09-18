@@ -60,10 +60,6 @@ interface StorageInterface {
 
     function setCreatorSharesPercentage(uint256 csp) external;
 
-    function getCreatorFeesPercentage() external view returns (uint256);
-
-    function setCreatorFeesPercentage(uint256 cf) external;
-
     function getStats() external view returns (Statistics memory);
 
     function setStats(Statistics memory stats) external;

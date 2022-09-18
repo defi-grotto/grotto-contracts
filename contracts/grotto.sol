@@ -55,21 +55,21 @@ contract Grotto is GrottoInterface {
     ) external payable {
         Lotto memory _lotto;
         Statistics memory stats = storageController.getStats();
-        _lotto.betAmount = (msg.value -
-            ((msg.value * storageController.getPlatformSharePercentage()) /
-                100));
         _lotto.creator = msg.sender;
         _lotto.startTime = _startTime;
         _lotto.endTime = _endTime;
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
         _lotto.winningType = _winningType;
 
-        uint256 creatorFees = (msg.value *
-            storageController.getCreatorFeesPercentage()) / 100;
-        _lotto.stakes = msg.value - creatorFees;
-        (bool sent, ) = payable(owner).call{value: creatorFees}("");
+        uint256 platformShares = (msg.value *
+            storageController.getPlatformSharePercentage()) / 100;
+
+        _lotto.betAmount = msg.value - platformShares;
+        _lotto.stakes = _lotto.betAmount;
+        (bool sent, ) = payable(owner).call{value: platformShares}("");
         require(sent, "CANCL");
-        stats.totalPlatformShares += creatorFees;
+
+        stats.totalPlatformShares += platformShares;
 
         uint256 _lottoId = lottoController.addNewLotto(_lotto);
 
@@ -97,7 +97,6 @@ contract Grotto is GrottoInterface {
         Statistics memory stats = storageController.getStats();
         Pot memory _pot;
         _lotto.creator = msg.sender;
-        _pot.potAmount = msg.value;
         _lotto.startTime = _startTime;
         _lotto.endTime = _endTime;
         _lotto.maxNumberOfPlayers = _maxNumberOfPlayers;
@@ -116,14 +115,16 @@ contract Grotto is GrottoInterface {
             stats.totalSingleWinnerPot += 1;
         }
 
-        uint256 creatorFees = (msg.value *
-            storageController.getCreatorFeesPercentage()) / 100;
-        _pot.potAmount = _pot.potAmount - creatorFees;
-        _lotto.stakes = _pot.potAmount;
-        _lotto.betAmount = _betAmount - ((_betAmount * storageController.getPlatformSharePercentage()) / 100);
-        (bool sent, ) = payable(owner).call{value: creatorFees}("");
+        uint256 platformShares = (msg.value *
+            storageController.getPlatformSharePercentage()) / 100;
+
+        _lotto.betAmount = _betAmount  - platformShares;
+        _lotto.stakes = msg.value - platformShares;
+        _pot.potAmount = _lotto.stakes;
+        
+        (bool sent, ) = payable(owner).call{value: platformShares}("");
         require(sent, "CANCL");
-        stats.totalPlatformShares += creatorFees;
+        stats.totalPlatformShares += platformShares;
 
         uint256 _potId = _controller.addNewPot(_pot);
 
@@ -284,7 +285,7 @@ contract Grotto is GrottoInterface {
     }
 
     // !!! This method can not go live. I repeat, this method can not go live. !!!
-    function withdraw () external {
+    function withdraw() external {
         require(msg.sender == owner, ERROR_30);
         (bool sent, ) = payable(owner).call{value: address(this).balance}("");
         require(sent, "CANCL");

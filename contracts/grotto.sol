@@ -118,10 +118,13 @@ contract Grotto is GrottoInterface {
         uint256 platformShares = (msg.value *
             storageController.getPlatformSharePercentage()) / 100;
 
-        _lotto.betAmount = _betAmount  - platformShares;
+        uint256 betAmountPlatforShare = (_betAmount *
+            storageController.getPlatformSharePercentage()) / 100;
+            
+        _lotto.betAmount = _betAmount - betAmountPlatforShare;
         _lotto.stakes = msg.value - platformShares;
         _pot.potAmount = _lotto.stakes;
-        
+
         (bool sent, ) = payable(owner).call{value: platformShares}("");
         require(sent, "CANCL");
         stats.totalPlatformShares += platformShares;

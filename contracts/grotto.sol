@@ -120,7 +120,7 @@ contract Grotto is GrottoInterface {
 
         uint256 betAmountPlatforShare = (_betAmount *
             storageController.getPlatformSharePercentage()) / 100;
-            
+
         _lotto.betAmount = _betAmount - betAmountPlatforShare;
         _lotto.stakes = msg.value - platformShares;
         _pot.potAmount = _lotto.stakes;

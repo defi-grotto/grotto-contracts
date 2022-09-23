@@ -13,7 +13,7 @@ describe("Grotto: Play Pot Tests", () => {
     let grotto: Contract;
     let potReader: Contract;
 
-    const potIds: Array<number> = [];
+    let potIds: Array<number> = [];
 
     const getBalances = async (player: string) => {
         const grottoBalance = ethers.utils.formatEther(
@@ -36,14 +36,20 @@ describe("Grotto: Play Pot Tests", () => {
         playerBalanceBefore: string,
         amount: string,
         shouldBeEqual = false,
+        isCreateCall = false,
     ) => {
         if (shouldBeEqual) {
             // return;
         } else {
             const { grottoBalance, deployerBalance, playerBalance } = await getBalances(player);
 
-            const grottoPercentage = +amount * 0.9;
-            const deployerPercentage = +amount * 0.1;
+            let deployerPercentage = +amount * 0.1;
+            let grottoPercentage = +amount * 0.9;
+            
+            // if (isCreateCall) {
+            //     deployerPercentage = +amount * 0.09;                
+            //     grottoPercentage = +amount - deployerPercentage;
+            // }
 
             expect((+grottoBalance).toFixed(4)).to.eq(
                 (+grottoBalanceBefore + grottoPercentage).toFixed(4),
@@ -111,6 +117,8 @@ describe("Grotto: Play Pot Tests", () => {
         expect(controller.address).to.not.eq(address0);
 
         console.log(`Grotto Deployed to ${grotto.address}`);
+
+        potIds = [];
     });
 
     const playToWin = async (): Promise<number> => {
@@ -144,9 +152,11 @@ describe("Grotto: Play Pot Tests", () => {
             balance.deployerBalance,
             balance.playerBalance,
             potAmount,
+            false,
+            true,
         );
 
-        // Numbers matched but not order
+        // // Numbers matched but not order
         balance = await getBalances(accounts[4].address);
         overrides = {
             value: ethers.utils.parseEther(betAmount),
@@ -163,14 +173,14 @@ describe("Grotto: Play Pot Tests", () => {
             betAmount,
         );
 
-        // Numbers matched and is in the correct order
+        // // Numbers matched and is in the correct order
         balance = await getBalances(accounts[3].address);
         guesses = [3, 6, 9, 3];
         const player3 = await grotto.connect(accounts[3]);
         await expect(player3.playPot(potId, guesses, overrides)).to.emit(grotto, "BetPlaced");
         potSize += +betAmount;
         checkBalances(
-            accounts[4].address,
+            accounts[3].address,
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
@@ -190,7 +200,7 @@ describe("Grotto: Play Pot Tests", () => {
             betAmount,
         );
 
-        // Number not matched
+        // // Number not matched
         balance = await getBalances(accounts[6].address);
         guesses = [1, 2, 4, 6];
         const player6 = await grotto.connect(accounts[6]);
@@ -204,7 +214,7 @@ describe("Grotto: Play Pot Tests", () => {
             betAmount,
         );
 
-        // Numbers not matched
+        // // Numbers not matched
         balance = await getBalances(accounts[7].address);
         guesses = [1, 3, 3, 7];
         const player7 = await grotto.connect(accounts[7]);
@@ -293,6 +303,8 @@ describe("Grotto: Play Pot Tests", () => {
                 deployerBalance,
                 playerBalance,
                 potAmount,
+                false,
+                true,
             );
         } catch (error) {
             console.log(error);

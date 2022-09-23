@@ -12,18 +12,18 @@ const main = async () => {
   const Storage = await ethers.getContractFactory("Storage");
   const storageController = await Storage.deploy();
   await storageController.deployed();
-  console.log(`REACT_APP_STORAGE_ADDRESS=${storageController.address}`);
+  console.log(`REACT_APP_STORAGE_ADDRESS="${storageController.address}"`);
 
 
   const LottoController = await ethers.getContractFactory("LottoController");
   const lottoController = await LottoController.deploy(
     storageController.address
   );
-  console.log(`REACT_APP_LOTTO_ADDRESS=${lottoController.address}`);
+  console.log(`REACT_APP_LOTTO_ADDRESS="${lottoController.address}"`);
 
   const PotController = await ethers.getContractFactory("PotController");
   const potController = await PotController.deploy(storageController.address);
-  console.log(`REACT_APP_POT_ADDRESS=${potController.address}`);
+  console.log(`REACT_APP_POT_ADDRESS="${potController.address}"`);
 
   const SingleWinnerPotController = await ethers.getContractFactory(
     "SingleWinnerPotController"
@@ -32,7 +32,7 @@ const main = async () => {
     storageController.address
   );
   console.log(
-    `REACT_APP_SW_POT_ADDRESS=${swPotController.address}`
+    `REACT_APP_SW_POT_ADDRESS="${swPotController.address}"`
   );
 
   const grotto = await Grotto.deploy(
@@ -42,14 +42,14 @@ const main = async () => {
     storageController.address
   );
 
-  console.log(`REACT_APP_GROTTO_ADDRESS=${grotto.address}`);
+  console.log(`REACT_APP_GROTTO_ADDRESS="${grotto.address}"`);
 
   const lottoReader = await LottoReader.deploy(
     lottoController.address,
     storageController.address
   );
 
-  console.log(`REACT_APP_LOTTO_READER_ADDRESS=${lottoReader.address}`);
+  console.log(`REACT_APP_LOTTO_READER_ADDRESS="${lottoReader.address}"`);
 
 
   const potReader = await PotReader.deploy(
@@ -58,7 +58,7 @@ const main = async () => {
     storageController.address
   );
 
-  console.log(`REACT_APP_LOTTO_READER_ADDRESS=${potReader.address}`);
+  console.log(`REACT_APP_POT_READER_ADDRESS="${potReader.address}"`);
 
   await lottoController.grantLottoCreator(grotto.address);
   await lottoController.grantLottoPlayer(grotto.address);

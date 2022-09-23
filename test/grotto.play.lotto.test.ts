@@ -35,14 +35,20 @@ describe("Grotto: Play Lotto Tests", () => {
         deployerBalanceBefore: string,
         playerBalanceBefore: string,
         shouldBeEqual = false,
+        isCreateCall = false,
     ) => {
         if (shouldBeEqual) {
-          // return;
+            // return;
         } else {
             const { grottoBalance, deployerBalance, playerBalance } = await getBalances(player);
 
-            const grottoPercentage = +betAmount * 0.9;
-            const deployerPercentage = +betAmount * 0.1;
+            let deployerPercentage = +betAmount * 0.1;
+            let grottoPercentage = +betAmount * 0.9;
+
+            // if (isCreateCall) {
+            //     deployerPercentage = +betAmount * 0.09;
+            //     grottoPercentage = +betAmount - deployerPercentage;
+            // }
 
             expect((+grottoBalance).toFixed(4)).to.eq(
                 (+grottoBalanceBefore + grottoPercentage).toFixed(4),
@@ -116,7 +122,14 @@ describe("Grotto: Play Lotto Tests", () => {
             ).to.emit(grotto, "LottoCreated");
             lottoIds.push(lottoIds.length);
 
-            checkBalances(accounts[10].address, grottoBalance, deployerBalance, playerBalance);
+            checkBalances(
+                accounts[10].address,
+                grottoBalance,
+                deployerBalance,
+                playerBalance,
+                false,
+                true,
+            );
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -147,7 +160,6 @@ describe("Grotto: Play Lotto Tests", () => {
 
     it("should not play lotto by creator", async () => {
         try {
-
             const player0 = await grotto.connect(accounts[10]);
 
             const { grottoBalance, deployerBalance, playerBalance } = await getBalances(
@@ -160,7 +172,13 @@ describe("Grotto: Play Lotto Tests", () => {
                 "Creator can not play",
             );
 
-            checkBalances(accounts[10].address, grottoBalance, deployerBalance, playerBalance, true);
+            checkBalances(
+                accounts[10].address,
+                grottoBalance,
+                deployerBalance,
+                playerBalance,
+                true,
+            );
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);

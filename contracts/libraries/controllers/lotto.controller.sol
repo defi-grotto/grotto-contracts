@@ -124,8 +124,8 @@ contract LottoController is BaseController, AccessControl {
     {
         Lotto memory _exists = storageController.getLottoById(_lottoId);
         require(_exists.status.creatorClaimed == false, ERROR_37);
-        require(_exists.startTime <= block.timestamp, ERROR_14);
-        require(_exists.endTime <= block.timestamp, ERROR_22);
+        require(_exists.status.isFinished, ERROR_22);
+        require(!_exists.status.isPot, ERROR_19);
         _exists.status.creatorClaimed = true;
 
         removeFromLottoIds(_lottoId);

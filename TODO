@@ -1,5 +1,1 @@
-Deploy contract
-Test that you can pull user games
-Test that if user is a winner, you can claim winning
-Test that you can pull creator games
-Test that if creator game is ended you can claim winning
+We need to leave 1% of creator winnings in the smart contract for paying gas fees

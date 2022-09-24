@@ -123,12 +123,24 @@ contract LottoController is BaseController, AccessControl {
         returns (Claim memory)
     {
         Lotto memory _exists = storageController.getLottoById(_lottoId);
-        require(_exists.status.creatorClaimed == false, ERROR_37);
-        require(_exists.status.isFinished, ERROR_22);
         require(!_exists.status.isPot, ERROR_19);
-        _exists.status.creatorClaimed = true;
+        require(_exists.status.creatorClaimed == false, ERROR_37);
+
+        address[] memory players = storageController.getPlayers(_lottoId);
+
+        if (_exists.winningType == WinningType.TIME_BASED) {
+            require(_exists.endTime < block.timestamp, ERROR_22);
+        } else if (_exists.winningType == WinningType.NUMBER_OF_PLAYERS) {
+            require(_exists.maxNumberOfPlayers == players.length, ERROR_22);
+        }
+
+        if (_exists.winner == address(0)) {
+            _exists.creatorShares = _exists.stakes;
+        }
 
         removeFromLottoIds(_lottoId);
+        _exists.status.isFinished = true;
+        _exists.status.creatorClaimed = true;
 
         storageController.setLotto(_lottoId, _exists);
         return Claim({winner: _exists.creator, winning: _exists.creatorShares});
@@ -185,6 +197,7 @@ contract LottoController is BaseController, AccessControl {
         return true;
     }
 
+    // TODO: Remove this
     function endLotto(uint256 _lottoId, address _caller)
         external
         override
@@ -250,8 +263,12 @@ contract LottoController is BaseController, AccessControl {
     }
 
     function findLottoWinner(uint256 _lottoId) private {
-        uint256 current = block.timestamp;
         Lotto memory _exists = storageController.getLottoById(_lottoId);
+        uint256 totalStaked = _exists.stakes;
+        uint256 current = block.timestamp;
+        // if no winner found, everything belongs to creator...for now
+        uint256 _creatorShares = totalStaked;
+
         if (
             (!_exists.status.isFinished &&
                 !_exists.status.isPot &&
@@ -261,9 +278,8 @@ contract LottoController is BaseController, AccessControl {
             (_exists.winningType == WinningType.TIME_BASED &&
                 _exists.endTime <= current)
         ) {
-            uint256 totalStaked = _exists.stakes;
-
-            uint256 _creatorShares = totalStaked
+            // once we find a winner, creator shares should reduce
+            _creatorShares = totalStaked
                 .mul(storageController.getCreatorSharesPercentage())
                 .div(100);
 
@@ -303,12 +319,12 @@ contract LottoController is BaseController, AccessControl {
             storageController.setIsWinner(_lottoId, lottoWinner, true);
             storageController.setWinner(_lottoId, lottoWinner);
 
-            _exists.creatorShares = _creatorShares;
-
             removeFromLottoIds(_lottoId);
 
-            storageController.setLotto(_lottoId, _exists);
             // TODO: Reward both winner and creator with grotto tokens
         }
+
+        _exists.creatorShares = _creatorShares;
+        storageController.setLotto(_lottoId, _exists);
     }
 }

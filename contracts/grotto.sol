@@ -259,6 +259,7 @@ contract Grotto is GrottoInterface {
         require(_controller.forceEnd(_lottoId), ERROR_29);
     }
 
+    // TODO: Remove this
     /**
         Should only be called for timebased lottos and 
         should only be called by owner or a player and

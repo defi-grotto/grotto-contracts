@@ -159,7 +159,6 @@ contract LottoController is BaseController, AccessControl {
             storageController.getIsClaimed(_lottoId, _claimer) == false,
             ERROR_23
         );
-        _exists.status.isPot = true;
 
         storageController.setIsClaimed(_lottoId, _claimer, true);
 

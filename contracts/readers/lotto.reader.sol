@@ -100,4 +100,8 @@ contract LottoReader {
     function getStats() external view returns (Statistics memory) {
         return storageController.getStats();
     }
+
+    function getIsClaimed(uint256 _potId, address claimant) external view returns (bool) {
+        return storageController.getIsClaimed(_potId, claimant);
+    }    
 }

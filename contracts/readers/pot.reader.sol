@@ -100,6 +100,10 @@ contract PotReader {
         return storageController.getStats();
     }
 
+    function getIsClaimed(uint256 _potId, address claimant) external view returns (bool) {
+        return storageController.getIsClaimed(_potId, claimant);
+    }
+
     // ============================ PRIVATE VIEW METHODS ============================
     function _getController(uint256 _lottoId)
         private

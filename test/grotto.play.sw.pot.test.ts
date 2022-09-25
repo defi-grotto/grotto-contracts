@@ -7,7 +7,7 @@ import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-describe("Grotto: Play Single Winner Pot Tests", () => {
+describe.only("Grotto: Play Single Winner Pot Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
@@ -95,7 +95,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                     overrides,
                 ),
             ).to.emit(grotto, "PotCreated");
-            potIds.push(potIds.length + 1);
+            potIds.push(potIds.length);
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -126,7 +126,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                     overrides,
                 ),
             ).to.emit(grotto, "PotCreated");
-            potIds.push(potIds.length + 1);
+            potIds.push(potIds.length);
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -141,7 +141,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
 
             const guesses = [3, 6, 9, 1];
             const player1 = await grotto.connect(accounts[2]);
-            await expect(player1.playSingleWinnerPot(potIds[0], guesses, overrides)).to.emit(
+            await expect(player1.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
@@ -159,7 +159,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
 
             const guesses = [3, 6, 9, 1];
             const player1 = await grotto.connect(accounts[2]);
-            await expect(player1.playSingleWinnerPot(potIds[1], guesses, overrides)).to.emit(
+            await expect(player1.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
@@ -176,7 +176,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             };
             const guesses = [3, 6, 9, 1];
             await expect(
-                grotto.playSingleWinnerPot(potIds[0], guesses, overrides),
+                grotto.playSingleWinnerPot(potIds.length, guesses, overrides),
             ).to.be.revertedWith("Creator can not play");
         } catch (error) {
             console.log(error);
@@ -217,7 +217,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     });
 
     it("should not claim winnings before pot is finished", async () => {
-        await expect(grotto.claim(potIds.length)).to.be.revertedWith("Lotto is not finished");
+        await expect(grotto.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner");
     });
 
     it("should not find a winner if numbers matched but not in order", async () => {
@@ -242,12 +242,12 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                     overrides,
                 ),
             ).to.emit(grotto, "PotCreated");
-            potIds.push(potIds.length + 1);
+            potIds.push(potIds.length);
 
             // Numbers matched but not order
             let guesses = [3, 6, 3, 9];
             const player2 = await grotto.connect(accounts[3]);
-            await expect(player2.playSingleWinnerPot(potIds[2], guesses, overrides)).to.emit(
+            await expect(player2.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
@@ -255,16 +255,16 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             // Numbers matched but not order, should allow a bet to be placed
             guesses = [3, 6, 3, 9];
             const player3 = await grotto.connect(accounts[4]);
-            await expect(player3.playSingleWinnerPot(potIds[2], guesses, overrides)).to.emit(
+            await expect(player3.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
 
-            await grotto.forceEnd(potIds[2]);
+            await grotto.forceEnd(potIds.length);
 
-            await expect(player2.claim(potIds[2])).to.be.revertedWith("Claimer is not a winner");
+            await expect(player2.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner'");
 
-            await expect(player3.claim(potIds[2])).to.be.revertedWith("Claimer is not a winner");
+            await expect(player3.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner'");
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -292,12 +292,12 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                     overrides,
                 ),
             ).to.emit(grotto, "PotCreated");
-            potIds.push(potIds.length + 1);
+            potIds.push(potIds.length);
 
             // Numbers matched but not order
             let guesses = [3, 6, 3, 9];
             const player3 = await grotto.connect(accounts[4]);
-            await expect(player3.playSingleWinnerPot(potIds[3], guesses, overrides)).to.emit(
+            await expect(player3.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
@@ -305,7 +305,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             // Numbers matched but not order
             guesses = [3, 6, 3, 9];
             const player2 = await grotto.connect(accounts[3]);
-            await expect(player2.playSingleWinnerPot(potIds[3], guesses, overrides)).to.emit(
+            await expect(player2.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
@@ -313,14 +313,14 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             // Numbers matched but not order
             guesses = [3, 6, 3, 9];
             const player4 = await grotto.connect(accounts[5]);
-            await expect(player4.playSingleWinnerPot(potIds[3], guesses, overrides)).to.emit(
+            await expect(player4.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
 
-            await grotto.forceEnd(potIds[3]);
+            await grotto.forceEnd(potIds.length);
 
-            let pot = await potReader.getById(potIds[3]);
+            let pot = await potReader.getById(potIds.length);
 
             const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
             await grotto.claimCreator(potIds.length);
@@ -328,17 +328,91 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
 
             const pots = await potReader.getAll(true);
-            expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds[3]);
+            expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds.length);
 
             const completed = await potReader.getCompleted(true);
 
-            expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds[3]);
+            expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds.length);
 
             expect(pot.lotto.creator).to.equal(accounts[0].address);
 
             expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
                 +ethers.utils.formatEther(balanceAfter),
             );
+        } catch (error) {
+            console.log(error);
+            expect(error).to.equal(undefined);
+        }
+    });
+
+    it("should claim creator before claiming winning", async () => {
+        try {
+            const overrides = {
+                value: ethers.utils.parseEther("10"),
+            };
+            const betAmount = ethers.utils.parseEther("10");
+            const _startTime = Math.floor(new Date().getTime() / 1000);
+            const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+
+            await expect(
+                grotto.createPot(
+                    _startTime,
+                    _endTime,
+                    0,
+                    betAmount,
+                    WinningType.TIME_BASED,
+                    [3, 6, 9, 3],
+                    PotGuessType.ORDER,
+                    PotType.SINGLE_WINNER,
+                    overrides,
+                ),
+            ).to.emit(grotto, "PotCreated");
+            potIds.push(potIds.length);
+
+            // Numbers matched but not order
+            let guesses = [3, 6, 3, 9];
+            const player2 = await grotto.connect(accounts[3]);
+            await expect(player2.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
+                grotto,
+                "BetPlaced",
+            );
+
+            // Numbers matched and in order
+            guesses = [3, 6, 9, 3];
+            const player3 = await grotto.connect(accounts[4]);
+            await expect(player3.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
+                grotto,
+                "BetPlaced",
+            );
+
+            let balanceBefore = await ethers.provider.getBalance(accounts[0].address);
+            await grotto.claimCreator(potIds.length);
+            let balanceAfter = await ethers.provider.getBalance(accounts[0].address);        
+
+            const pot = await potReader.getById(potIds.length);
+
+            const stakes = +ethers.utils.formatEther(pot.lotto.stakes);
+
+            const creatorShare = stakes * 0.2;            
+
+            let balancePlusStakes = +ethers.utils.formatEther(balanceBefore) + creatorShare;
+
+            expect(balancePlusStakes.toFixed(2)).to.be.eq(
+                (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
+            );            
+
+            await expect(player2.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner");
+
+            const winnerShare = stakes * 0.8;
+            balanceBefore = await ethers.provider.getBalance(accounts[4].address);
+            await expect(player3.claim(potIds.length)).to.emit(player3, "Claimed");
+            balanceAfter = await ethers.provider.getBalance(accounts[4].address);
+            balancePlusStakes = +ethers.utils.formatEther(balanceBefore) + winnerShare;
+            expect(balancePlusStakes.toFixed(2)).to.be.eq(
+                (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
+            );            
+
+            await expect(player3.claim(potIds.length)).to.be.revertedWith("Lotto is already claimed");
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -367,12 +441,12 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                     overrides,
                 ),
             ).to.emit(grotto, "PotCreated");
-            potIds.push(potIds.length + 1);
+            potIds.push(potIds.length);
 
             // Numbers matched but not order
             let guesses = [3, 6, 3, 9];
             const player2 = await grotto.connect(accounts[3]);
-            await expect(player2.playSingleWinnerPot(potIds[4], guesses, overrides)).to.emit(
+            await expect(player2.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
@@ -380,18 +454,16 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             // Numbers matched and in order
             guesses = [3, 6, 9, 3];
             const player3 = await grotto.connect(accounts[4]);
-            await expect(player3.playSingleWinnerPot(potIds[4], guesses, overrides)).to.emit(
+            await expect(player3.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
                 grotto,
                 "BetPlaced",
             );
 
-            await grotto.forceEnd(potIds[4]);
+            await expect(player2.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner");
 
-            await expect(player2.claim(potIds[4])).to.be.revertedWith("Claimer is not a winner");
+            await expect(player3.claim(potIds.length)).to.emit(player3, "Claimed");
 
-            await expect(player3.claim(potIds[4])).to.emit(player3, "Claimed");
-
-            await expect(player3.claim(potIds[4])).to.be.revertedWith("Pot claimed");
+            await expect(player3.claim(potIds.length)).to.be.revertedWith("Lotto is already claimed");
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -423,7 +495,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                     overrides,
                 ),
             ).to.emit(grotto, "PotCreated");
-            potIds.push(1);
+            potIds.push(potIds.length);
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);

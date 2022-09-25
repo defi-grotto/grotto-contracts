@@ -5,7 +5,7 @@ import { WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-describe.only("Grotto: Play Lotto Tests", () => {
+describe("Grotto: Play Lotto Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;

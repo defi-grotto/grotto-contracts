@@ -13,9 +13,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
     using SafeMath for uint256;
 
     // ============================ VARIABLES ============================
-    // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
     mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
-    mapping(uint256 => mapping(address => bool)) private winningClaimed;
 
     StorageInterface private storageController;
     address private storageControllerAddress;
@@ -93,7 +91,11 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         _pot.lotto.status.isPot = true;
 
         storageController.setPot(_pot.lotto.id, _pot);
-        storageController.addCreatorGame(_pot.lotto.id, _pot.lotto.creator, "SW_POT");
+        storageController.addCreatorGame(
+            _pot.lotto.id,
+            _pot.lotto.creator,
+            "SW_POT"
+        );
 
         potIds.push(_pot.lotto.id);
         potIdIndex[_lotto.id] = int256(potIds.length - 1);
@@ -126,9 +128,9 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         _exists.lotto.stakes = _exists.lotto.stakes.add(_betPlaced);
         storageController.setPlayer(_potId, _player, "SW_POT");
 
-        checkIfWinner(_potId, _player, _guesses);
-
         storageController.setPot(_potId, _exists);
+
+        checkIfWinner(_potId, _player, _guesses);
         return true;
     }
 
@@ -161,6 +163,15 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             storageController.setWinner(_potId, _player);
             storageController.setIsWinner(_potId, _player, true);
             _exists.lotto.status.isFinished = true;
+            uint256 _totalStaked = _exists.lotto.stakes;
+            uint256 _creatorShare = _totalStaked
+                .mul(storageController.getCreatorSharesPercentage())
+                .div(100);
+
+            _exists.lotto.winning = (_totalStaked.sub(_creatorShare));
+            _exists.lotto.creatorShares = _creatorShare;
+            _exists.lotto.status.isFinished = true;
+
             removeFromPotIds(_potId);
 
             storageController.setPot(_potId, _exists);
@@ -173,38 +184,23 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         returns (Claim memory)
     {
         Pot memory _exists = storageController.getPotById(_potId);
-        require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
-        require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
-
+        require(
+            storageController.getIsClaimed(_potId, _claimer) == false,
+            ERROR_23
+        );
         require(storageController.getIsWinner(_potId, _claimer), ERROR_27);
-        require(winningClaimed[_potId][_claimer] == false, ERROR_26);
+        require(_exists.lotto.status.isFinished, ERROR_22);
+        require(_exists.lotto.status.isPot, ERROR_19);
 
-        if (_exists.lotto.status.isClaimed == false) {
-            // no one has claimed, calculate winners claims
-            uint256 _totalStaked = _exists.lotto.stakes;
-            uint256 _totalWinners = 1;
-            uint256 _creatorShare = _totalStaked
-                .mul(storageController.getCreatorSharesPercentage())
-                .div(100);
-
-            if (_totalWinners <= 0) {
-                _creatorShare = _totalStaked;
-            } else {
-                _exists.winningsPerWinner = (_totalStaked.sub(_creatorShare))
-                    .div(_totalWinners);
-            }
-
-            _exists.lotto.creatorShares = _creatorShare;
-
-            _exists.lotto.status.isClaimed = true;
-        }
-
-        winningClaimed[_potId][_claimer] = true;
-        _exists.lotto.status.isFinished = true;
+        storageController.setIsClaimed(_potId, _claimer, true);
 
         removeFromPotIds(_potId);
 
-        return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
+        return
+            Claim({
+                winner: _exists.lotto.winner,
+                winning: _exists.lotto.winning
+            });
     }
 
     function endLotto(uint256 _potId, address _caller)
@@ -258,23 +254,36 @@ contract SingleWinnerPotController is BaseController, AccessControl {
     {
         Pot memory _exists = storageController.getPotById(_potId);
         require(_exists.lotto.status.creatorClaimed == false, ERROR_37);
-        require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
-        require(_exists.lotto.endTime <= block.timestamp, ERROR_22);
 
-        if (_exists.winners.length > 0) {
-            require(_exists.lotto.status.isClaimed, ERROR_36);
-        } else {
-            uint256 _totalStaked = _exists.lotto.stakes;
-            uint256 _creatorShare = _totalStaked
-                .mul(storageController.getCreatorSharesPercentage())
-                .div(100);
+        address[] memory players = storageController.getPlayers(_potId);
 
-            _exists.lotto.creatorShares = _creatorShare;
+        if (_exists.lotto.status.isFinished == false) {
+            if (_exists.lotto.winningType == WinningType.TIME_BASED) {
+                require(_exists.lotto.endTime < block.timestamp, ERROR_22);
+            } else if (
+                _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS
+            ) {
+                require(
+                    _exists.lotto.maxNumberOfPlayers == players.length,
+                    ERROR_22
+                );
+            }
+        }
+
+        uint256 _totalStaked = _exists.lotto.stakes;
+        _exists.lotto.creatorShares = _totalStaked
+            .mul(storageController.getCreatorSharesPercentage())
+            .div(100);
+
+        if (_exists.lotto.winner == address(0)) {
+            _exists.lotto.creatorShares = _exists.lotto.stakes;
         }
 
         _exists.lotto.status.creatorClaimed = true;
 
         removeFromPotIds(_potId);
+
+        storageController.setPot(_potId, _exists);
 
         return
             Claim({

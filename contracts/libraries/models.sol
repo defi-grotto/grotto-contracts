@@ -50,8 +50,8 @@ struct Lotto {
 struct Status {
     bool isPot;
     bool isFinished;  
-    bool isClaimed;  
     bool creatorClaimed;
+    bool isClaimed;
     bool platformClaimed;           
 }
 

@@ -691,8 +691,8 @@ describe("Grotto: Play Lotto Tests", () => {
         const balanceBefore = await ethers.provider.getBalance(accounts[1].address);
         await expect(player1.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
         const balanceAfter = await ethers.provider.getBalance(accounts[1].address);
-        expect((+ethers.utils.formatEther(balanceBefore) + 9).toFixed(3)).to.be.eq(
-            (+ethers.utils.formatEther(balanceAfter)).toFixed(3),
+        expect((+ethers.utils.formatEther(balanceBefore) + 9).toFixed(2)).to.be.eq(
+            (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
         );
     });
 

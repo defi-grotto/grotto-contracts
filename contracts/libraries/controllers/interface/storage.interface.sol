@@ -41,7 +41,12 @@ interface StorageInterface {
     function getPlayers(uint256 lottoId)
         external
         view
-        returns (address[] memory);
+        returns (uint256);
+
+    function findPlayerByIndex(uint256 lottoId, uint256 index)
+        external
+        view
+        returns (address);
 
     function setPlayer(uint256 lottoId, address player, string memory gameType) external;
 
@@ -75,4 +80,7 @@ interface StorageInterface {
     function getCreatorGames(address creator, string memory gameType) external view returns (uint256[] memory);
 
     function isPlayer(address player, uint256 lottoId) external view returns (bool);
+
+    function getRandBase() external view returns (bytes32);
+    function setRandBase(bytes32 randBase) external;
 }

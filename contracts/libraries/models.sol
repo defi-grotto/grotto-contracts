@@ -43,7 +43,7 @@ struct Lotto {
     WinningType winningType;          
     address creator;
     address winner;
-    address[] players;
+    uint256 players;
     Status status;        
 }
 

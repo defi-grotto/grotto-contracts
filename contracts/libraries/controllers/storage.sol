@@ -24,7 +24,9 @@ contract Storage is StorageInterface, AccessControl {
     mapping(uint256 => mapping(address => bool)) private isWinner;
     mapping(uint256 => mapping(address => bool)) private isClaimed;
 
-    mapping(uint256 => address[]) private players;
+    // mapping(uint256 => address[]) private players;
+    mapping(uint256 => mapping(uint256 => address)) private playerIndex;
+    mapping(uint256 => uint256) private players;
     mapping(address => mapping(uint256 => bool)) private _isPlayer;
     mapping(uint256 => address[]) private winners;
 
@@ -35,6 +37,9 @@ contract Storage is StorageInterface, AccessControl {
     uint256 private creatorSharesPercentage;
 
     mapping(address => bool) creators;
+
+    bytes32 private randBase =
+        0x746875732066617220796f75207368616c6c20636f6d6520616e64206e6f2066;
 
     Statistics private stats;
 
@@ -174,11 +179,20 @@ contract Storage is StorageInterface, AccessControl {
         isClaimed[lottoId][player] = _isClaimed;
     }
 
+    function findPlayerByIndex(uint256 lottoId, uint256 index)
+        external
+        view
+        override
+        returns (address)
+    {
+        return playerIndex[lottoId][index];
+    }
+
     function getPlayers(uint256 lottoId)
         external
         view
         override
-        returns (address[] memory)
+        returns (uint256)
     {
         return players[lottoId];
     }
@@ -188,7 +202,9 @@ contract Storage is StorageInterface, AccessControl {
         address player,
         string memory gameType
     ) external override onlyRole(ADMIN) {
-        players[lottoId].push(player);
+        playerIndex[lottoId][players[lottoId]] = player;
+        players[lottoId]++;        
+
         if (_isPlayer[player][lottoId] == false) {
             playerGames[player][gameType].push(lottoId);
         }
@@ -268,5 +284,13 @@ contract Storage is StorageInterface, AccessControl {
 
     function setCreator(address _creator) external override onlyRole(ADMIN) {
         creators[_creator] = true;
+    }
+
+    function getRandBase() external view override returns (bytes32) {
+        return randBase;
+    }
+
+    function setRandBase(bytes32 _randBase) external override onlyRole(ADMIN) {
+        randBase = _randBase;
     }
 }

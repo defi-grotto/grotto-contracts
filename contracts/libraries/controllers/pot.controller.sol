@@ -83,7 +83,11 @@ contract PotController is BaseController, AccessControl {
         _pot.lotto.status.isPot = true;
 
         storageController.setPot(_pot.lotto.id, _pot);
-        storageController.addCreatorGame(_pot.lotto.id, _pot.lotto.creator, "POT");
+        storageController.addCreatorGame(
+            _pot.lotto.id,
+            _pot.lotto.creator,
+            "POT"
+        );
 
         potIds.push(_pot.lotto.id);
         potIdIndex[_lotto.id] = int256(potIds.length - 1);
@@ -103,7 +107,7 @@ contract PotController is BaseController, AccessControl {
             require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                storageController.getPlayers(_potId).length <
+                storageController.getPlayers(_potId) <
                     _exists.lotto.maxNumberOfPlayers,
                 ERROR_16
             );
@@ -124,7 +128,7 @@ contract PotController is BaseController, AccessControl {
             finishPot(_potId);
         } else if (
             _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS &&
-            storageController.getPlayers(_potId).length >=
+            storageController.getPlayers(_potId) >=
             _exists.lotto.maxNumberOfPlayers
         ) {
             finishPot(_potId);
@@ -180,7 +184,7 @@ contract PotController is BaseController, AccessControl {
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
                 _exists.lotto.maxNumberOfPlayers ==
-                    storageController.getPlayers(_potId).length,
+                    storageController.getPlayers(_potId),
                 ERROR_22
             );
         }
@@ -209,7 +213,7 @@ contract PotController is BaseController, AccessControl {
             _exists.lotto.status.isClaimed = true;
         }
 
-        winningClaimed[_potId][_claimer] = true;        
+        winningClaimed[_potId][_claimer] = true;
 
         storageController.setIsClaimed(_potId, _claimer, true);
         storageController.setPot(_potId, _exists);
@@ -224,7 +228,7 @@ contract PotController is BaseController, AccessControl {
         override
         onlyRole(ADMIN)
         returns (bool)
-    {       
+    {
         Pot memory _exists = storageController.getPotById(_potId);
         // lotto must have ended
         require(
@@ -232,15 +236,15 @@ contract PotController is BaseController, AccessControl {
                 _exists.lotto.endTime < block.timestamp,
             ERROR_22
         );
-        
+
         bool _canEndLotto = false;
-        if(_caller == _exists.lotto.creator) {
+        if (_caller == _exists.lotto.creator) {
             _canEndLotto = true;
-        } else if(storageController.isPlayer(_caller, _potId)) {
+        } else if (storageController.isPlayer(_caller, _potId)) {
             _canEndLotto = true;
         }
-        
-        if(_canEndLotto) {
+
+        if (_canEndLotto) {
             finishPot(_potId);
             return true;
         }
@@ -263,7 +267,6 @@ contract PotController is BaseController, AccessControl {
         return true;
     }
 
-
     function creatorClaim(uint256 _potId)
         external
         override
@@ -277,7 +280,7 @@ contract PotController is BaseController, AccessControl {
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
                 _exists.lotto.maxNumberOfPlayers ==
-                    storageController.getPlayers(_potId).length,
+                    storageController.getPlayers(_potId),
                 ERROR_22
             );
         }
@@ -375,8 +378,8 @@ contract PotController is BaseController, AccessControl {
     function finishPot(uint256 _potId) private {
         Pot memory _exists = storageController.getPotById(_potId);
         _exists.lotto.status.isFinished = true;
-        removeFromPotIds(_potId);        
-        
+        removeFromPotIds(_potId);
+
         storageController.setPot(_potId, _exists);
     }
 }

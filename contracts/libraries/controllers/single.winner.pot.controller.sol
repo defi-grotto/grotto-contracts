@@ -115,7 +115,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             require(_exists.lotto.startTime <= block.timestamp, ERROR_14);
         } else if (_exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS) {
             require(
-                storageController.getPlayers(_potId).length <
+                storageController.getPlayers(_potId) <
                     _exists.lotto.maxNumberOfPlayers,
                 ERROR_16
             );
@@ -255,8 +255,6 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         Pot memory _exists = storageController.getPotById(_potId);
         require(_exists.lotto.status.creatorClaimed == false, ERROR_37);
 
-        address[] memory players = storageController.getPlayers(_potId);
-
         if (_exists.lotto.status.isFinished == false) {
             if (_exists.lotto.winningType == WinningType.TIME_BASED) {
                 require(_exists.lotto.endTime < block.timestamp, ERROR_22);
@@ -264,7 +262,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
                 _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS
             ) {
                 require(
-                    _exists.lotto.maxNumberOfPlayers == players.length,
+                    _exists.lotto.maxNumberOfPlayers == storageController.getPlayers(_potId),
                     ERROR_22
                 );
             }

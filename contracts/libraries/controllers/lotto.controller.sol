@@ -126,12 +126,14 @@ contract LottoController is BaseController, AccessControl {
         require(!_exists.status.isPot, ERROR_19);
         require(_exists.status.creatorClaimed == false, ERROR_37);
 
-        address[] memory players = storageController.getPlayers(_lottoId);
-
         if (_exists.winningType == WinningType.TIME_BASED) {
             require(_exists.endTime < block.timestamp, ERROR_22);
         } else if (_exists.winningType == WinningType.NUMBER_OF_PLAYERS) {
-            require(_exists.maxNumberOfPlayers == players.length, ERROR_22);
+            require(
+                _exists.maxNumberOfPlayers ==
+                    storageController.getPlayers(_lottoId),
+                ERROR_22
+            );
         }
 
         if (_exists.winner == address(0)) {
@@ -267,13 +269,13 @@ contract LottoController is BaseController, AccessControl {
         uint256 current = block.timestamp;
         // if no winner found, everything belongs to creator...for now
         uint256 _creatorShares = totalStaked;
+        uint256 players = storageController.getPlayers(_lottoId);
 
         if (
             (!_exists.status.isFinished &&
                 !_exists.status.isPot &&
                 (_exists.winningType == WinningType.NUMBER_OF_PLAYERS &&
-                    storageController.getPlayers(_lottoId).length ==
-                    _exists.maxNumberOfPlayers)) ||
+                    players == _exists.maxNumberOfPlayers)) ||
             (_exists.winningType == WinningType.TIME_BASED &&
                 _exists.endTime <= current)
         ) {
@@ -284,33 +286,31 @@ contract LottoController is BaseController, AccessControl {
 
             totalStaked = totalStaked.sub(_creatorShares);
 
+            // perform a bunch of operations to determine randBase
             bytes32 randBase = keccak256(
-                abi.encode(storageController.getPlayers(_lottoId)[0])
-            );
-            randBase = keccak256(
                 abi.encode(
-                    randBase,
-                    storageController.getPlayers(_lottoId)[
-                        storageController.getPlayers(_lottoId).length.div(2)
-                    ]
+                    storageController.getRandBase(),
+                    players,
+                    _exists.creator,
+                    _exists.betAmount,
+                    _exists.stakes,
+                    _creatorShares,
+                    current
                 )
             );
-            randBase = keccak256(
-                abi.encode(
-                    randBase,
-                    storageController.getPlayers(_lottoId)[
-                        storageController.getPlayers(_lottoId).length.sub(1)
-                    ]
-                )
-            );
+
+            // make randBase better, the more winners are found,
+            // the less likely someone will be able to guess the next winner
+            storageController.setRandBase(randBase);
 
             uint256 winnerIndex = uint256(
                 keccak256(abi.encode(totalStaked, randBase))
-            ) % (storageController.getPlayers(_lottoId).length);
+            ) % (storageController.getPlayers(_lottoId));
 
-            address lottoWinner = storageController.getPlayers(_lottoId)[
+            address lottoWinner = storageController.findPlayerByIndex(
+                _lottoId,
                 winnerIndex
-            ];
+            );
             _exists.winner = lottoWinner;
             _exists.winning = totalStaked;
             _exists.status.isFinished = true;
@@ -319,8 +319,6 @@ contract LottoController is BaseController, AccessControl {
             storageController.setWinner(_lottoId, lottoWinner);
 
             removeFromLottoIds(_lottoId);
-
-            // TODO: Reward both winner and creator with grotto tokens
         }
 
         _exists.creatorShares = _creatorShares;

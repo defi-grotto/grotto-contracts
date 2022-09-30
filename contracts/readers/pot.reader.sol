@@ -100,20 +100,42 @@ contract PotReader {
         return storageController.getStats();
     }
 
-    function getIsClaimed(uint256 _potId, address claimant) external view returns (bool) {
+    function getIsClaimed(uint256 _potId, address claimant)
+        external
+        view
+        returns (bool)
+    {
         return storageController.getIsClaimed(_potId, claimant);
     }
 
+    function getPlayerWinnings(uint256 _potId, address player)
+        external
+        view
+        returns (Claim memory)
+    {
+        ControllerInterface _controller = _getController(_potId);
+        return _controller.getPlayerWinnings(_potId, player);
+    }
+
+    function getCreatorWinnings(uint256 _potId)
+        external
+        view
+        returns (Claim memory)
+    {
+        ControllerInterface _controller = _getController(_potId);
+        return _controller.getCreatorWinnings(_potId);
+    }
+
     // ============================ PRIVATE VIEW METHODS ============================
-    function _getController(uint256 _lottoId)
+    function _getController(uint256 _potId)
         private
         view
         returns (ControllerInterface)
     {
         ControllerInterface _controller;
-        if (potController.isPotId(_lottoId)) {
+        if (potController.isPotId(_potId)) {
             _controller = potController;
-        } else if (singleWinnerPotController.isPotId(_lottoId)) {
+        } else if (singleWinnerPotController.isPotId(_potId)) {
             _controller = singleWinnerPotController;
         }
 

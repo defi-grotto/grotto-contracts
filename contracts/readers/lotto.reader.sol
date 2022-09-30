@@ -89,11 +89,7 @@ contract LottoReader {
         return lottoController.getCompletedLottos();
     }
 
-    function getById(uint256 _lottoId)
-        external
-        view
-        returns (Lotto memory)
-    {
+    function getById(uint256 _lottoId) external view returns (Lotto memory) {
         return lottoController.getLottoById(_lottoId);
     }
 
@@ -101,7 +97,27 @@ contract LottoReader {
         return storageController.getStats();
     }
 
-    function getIsClaimed(uint256 _potId, address claimant) external view returns (bool) {
-        return storageController.getIsClaimed(_potId, claimant);
-    }    
+    function getIsClaimed(uint256 _lottoId, address claimant)
+        external
+        view
+        returns (bool)
+    {
+        return storageController.getIsClaimed(_lottoId, claimant);
+    }
+
+    function getPlayerWinnings(uint256 _lottoId, address player)
+        external
+        view
+        returns (Claim memory)
+    {
+        return lottoController.getPlayerWinnings(_lottoId, player);
+    }
+
+    function getCreatorWinnings(uint256 _lottoId)
+        external
+        view
+        returns (Claim memory)
+    {
+        return lottoController.getCreatorWinnings(_lottoId);
+    }
 }

@@ -321,11 +321,14 @@ describe("Grotto: Play Lotto Tests", () => {
         const balanceBefore = await ethers.provider.getBalance(winnerAddress);
         const winner = await grotto.connect(accounts[winnerAccountIndex[0]]);
 
+        const playerWinnings = await lottoReader.getPlayerWinnings(lottoIds.length, winnerAddress);
+        const winningsFormatted = +ethers.utils.formatEther(playerWinnings.winning);
+
         await expect(winner.claim(lottoIds.length)).to.emit(grotto, "Claimed");
         const balanceAfter = await ethers.provider.getBalance(winnerAddress);
 
-        expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
-            +ethers.utils.formatEther(balanceAfter),
+        expect((+ethers.utils.formatEther(balanceBefore) + winningsFormatted).toFixed(2)).to.be.eq(
+            (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
         );
     });
 
@@ -391,12 +394,15 @@ describe("Grotto: Play Lotto Tests", () => {
             const winner = await grotto.connect(accounts[winnerAccountIndex[0]]);
             await expect(winner.claim(lottoIds.length)).to.emit(grotto, "Claimed");
 
+            const creatorWinnings = await lottoReader.getCreatorWinnings(lottoIds.length);
+            const winningsFormatted = +ethers.utils.formatEther(creatorWinnings.winning);
+
             const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
             await expect(grotto.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
             const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
-            expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
-                +ethers.utils.formatEther(balanceAfter),
-            );
+            expect(
+                (+ethers.utils.formatEther(balanceBefore) + winningsFormatted).toFixed(2),
+            ).to.be.eq((+ethers.utils.formatEther(balanceAfter)).toFixed(2));
         } catch (error) {
             console.log("Errored: ", error);
             expect(error).to.equal(undefined);

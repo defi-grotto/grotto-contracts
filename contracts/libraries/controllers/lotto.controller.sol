@@ -116,6 +116,30 @@ contract LottoController is BaseController, AccessControl {
     }
 
     // ============================ EXTERNAL METHODS ============================
+    function getCreatorWinnings(uint256 _lottoId)
+        public
+        view
+        override
+        returns (Claim memory)
+    {
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
+        if (_exists.winner == address(0)) {
+            _exists.creatorShares = _exists.stakes;
+        }
+        return Claim({winner: _exists.creator, winning: _exists.creatorShares});
+    }
+
+    function getPlayerWinnings(uint256 _lottoId, address _claimer)
+        public
+        view
+        override
+        returns (Claim memory)
+    {                
+        Lotto memory _exists = storageController.getLottoById(_lottoId);
+        require(_claimer == _exists.winner, ERROR_33);
+        return Claim({winner: _exists.winner, winning: _exists.winning});
+    }
+
     function creatorClaim(uint256 _lottoId)
         external
         virtual

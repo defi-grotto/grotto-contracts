@@ -246,7 +246,12 @@ describe("Grotto: Play Pot Tests", () => {
         for (const index of potWinnersIndex) {
             const player = await grotto.connect(accounts[index]);
             const address = accounts[index].address;
+            
             const balanceBefore = await ethers.provider.getBalance(address);
+            
+            const playerWinnings = await potReader.getPlayerWinnings(potId, address);
+            const winningFormatted = +ethers.utils.formatEther(playerWinnings.winning);
+            
             await expect(player.claim(potId)).to.emit(player, "Claimed");
             const balanceAfter = await ethers.provider.getBalance(address);
             let pot = await potReader.getById(potId);
@@ -254,6 +259,9 @@ describe("Grotto: Play Pot Tests", () => {
             const totalStaked = pot.lotto.stakes;
             const winners = pot.winners;
             const winnerShare = totalStaked.mul(80).div(100).div(winners.length);
+
+            expect(+ethers.utils.formatEther(winnerShare)).to.equal(winningFormatted);
+
             expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
                 +ethers.utils.formatEther(balanceAfter),
             );
@@ -461,14 +469,13 @@ describe("Grotto: Play Pot Tests", () => {
         try {
             const player0 = await grotto.connect(accounts[10]);
             const potId = await playToWin();
-            await expect(player0.claimCreator(potId)).to.be.revertedWith(
-                "Creator can't claim until at least one winner claimed",
-            );
             const balanceBefore = await ethers.provider.getBalance(accounts[10].address);
             await validateWinners(potId);
+            const creatorWinnings = await potReader.getCreatorWinnings(potId);
+            const formatted = +ethers.utils.formatEther(creatorWinnings.winning);
             await grotto.claimCreator(potId);
-            const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
-            expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
+            const balanceAfter = await ethers.provider.getBalance(accounts[10].address);
+            expect(+ethers.utils.formatEther(balanceBefore) + formatted).to.be.eq(
                 +ethers.utils.formatEther(balanceAfter),
             );
         } catch (error) {

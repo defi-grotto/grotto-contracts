@@ -178,6 +178,36 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         }
     }
 
+    function getCreatorWinnings(uint256 _potId)
+        public
+        view
+        override
+        returns (Claim memory)
+    {
+        Pot memory _exists = storageController.getPotById(_potId);
+
+        uint256 _totalStaked = _exists.lotto.stakes;
+        uint256 creatorShares = _totalStaked
+            .mul(storageController.getCreatorSharesPercentage())
+            .div(100);
+
+        if (_exists.lotto.winner == address(0)) {
+            creatorShares = _totalStaked;
+        }
+
+        return Claim({winner: _exists.lotto.creator, winning: creatorShares});
+    }
+
+    function getPlayerWinnings(uint256 _potId, address _claimer)
+        public
+        view
+        override
+        returns (Claim memory)
+    {
+        Pot memory _exists = storageController.getPotById(_potId);
+        return Claim({winner: _claimer, winning: _exists.lotto.winning});
+    }
+
     function claimWinning(uint256 _potId, address _claimer)
         external
         override
@@ -262,7 +292,8 @@ contract SingleWinnerPotController is BaseController, AccessControl {
                 _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS
             ) {
                 require(
-                    _exists.lotto.maxNumberOfPlayers == storageController.getPlayers(_potId),
+                    _exists.lotto.maxNumberOfPlayers ==
+                        storageController.getPlayers(_potId),
                     ERROR_22
                 );
             }

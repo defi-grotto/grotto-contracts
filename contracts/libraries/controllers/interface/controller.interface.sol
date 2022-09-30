@@ -50,5 +50,8 @@ interface ControllerInterface {
 
     function creatorClaim(uint256 lottoId) external returns (Claim memory);
 
+    function getCreatorWinnings(uint256 lottoId) external view returns (Claim memory);
+    function getPlayerWinnings(uint256 lottoId, address _claimer) external view returns (Claim memory);
+
     event LottoCreated(uint256 indexed lottoId);
 }

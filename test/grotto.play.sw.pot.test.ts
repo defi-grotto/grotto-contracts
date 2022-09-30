@@ -262,9 +262,13 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
 
             await grotto.forceEnd(potIds.length);
 
-            await expect(player2.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner'");
+            await expect(player2.claim(potIds.length)).to.be.revertedWith(
+                "Claimer is not a winner'",
+            );
 
-            await expect(player3.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner'");
+            await expect(player3.claim(potIds.length)).to.be.revertedWith(
+                "Claimer is not a winner'",
+            );
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -323,6 +327,10 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             let pot = await potReader.getById(potIds.length);
 
             const balanceBefore = await ethers.provider.getBalance(accounts[0].address);
+
+            const creatorShare = await potReader.getCreatorWinnings(potIds.length);
+            const formatted = +ethers.utils.formatEther(creatorShare.winning);
+
             await grotto.claimCreator(potIds.length);
 
             const balanceAfter = await ethers.provider.getBalance(accounts[0].address);
@@ -336,8 +344,8 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
 
             expect(pot.lotto.creator).to.equal(accounts[0].address);
 
-            expect(+ethers.utils.formatEther(balanceBefore)).to.be.lessThan(
-                +ethers.utils.formatEther(balanceAfter),
+            expect((+ethers.utils.formatEther(balanceBefore) + formatted).toFixed(2)).to.be.eq(
+                (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
             );
         } catch (error) {
             console.log(error);
@@ -387,32 +395,46 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
 
             let balanceBefore = await ethers.provider.getBalance(accounts[0].address);
             await grotto.claimCreator(potIds.length);
-            let balanceAfter = await ethers.provider.getBalance(accounts[0].address);        
+            let balanceAfter = await ethers.provider.getBalance(accounts[0].address);
 
             const pot = await potReader.getById(potIds.length);
 
             const stakes = +ethers.utils.formatEther(pot.lotto.stakes);
 
-            const creatorShare = stakes * 0.2;            
+            const creatorShare = stakes * 0.2;
 
             let balancePlusStakes = +ethers.utils.formatEther(balanceBefore) + creatorShare;
 
             expect(balancePlusStakes.toFixed(2)).to.be.eq(
                 (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
-            );            
+            );
 
-            await expect(player2.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner");
+            await expect(player2.claim(potIds.length)).to.be.revertedWith(
+                "Claimer is not a winner",
+            );
 
             const winnerShare = stakes * 0.8;
             balanceBefore = await ethers.provider.getBalance(accounts[4].address);
+
+            const playerWinnings = await potReader.getPlayerWinnings(
+                potIds.length,
+                accounts[4].address,
+            );
+            const formatted = +ethers.utils.formatEther(playerWinnings.winning);
+
             await expect(player3.claim(potIds.length)).to.emit(player3, "Claimed");
             balanceAfter = await ethers.provider.getBalance(accounts[4].address);
             balancePlusStakes = +ethers.utils.formatEther(balanceBefore) + winnerShare;
+
+            expect(formatted).to.be.eq(winnerShare);
+
             expect(balancePlusStakes.toFixed(2)).to.be.eq(
                 (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
-            );            
+            );
 
-            await expect(player3.claim(potIds.length)).to.be.revertedWith("Lotto is already claimed");
+            await expect(player3.claim(potIds.length)).to.be.revertedWith(
+                "Lotto is already claimed",
+            );
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -459,11 +481,15 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
                 "BetPlaced",
             );
 
-            await expect(player2.claim(potIds.length)).to.be.revertedWith("Claimer is not a winner");
+            await expect(player2.claim(potIds.length)).to.be.revertedWith(
+                "Claimer is not a winner",
+            );
 
             await expect(player3.claim(potIds.length)).to.emit(player3, "Claimed");
 
-            await expect(player3.claim(potIds.length)).to.be.revertedWith("Lotto is already claimed");
+            await expect(player3.claim(potIds.length)).to.be.revertedWith(
+                "Lotto is already claimed",
+            );
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);

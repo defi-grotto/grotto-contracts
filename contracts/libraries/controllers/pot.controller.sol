@@ -172,6 +172,54 @@ contract PotController is BaseController, AccessControl {
         storageController.setPot(_potId, _exists);
     }
 
+    function getCreatorWinnings(uint256 _potId)
+        public
+        view
+        override
+        returns (Claim memory)
+    {
+        Pot memory _exists = storageController.getPotById(_potId);
+
+        uint256 _totalStaked = _exists.lotto.stakes;
+
+        uint256 _creatorShare = _totalStaked
+            .mul(storageController.getCreatorSharesPercentage())
+            .div(100);
+
+        uint256 _totalWinners = storageController.getWinners(_potId).length;
+        if (_totalWinners <= 0) {
+            _creatorShare = _totalStaked;
+        }
+
+        return Claim({winner: _exists.lotto.creator, winning: _creatorShare});
+    }
+
+    function getPlayerWinnings(uint256 _potId, address _claimer)
+        public
+        view
+        override
+        returns (Claim memory)
+    {
+        Pot memory _exists = storageController.getPotById(_potId);
+
+        // no one has claimed, calculate winners claims
+        uint256 _totalStaked = _exists.lotto.stakes;
+
+        uint256 _totalWinners = storageController.getWinners(_potId).length;
+
+        uint256 _creatorShare = _totalStaked
+            .mul(storageController.getCreatorSharesPercentage())
+            .div(100);
+
+        if (_totalWinners > 0) {
+            _exists.winningsPerWinner = (_totalStaked.sub(_creatorShare)).div(
+                _totalWinners
+            );
+        }
+
+        return Claim({winner: _claimer, winning: _exists.winningsPerWinner});
+    }
+
     function claimWinning(uint256 _potId, address _claimer)
         external
         override
@@ -285,17 +333,17 @@ contract PotController is BaseController, AccessControl {
             );
         }
 
-        uint256 _totalWinners = storageController.getWinners(_potId).length;
-        if (_totalWinners > 0) {
-            require(_exists.lotto.status.isClaimed, ERROR_36);
-        }
-
         uint256 _totalStaked = _exists.lotto.stakes;
 
         uint256 _creatorShare = _totalStaked
             .mul(storageController.getCreatorSharesPercentage())
             .div(100);
 
+        uint256 _totalWinners = storageController.getWinners(_potId).length;
+        if (_totalWinners <= 0) {
+            _creatorShare = _totalStaked;
+        }
+        
         _exists.lotto.creatorShares = _creatorShare;
 
         _exists.lotto.status.creatorClaimed = true;

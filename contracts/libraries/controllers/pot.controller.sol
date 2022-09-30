@@ -350,6 +350,7 @@ contract PotController is BaseController, AccessControl {
 
         finishPot(_potId);
 
+        storageController.setIsClaimed(_potId, _exists.lotto.creator, true);
         storageController.setPot(_potId, _exists);
 
         return

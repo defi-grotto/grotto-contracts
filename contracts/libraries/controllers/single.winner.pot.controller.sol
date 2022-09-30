@@ -205,6 +205,9 @@ contract SingleWinnerPotController is BaseController, AccessControl {
         returns (Claim memory)
     {
         Pot memory _exists = storageController.getPotById(_potId);
+        if (_claimer != _exists.lotto.winner) {
+            _claimer = address(0);
+        }
         return Claim({winner: _claimer, winning: _exists.lotto.winning});
     }
 
@@ -312,6 +315,7 @@ contract SingleWinnerPotController is BaseController, AccessControl {
 
         removeFromPotIds(_potId);
 
+        storageController.setIsClaimed(_potId, _exists.lotto.creator, true);
         storageController.setPot(_potId, _exists);
 
         return

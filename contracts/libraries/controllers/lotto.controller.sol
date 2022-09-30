@@ -136,8 +136,12 @@ contract LottoController is BaseController, AccessControl {
         returns (Claim memory)
     {                
         Lotto memory _exists = storageController.getLottoById(_lottoId);
-        require(_claimer == _exists.winner, ERROR_33);
-        return Claim({winner: _exists.winner, winning: _exists.winning});
+
+        if(_claimer != _exists.winner){
+            _claimer = address(0);
+        }
+
+        return Claim({winner: _claimer, winning: _exists.winning});
     }
 
     function creatorClaim(uint256 _lottoId)
@@ -167,6 +171,8 @@ contract LottoController is BaseController, AccessControl {
         removeFromLottoIds(_lottoId);
         _exists.status.isFinished = true;
         _exists.status.creatorClaimed = true;
+
+        storageController.setIsClaimed(_lottoId, _exists.creator, true);
 
         storageController.setLotto(_lottoId, _exists);
         return Claim({winner: _exists.creator, winning: _exists.creatorShares});

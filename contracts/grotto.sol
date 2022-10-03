@@ -253,21 +253,16 @@ contract Grotto is GrottoInterface {
         emit Claimed(_lottoId);
     }
 
+    function findWinner(uint256 _lottoId) external {
+        ControllerInterface _controller = _getController(_lottoId);
+        _controller.findWinner(_lottoId);
+    }
+
+    // TODO: This is for testing purpose only, remove in production
     function forceEnd(uint256 _lottoId) external {
         require(msg.sender == owner, ERROR_30);
         ControllerInterface _controller = _getController(_lottoId);
         require(_controller.forceEnd(_lottoId), ERROR_29);
-    }
-
-    // TODO: Remove this
-    /**
-        Should only be called for timebased lottos and 
-        should only be called by owner or a player and
-        should only be callable if end time has passed
-     */
-    function endLotto(uint256 _lottoId) external {
-        ControllerInterface _controller = _getController(_lottoId);
-        require(_controller.endLotto(_lottoId, msg.sender), ERROR_29);
     }
 
     // ============================ PRIVATE VIEW METHODS ============================

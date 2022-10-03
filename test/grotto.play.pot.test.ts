@@ -45,9 +45,9 @@ describe("Grotto: Play Pot Tests", () => {
 
             let deployerPercentage = +amount * 0.1;
             let grottoPercentage = +amount * 0.9;
-            
+
             // if (isCreateCall) {
-            //     deployerPercentage = +amount * 0.09;                
+            //     deployerPercentage = +amount * 0.09;
             //     grottoPercentage = +amount - deployerPercentage;
             // }
 
@@ -246,12 +246,12 @@ describe("Grotto: Play Pot Tests", () => {
         for (const index of potWinnersIndex) {
             const player = await grotto.connect(accounts[index]);
             const address = accounts[index].address;
-            
+
             const balanceBefore = await ethers.provider.getBalance(address);
-            
+
             const playerWinnings = await potReader.getPlayerWinnings(potId, address);
             const winningFormatted = +ethers.utils.formatEther(playerWinnings.winning);
-            
+
             await expect(player.claim(potId)).to.emit(player, "Claimed");
             const balanceAfter = await ethers.provider.getBalance(address);
             let pot = await potReader.getById(potId);
@@ -458,7 +458,7 @@ describe("Grotto: Play Pot Tests", () => {
     it("should find winner(s) if number is matched and is in order", async () => {
         try {
             const potId = await playToWin();
-            // await validateWinners(potId);
+            await validateWinners(potId);
         } catch (error) {
             console.log(error);
             expect(error).to.equal(undefined);
@@ -467,7 +467,6 @@ describe("Grotto: Play Pot Tests", () => {
 
     it("should claim by creator", async () => {
         try {
-            const player0 = await grotto.connect(accounts[10]);
             const potId = await playToWin();
             const balanceBefore = await ethers.provider.getBalance(accounts[10].address);
             await validateWinners(potId);
@@ -548,90 +547,6 @@ describe("Grotto: Play Pot Tests", () => {
             console.log(error);
             expect(error).to.equal(undefined);
         }
-    });
-
-    it("should not end a number of players pot", async () => {
-        const overrides = {
-            value: ethers.utils.parseEther("10"),
-        };
-
-        const betAmount = ethers.utils.parseEther("10");
-        await expect(
-            grotto.createPot(
-                0,
-                0,
-                5,
-                betAmount,
-                WinningType.NUMBER_OF_PLAYERS,
-                [3, 6, 9, 3],
-                PotGuessType.ORDER,
-                PotType.MULTIPLE_WINNER,
-                overrides,
-            ),
-        ).to.emit(grotto, "PotCreated");
-        potIds.push(potIds.length);
-        const potId = potIds.length;
-
-        // try to end, should get an error
-        await expect(grotto.endLotto(potIds.length)).to.be.revertedWith("Lotto is not finished");
-    });
-
-    it("should end a pot by creator if time has passed", async () => {
-        const overrides = {
-            value: ethers.utils.parseEther("10"),
-        };
-
-        const betAmount = ethers.utils.parseEther("10");
-        const _startTime = Math.floor(new Date().getTime() / 1000);
-        const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
-
-        const player1 = grotto.connect(accounts[1]);
-
-        try {
-            await expect(
-                player1.createPot(
-                    _startTime,
-                    _endTime,
-                    0,
-                    betAmount,
-                    WinningType.TIME_BASED,
-                    [3, 6, 9, 3],
-                    PotGuessType.ORDER,
-                    PotType.MULTIPLE_WINNER,
-                    overrides,
-                ),
-            ).to.emit(grotto, "PotCreated");
-            potIds.push(1);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.equal(undefined);
-        }
-
-        // try to end, should get an error
-        await expect(player1.endLotto(potIds.length)).to.be.revertedWith("Lotto is not finished");
-
-        // potId should still be in potIds
-        let pots = await potReader.getAll(false);
-        expect(pots.map((l: BigNumber) => l.toNumber())).to.contain(potIds.length);
-
-        let completed = await potReader.getCompleted(false);
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(potIds.length);
-
-        await grotto.forceEnd(potIds.length);
-        // lottoIds should not be in lottoIds anymore
-
-        try {
-            await player1.endLotto(potIds.length);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.be.undefined;
-        }
-
-        pots = await potReader.getAll(false);
-        expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds.length);
-
-        completed = await potReader.getCompleted(false);
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds.length);
     });
 
     it("should get some stats", async () => {

@@ -34,8 +34,6 @@ interface ControllerInterface {
 
     function forceEnd(uint256 lottoId) external returns (bool);
 
-    function endLotto(uint256 lottoId, address caller) external returns (bool);
-
     function isLottoId(uint256 lottoId) external view returns (bool);
 
     function isPotId(uint256 potId) external view returns (bool);
@@ -52,6 +50,8 @@ interface ControllerInterface {
 
     function getCreatorWinnings(uint256 lottoId) external view returns (Claim memory);
     function getPlayerWinnings(uint256 lottoId, address _claimer) external view returns (Claim memory);
+
+    function findWinner(uint256 lottoId) external;
 
     event LottoCreated(uint256 indexed lottoId);
 }

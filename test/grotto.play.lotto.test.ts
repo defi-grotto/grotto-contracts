@@ -582,95 +582,34 @@ describe("Grotto: Play Lotto Tests", () => {
         );
     });
 
-    it("should end a lotto by owner if time has passed", async () => {
-        // create lotto
+    it("should play time based lotto and call findWinner when time has passed", async () => {
+        //create time based lotto
         const overrides = {
-            value: ethers.utils.parseEther("0.01"),
+            value: ethers.utils.parseEther("10"),
         };
 
-        // create lotto
-        const player1 = await grotto.connect(accounts[1]);
         const _startTime = Math.floor(new Date().getTime() / 1000);
         const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+        const player1 = await grotto.connect(accounts[1]);
         await expect(
             player1.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides),
         ).to.emit(grotto, "LottoCreated");
         lottoIds.push(lottoIds.length);
 
-        // try to end, should get an error
-        await expect(player1.endLotto(lottoIds.length)).to.be.revertedWith("Lotto is not finished");
-
-        // lottoId should still be in lottoIds
-        let lottos = await lottoReader.getAll();
-        expect(lottos.map((l: BigNumber) => l.toNumber())).to.contain(lottoIds.length);
-
-        let completed = await lottoReader.getCompleted();
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(lottoIds.length);
+        await expect(player1.claimCreator(lottoIds.length)).to.be.revertedWith(
+            "Lotto is not finished",
+        );
 
         await grotto.forceEnd(lottoIds.length);
-        // lottoIds should not be in lottoIds anymore
 
-        try {
-            await player1.endLotto(lottoIds.length);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.be.undefined;
-        }
+        await grotto.findWinner(lottoIds.length);
 
-        lottos = await lottoReader.getAll();
-        expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(lottoIds.length);
-
-        completed = await lottoReader.getCompleted();
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(lottoIds.length);
-    });
-
-    it("should end a lotto by player if time has passed", async () => {
-        // create lotto
-        let overrides = {
-            value: ethers.utils.parseEther("0.01"),
-        };
-
-        // create lotto
-        const player1 = await grotto.connect(accounts[1]);
-        const _startTime = Math.floor(new Date().getTime() / 1000);
-        const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
-        await expect(
-            player1.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides),
-        ).to.emit(grotto, "LottoCreated");
-        lottoIds.push(lottoIds.length);
-
-        // try to end, should get an error
-        await expect(player1.endLotto(lottoIds.length)).to.be.revertedWith("Lotto is not finished");
-
-        // lottoId should still be in lottoIds
-        let lottos = await lottoReader.getAll();
-        expect(lottos.map((l: BigNumber) => l.toNumber())).to.contain(lottoIds.length);
-
-        let completed = await lottoReader.getCompleted();
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(lottoIds.length);
-
-        overrides = {
-            value: ethers.utils.parseEther("0.02"),
-        };
-
-        const player2 = grotto.connect(accounts[2]);
-        await player2.playLotto(lottoIds.length, overrides);
-
-        await grotto.forceEnd(lottoIds.length);
-        // lottoIds should not be in lottoIds anymore
-
-        try {
-            await player2.endLotto(lottoIds.length);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.be.undefined;
-        }
-
-        lottos = await lottoReader.getAll();
-        expect(lottos.map((l: BigNumber) => l.toNumber())).to.not.contain(lottoIds.length);
-
-        completed = await lottoReader.getCompleted();
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(lottoIds.length);
+        const balanceBefore = await ethers.provider.getBalance(accounts[1].address);
+        await expect(player1.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
+        const balanceAfter = await ethers.provider.getBalance(accounts[1].address);
+        expect((+ethers.utils.formatEther(balanceBefore) + 9).toFixed(2)).to.be.eq(
+            (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
+        );
     });
 
     it("should withdraw time based lotto by creator", async () => {
@@ -694,6 +633,10 @@ describe("Grotto: Play Lotto Tests", () => {
 
         await grotto.forceEnd(lottoIds.length);
 
+        // creator must call findWinner before anyone can withdraw
+        await expect(player1.findWinner(lottoIds.length));
+
+        // then withdraw
         const balanceBefore = await ethers.provider.getBalance(accounts[1].address);
         await expect(player1.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
         const balanceAfter = await ethers.provider.getBalance(accounts[1].address);
@@ -702,10 +645,54 @@ describe("Grotto: Play Lotto Tests", () => {
         );
     });
 
+    it("should withdraw by player even if only 1 player", async () => {
+        // create lotto
+        let overrides = {
+            value: ethers.utils.parseEther("10"),
+        };
+
+        // create lotto
+        const player1 = await grotto.connect(accounts[1]);
+        const _startTime = Math.floor(new Date().getTime() / 1000);
+        const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
+        await expect(
+            player1.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides),
+        ).to.emit(grotto, "LottoCreated");
+        lottoIds.push(lottoIds.length);
+
+        // play lotto
+        const player2 = await grotto.connect(accounts[2]);
+        await expect(player2.playLotto(lottoIds.length, overrides)).to.emit(grotto, "BetPlaced");
+
+        await grotto.forceEnd(lottoIds.length);
+
+        await expect(player1.claimCreator(lottoIds.length)).to.be.revertedWith(
+            "Lotto is not finished",
+        );
+
+        // creator must call findWinner before anyone can withdraw
+        await expect(player1.findWinner(lottoIds.length));
+
+        const playerWinnings = await lottoReader.getPlayerWinnings(
+            lottoIds.length,
+            accounts[2].address,
+        );
+        // then withdraw player 1
+        const balanceBefore = await ethers.provider.getBalance(accounts[2].address);
+        await expect(player2.claim(lottoIds.length)).to.emit(grotto, "Claimed");
+        const balanceAfter = await ethers.provider.getBalance(accounts[2].address);
+        expect(
+            (
+                +ethers.utils.formatEther(balanceBefore) +
+                +ethers.utils.formatEther(playerWinnings.winning)
+            ).toFixed(2),
+        ).to.be.eq((+ethers.utils.formatEther(balanceAfter)).toFixed(2));
+    });
+
     it("should withdraw player after withdrawing creator", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.01"),
+                value: ethers.utils.parseEther("10"),
             };
 
             // create lotto
@@ -741,28 +728,24 @@ describe("Grotto: Play Lotto Tests", () => {
                 accounts[3].address,
             ]);
 
-            const totalStaked = ethers.utils
-                .parseEther("0.009")
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"));
-            const winnerShare = totalStaked.mul(80).div(100);
-            expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
+            const winnerShare = await lottoReader.getPlayerWinnings(lottoIds.length, lotto.winner);
+
+            expect(ethers.utils.formatEther(winnerShare.winning)).to.equal(
                 ethers.utils.formatEther(lotto.winning),
             );
 
-            const creatorShares = totalStaked.mul(20).div(100);
-            expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
+            const creatorShares = await lottoReader.getCreatorWinnings(lottoIds.length);
+            expect(ethers.utils.formatEther(creatorShares.winning)).to.equal(
                 ethers.utils.formatEther(lotto.creatorShares),
             );
 
-            let balanceBefore = await ethers.provider.getBalance(accounts[1].address);
+            let balanceBefore = await ethers.provider.getBalance(accounts[0].address);
             await expect(player1.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
-            let balanceAfter = await ethers.provider.getBalance(accounts[1].address);
+            let balanceAfter = await ethers.provider.getBalance(accounts[0].address);
             expect(
                 (
                     +ethers.utils.formatEther(balanceBefore) +
-                    +ethers.utils.formatEther(creatorShares)
+                    +ethers.utils.formatEther(creatorShares.winning)
                 ).toFixed(1),
             ).to.be.eq((+ethers.utils.formatEther(balanceAfter)).toFixed(1));
 

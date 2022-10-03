@@ -65,6 +65,8 @@ abstract contract BaseController is ControllerInterface {
         address
     ) external virtual override returns (bool) {}
 
+    function findWinner(uint256 lottoId) external virtual override {}
+
     function isLottoId(uint256) external view virtual override returns (bool) {}
 
     function addNewPot(Pot memory)

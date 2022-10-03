@@ -130,6 +130,19 @@ contract SingleWinnerPotController is BaseController, AccessControl {
 
         storageController.setPot(_potId, _exists);
 
+        if (
+            _exists.lotto.winningType == WinningType.TIME_BASED &&
+            _exists.lotto.endTime <= block.timestamp
+        ) {
+            finishPot(_potId);
+        } else if (
+            _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS &&
+            storageController.getPlayers(_potId) >=
+            _exists.lotto.maxNumberOfPlayers
+        ) {
+            finishPot(_potId);
+        }
+
         checkIfWinner(_potId, _player, _guesses);
         return true;
     }
@@ -234,35 +247,6 @@ contract SingleWinnerPotController is BaseController, AccessControl {
                 winner: _exists.lotto.winner,
                 winning: _exists.lotto.winning
             });
-    }
-
-    function endLotto(uint256 _potId, address _caller)
-        external
-        override
-        onlyRole(ADMIN)
-        returns (bool)
-    {
-        Pot memory _exists = storageController.getPotById(_potId);
-        // lotto must have ended
-        require(
-            _exists.lotto.winningType == WinningType.TIME_BASED &&
-                _exists.lotto.endTime < block.timestamp,
-            ERROR_22
-        );
-
-        bool _canEndLotto = false;
-        if (_caller == _exists.lotto.creator) {
-            _canEndLotto = true;
-        } else if (storageController.isPlayer(_caller, _potId)) {
-            _canEndLotto = true;
-        }
-
-        if (_canEndLotto) {
-            removeFromPotIds(_potId);
-            return true;
-        }
-
-        return false;
     }
 
     function forceEnd(uint256 _potId)
@@ -387,4 +371,12 @@ contract SingleWinnerPotController is BaseController, AccessControl {
             completedPotIds.push(_potId);
         }
     }
+
+    function finishPot(uint256 _potId) private {
+        Pot memory _exists = storageController.getPotById(_potId);
+        _exists.lotto.status.isFinished = true;
+        removeFromPotIds(_potId);
+
+        storageController.setPot(_potId, _exists);
+    }    
 }

@@ -7,7 +7,7 @@ import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-describe("Grotto: Play Single Winner Pot Tests", () => {
+describe.only("Grotto: Play Single Winner Pot Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
@@ -494,71 +494,6 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
             console.log(error);
             expect(error).to.equal(undefined);
         }
-    });
-
-    it("should end a pot by player if time has passed", async () => {
-        const overrides = {
-            value: ethers.utils.parseEther("10"),
-        };
-
-        const betAmount = ethers.utils.parseEther("10");
-        const _startTime = Math.floor(new Date().getTime() / 1000);
-        const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
-
-        const player1 = grotto.connect(accounts[1]);
-
-        try {
-            await expect(
-                player1.createPot(
-                    _startTime,
-                    _endTime,
-                    0,
-                    betAmount,
-                    WinningType.TIME_BASED,
-                    [3, 6, 9, 3],
-                    PotGuessType.ORDER,
-                    PotType.SINGLE_WINNER,
-                    overrides,
-                ),
-            ).to.emit(grotto, "PotCreated");
-            potIds.push(potIds.length);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.equal(undefined);
-        }
-
-        let guesses = [3, 7, 3, 9];
-        const player2 = await grotto.connect(accounts[3]);
-        await expect(player2.playSingleWinnerPot(potIds.length, guesses, overrides)).to.emit(
-            grotto,
-            "BetPlaced",
-        );
-
-        // try to end, should get an error
-        await expect(player2.endLotto(potIds.length)).to.be.revertedWith("Lotto is not finished");
-
-        // potId should still be in potIds
-        let pots = await potReader.getAll(true);
-        expect(pots.map((l: BigNumber) => l.toNumber())).to.contain(potIds.length);
-
-        let completed = await potReader.getCompleted(true);
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.not.contain(potIds.length);
-
-        await grotto.forceEnd(potIds.length);
-        // lottoIds should not be in lottoIds anymore
-
-        try {
-            await player2.endLotto(potIds.length);
-        } catch (error) {
-            console.log(error);
-            expect(error).to.be.undefined;
-        }
-
-        pots = await potReader.getAll(true);
-        expect(pots.map((l: BigNumber) => l.toNumber())).to.not.contain(potIds.length);
-
-        completed = await potReader.getCompleted(true);
-        expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potIds.length);
     });
 
     it("should get some stats", async () => {

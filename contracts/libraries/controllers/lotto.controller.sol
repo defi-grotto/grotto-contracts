@@ -134,10 +134,10 @@ contract LottoController is BaseController, AccessControl {
         view
         override
         returns (Claim memory)
-    {                
+    {
         Lotto memory _exists = storageController.getLottoById(_lottoId);
 
-        if(_claimer != _exists.winner){
+        if (_claimer != _exists.winner) {
             _claimer = address(0);
         }
 
@@ -153,6 +153,7 @@ contract LottoController is BaseController, AccessControl {
         Lotto memory _exists = storageController.getLottoById(_lottoId);
         require(!_exists.status.isPot, ERROR_19);
         require(_exists.status.creatorClaimed == false, ERROR_37);
+        require(_exists.status.isFinished, ERROR_22);
 
         if (_exists.winningType == WinningType.TIME_BASED) {
             require(_exists.endTime < block.timestamp, ERROR_22);
@@ -198,6 +199,10 @@ contract LottoController is BaseController, AccessControl {
         return Claim({winner: _exists.winner, winning: _exists.winning});
     }
 
+    function findWinner(uint256 _lottoId) external override onlyRole(ADMIN) {
+        findLottoWinner(_lottoId);
+    }
+
     function playLotto(
         uint256 _lottoId,
         uint256 _betPlaced,
@@ -226,36 +231,6 @@ contract LottoController is BaseController, AccessControl {
         }
 
         return true;
-    }
-
-    // TODO: Remove this
-    function endLotto(uint256 _lottoId, address _caller)
-        external
-        override
-        onlyRole(ADMIN)
-        returns (bool)
-    {
-        Lotto memory _exists = storageController.getLottoById(_lottoId);
-        // lotto must have ended
-        require(
-            _exists.winningType == WinningType.TIME_BASED &&
-                _exists.endTime < block.timestamp,
-            ERROR_22
-        );
-
-        bool _canEndLotto = false;
-        if (_caller == _exists.creator) {
-            _canEndLotto = true;
-        } else if (storageController.isPlayer(_caller, _lottoId)) {
-            _canEndLotto = true;
-        }
-
-        if (_canEndLotto) {
-            removeFromLottoIds(_lottoId);
-            return true;
-        }
-
-        return false;
     }
 
     function forceEnd(uint256 _lottoId)
@@ -333,21 +308,23 @@ contract LottoController is BaseController, AccessControl {
             // the less likely someone will be able to guess the next winner
             storageController.setRandBase(randBase);
 
-            uint256 winnerIndex = uint256(
-                keccak256(abi.encode(totalStaked, randBase))
-            ) % (storageController.getPlayers(_lottoId));
+            if (players > 0) {
+                uint256 winnerIndex = uint256(
+                    keccak256(abi.encode(totalStaked, randBase))
+                ) % (players);
 
-            address lottoWinner = storageController.findPlayerByIndex(
-                _lottoId,
-                winnerIndex
-            );
-            _exists.winner = lottoWinner;
-            _exists.winning = totalStaked;
+                address lottoWinner = storageController.findPlayerByIndex(
+                    _lottoId,
+                    winnerIndex
+                );
+                _exists.winner = lottoWinner;
+                _exists.winning = totalStaked;
+
+                storageController.setIsWinner(_lottoId, lottoWinner, true);
+                storageController.setWinner(_lottoId, lottoWinner);
+            }
+            
             _exists.status.isFinished = true;
-
-            storageController.setIsWinner(_lottoId, lottoWinner, true);
-            storageController.setWinner(_lottoId, lottoWinner);
-
             removeFromLottoIds(_lottoId);
         }
 

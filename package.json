@@ -1,46 +1,46 @@
 {
-  "name": "grotto-contracts",
-  "version": "1.0.0",
-  "description": "grotto smart contracts for creating lotto on the blockchain",
-  "main": "index.js",
-  "scripts": {
-    "test": "npx hardhat test",
-    "compile": "npx hardhat compile",
-    "deploy:all": "npx hardhat run ./scripts/deploy_all.ts",
-    "deploy:reader": "npx hardhat run ./scripts/deploy_reader.ts",
-    "start:node": "npx hardhat node"
-  },
-  "keywords": [
-    "lotto",
-    "lottery"
-  ],
-  "author": "Olusegun Akintayo",
-  "license": "ISC",
-  "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts-upgradeable": "^4.3.2",
-    "@openzeppelin/hardhat-upgrades": "^1.11.0",
-    "@types/chai": "^4.2.21",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "^16.9.1",
-    "chai": "^4.3.4",
-    "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.4.6",
-    "hardhat": "^2.6.4",
-    "hardhat-contract-sizer": "^2.1.1",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
-  },
-  "resolutions": {
-    "underscore": "^1.13.0",
-    "lodash": "^4.17.21",
-    "node-fetch": "^2.6.1",
-    "yargs-parser": "^20.2.2"
-  },
-  "dependencies": {
-    "@chainlink/contracts": "^0.4.1",
-    "@openzeppelin/contracts": "^4.3.1",
-    "lodash": "^4.17.21"
-  }
+    "name": "grotto-contracts",
+    "version": "1.0.0",
+    "description": "grotto smart contracts for creating lotto on the blockchain",
+    "main": "index.js",
+    "scripts": {
+        "test": "npx hardhat test",
+        "compile": "npx hardhat compile",
+        "deploy:all": "npx hardhat run ./scripts/deploy_all.ts",
+        "deploy:reader": "npx hardhat run ./scripts/deploy_reader.ts",
+        "start:node": "npx hardhat node"
+    },
+    "keywords": [
+        "lotto",
+        "lottery"
+    ],
+    "author": "Olusegun Akintayo",
+    "license": "ISC",
+    "devDependencies": {
+        "@nomiclabs/hardhat-ethers": "^2.0.2",
+        "@nomiclabs/hardhat-waffle": "^2.0.1",
+        "@openzeppelin/contracts-upgradeable": "^4.3.2",
+        "@openzeppelin/hardhat-upgrades": "^1.11.0",
+        "@types/chai": "^4.2.21",
+        "@types/mocha": "^9.0.0",
+        "@types/node": "^16.9.1",
+        "chai": "^4.3.4",
+        "ethereum-waffle": "^3.4.0",
+        "ethers": "^5.4.6",
+        "hardhat": "^2.6.4",
+        "hardhat-contract-sizer": "^2.1.1",
+        "ts-node": "^10.2.1",
+        "typescript": "^4.4.3"
+    },
+    "resolutions": {
+        "underscore": "^1.13.0",
+        "lodash": "^4.17.21",
+        "node-fetch": "^2.6.1",
+        "yargs-parser": "^20.2.2"        
+    },
+    "dependencies": {
+        "@chainlink/contracts": "^0.4.1",
+        "@openzeppelin/contracts": "^4.3.1",
+        "lodash": "^4.17.21"
+    }
 }

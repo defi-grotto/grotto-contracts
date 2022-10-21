@@ -211,10 +211,12 @@ contract Storage is StorageInterface, AccessControl {
         _isPlayer[player][lottoId] = true;
     }
 
+    // hide this from the public, only show if the pot has ended
     function getWinners(uint256 lottoId)
         external
         view
         override
+        onlyRole(ADMIN)
         returns (address[] memory)
     {
         return winners[lottoId];

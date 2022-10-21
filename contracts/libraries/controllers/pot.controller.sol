@@ -14,7 +14,9 @@ contract PotController is BaseController, AccessControl {
 
     // ============================ VARIABLES ============================
     // how much the pot creator is putting up, the pot winner(s) takes this money + all money staked
-    mapping(uint256 => mapping(uint256 => bool)) private winningNumbersMap;
+    // winningNumbersMap[potId][number][index] = bool;
+    mapping(uint256 => mapping(uint256 => mapping(uint256 => bool)))
+        private winningNumbersMap;
     mapping(uint256 => mapping(address => bool)) private winningClaimed;
 
     StorageInterface private storageController;
@@ -78,7 +80,7 @@ contract PotController is BaseController, AccessControl {
 
         _pot.lotto.id = storageController.getAutoIncrementId();
         for (uint256 i = 0; i < _pot.winningNumbers.length; i = i.add(1)) {
-            winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]] = true;
+            winningNumbersMap[_pot.lotto.id][_pot.winningNumbers[i]][i] = true;
         }
         _pot.lotto.status.isPot = true;
 
@@ -146,20 +148,10 @@ contract PotController is BaseController, AccessControl {
     ) internal {
         Pot memory _exists = storageController.getPotById(_potId);
         bool _won = true;
-        if (_exists.potGuessType == PotGuessType.NUMBERS) {
-            // just check that all guesses exists in winning numbers
-            for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
-                if (winningNumbersMap[_potId][_guesses[i]] == false) {
-                    _won = false;
-                    break;
-                }
-            }
-        } else if (_exists.potGuessType == PotGuessType.ORDER) {
-            for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
-                if (_guesses[i] != _exists.winningNumbers[i]) {
-                    _won = false;
-                    break;
-                }
+        for (uint256 i = 0; i < _guesses.length; i = i.add(1)) {
+            if (_guesses[i] != _exists.winningNumbers[i]) {
+                _won = false;
+                break;
             }
         }
 
@@ -370,7 +362,21 @@ contract PotController is BaseController, AccessControl {
         for (uint256 i = 0; i < _exists.winningNumbers.length; i++) {
             _exists.winningNumbers[i] = 0;
         }
-        _exists.winners = storageController.getWinners(_potId);
+
+        // only show the winners if the game is completed
+        if (
+            _exists.lotto.winningType == WinningType.TIME_BASED &&
+            _exists.lotto.endTime < block.timestamp
+        ) {
+            _exists.winners = storageController.getWinners(_potId);
+        } else if (
+            _exists.lotto.winningType == WinningType.NUMBER_OF_PLAYERS &&
+            _exists.lotto.maxNumberOfPlayers >=
+            storageController.getPlayers(_potId)
+        ) {
+            _exists.winners = storageController.getWinners(_potId);
+        }
+
         _exists.lotto.players = storageController.getPlayers(_potId);
         return _exists;
     }

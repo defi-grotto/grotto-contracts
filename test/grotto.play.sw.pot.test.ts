@@ -6,6 +6,7 @@ chai.use(waffle.solidity);
 import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
+import { LOTTO_BETS, POT_VALUES } from "./constants";
 
 describe("Grotto: Play Single Winner Pot Tests", () => {
     let accounts: SignerWithAddress[];
@@ -78,10 +79,10 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should create a number of player pot winning type", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(POT_VALUES[1] + ""),
             };
 
-            const betAmount = ethers.utils.parseEther("10");
+            const betAmount = ethers.utils.parseEther(LOTTO_BETS[1] + "");
             await expect(
                 grotto.createPot(
                     0,
@@ -105,10 +106,10 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should create a time based winning type", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(POT_VALUES[1] + ""),
             };
 
-            const betAmount = ethers.utils.parseEther("10");
+            const betAmount = ethers.utils.parseEther(LOTTO_BETS[1] + "");
 
             const _startTime = Math.floor(new Date().getTime() / 1000);
             const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
@@ -136,7 +137,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should play number of players pot", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             const guesses = [3, 6, 9, 1];
@@ -154,7 +155,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should play time based pot", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             const guesses = [3, 6, 9, 1];
@@ -172,7 +173,7 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should not play pot by creator", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
             const guesses = [3, 6, 9, 1];
             await expect(
@@ -278,9 +279,9 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should send everything to creator if no winner found", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(POT_VALUES[1] + ""),
             };
-            const betAmount = ethers.utils.parseEther("10");
+            const betAmount = ethers.utils.parseEther(LOTTO_BETS[1] + "");
             const _startTime = Math.floor(new Date().getTime() / 1000);
             const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
             await expect(
@@ -356,9 +357,9 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should claim creator before claiming winning", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(POT_VALUES[1] + ""),
             };
-            const betAmount = ethers.utils.parseEther("10");
+            const betAmount = ethers.utils.parseEther(LOTTO_BETS[1] + "");
             const _startTime = Math.floor(new Date().getTime() / 1000);
             const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
 
@@ -444,9 +445,9 @@ describe("Grotto: Play Single Winner Pot Tests", () => {
     it("should find a winner if numbers matched and in order", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("10"),
+                value: ethers.utils.parseEther(POT_VALUES[1] + ""),
             };
-            const betAmount = ethers.utils.parseEther("10");
+            const betAmount = ethers.utils.parseEther(LOTTO_BETS[1] + "");
             const _startTime = Math.floor(new Date().getTime() / 1000);
             const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
 

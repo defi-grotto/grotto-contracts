@@ -6,9 +6,9 @@ chai.use(waffle.solidity);
 import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
-import { getPercentage, PLATFORM_PERCENTAGE } from "./constants";
+import { getPercentage, LOTTO_BETS, PLATFORM_PERCENTAGE, POT_VALUES } from "./constants";
 
-describe("Grotto: Play Pot Tests", () => {
+describe.only("Grotto: Play Pot Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
@@ -61,9 +61,6 @@ describe("Grotto: Play Pot Tests", () => {
             expect(Math.round(+playerBalance)).to.eq(Math.round(+playerBalanceBefore - +amount));
         }
     };
-
-    const betAmount = "10";
-    const potAmount = "100";
 
     before(async () => {
         accounts = await ethers.getSigners();
@@ -125,7 +122,7 @@ describe("Grotto: Play Pot Tests", () => {
     const playToWin = async (): Promise<number> => {
         let balance = await getBalances(accounts[10].address);
         let overrides = {
-            value: ethers.utils.parseEther(potAmount),
+            value: ethers.utils.parseEther(POT_VALUES[1] + ""),
         };
 
         let potSize = 0;
@@ -136,7 +133,7 @@ describe("Grotto: Play Pot Tests", () => {
                 0,
                 0,
                 5,
-                ethers.utils.parseEther(betAmount),
+                ethers.utils.parseEther(LOTTO_BETS[1] + ""),
                 WinningType.NUMBER_OF_PLAYERS,
                 [3, 6, 9, 3],
                 PotGuessType.ORDER,
@@ -144,7 +141,7 @@ describe("Grotto: Play Pot Tests", () => {
                 overrides,
             ),
         ).to.emit(grotto, "PotCreated");
-        potSize += +potAmount;
+        potSize += POT_VALUES[1];
         potIds.push(potIds.length);
         const potId = potIds.length;
         checkBalances(
@@ -152,7 +149,7 @@ describe("Grotto: Play Pot Tests", () => {
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
-            potAmount,
+            POT_VALUES[1] + "",
             false,
             true,
         );
@@ -160,18 +157,18 @@ describe("Grotto: Play Pot Tests", () => {
         // // Numbers matched but not order
         balance = await getBalances(accounts[4].address);
         overrides = {
-            value: ethers.utils.parseEther(betAmount),
+            value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
         };
         let guesses = [3, 6, 3, 9];
         const player4 = await grotto.connect(accounts[4]);
         await expect(player4.playPot(potId, guesses, overrides)).to.emit(grotto, "BetPlaced");
-        potSize += +betAmount;
+        potSize += LOTTO_BETS[1];
         checkBalances(
             accounts[4].address,
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
-            betAmount,
+            LOTTO_BETS[1] + "",
         );
 
         // Numbers matched and is in the correct order
@@ -179,13 +176,13 @@ describe("Grotto: Play Pot Tests", () => {
         guesses = [3, 6, 9, 3];
         const player3 = await grotto.connect(accounts[3]);
         await expect(player3.playPot(potId, guesses, overrides)).to.emit(grotto, "BetPlaced");
-        potSize += +betAmount;
+        potSize += LOTTO_BETS[1];
         checkBalances(
             accounts[3].address,
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
-            betAmount,
+            LOTTO_BETS[1] + "",
         );
 
         // Numbers matched and is in the correct order
@@ -193,13 +190,13 @@ describe("Grotto: Play Pot Tests", () => {
         guesses = [3, 6, 9, 3];
         const player5 = await grotto.connect(accounts[5]);
         await expect(player5.playPot(potId, guesses, overrides)).to.emit(grotto, "BetPlaced");
-        potSize += +betAmount;
+        potSize += LOTTO_BETS[1];
         checkBalances(
             accounts[5].address,
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
-            betAmount,
+            LOTTO_BETS[1] + "",
         );
 
         // // Number not matched
@@ -207,13 +204,13 @@ describe("Grotto: Play Pot Tests", () => {
         guesses = [1, 2, 4, 6];
         const player6 = await grotto.connect(accounts[6]);
         await expect(player6.playPot(potId, guesses, overrides)).to.emit(grotto, "BetPlaced");
-        potSize += +betAmount;
+        potSize += LOTTO_BETS[1];
         checkBalances(
             accounts[6].address,
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
-            betAmount,
+            LOTTO_BETS[1] + "",
         );
 
         // // Some Numbers matched
@@ -221,13 +218,13 @@ describe("Grotto: Play Pot Tests", () => {
         guesses = [6, 6, 3, 9];
         const player7 = await grotto.connect(accounts[7]);
         await expect(player7.playPot(potId, guesses, overrides)).to.emit(grotto, "BetPlaced");
-        potSize += +betAmount;
+        potSize += LOTTO_BETS[1];
         checkBalances(
             accounts[7].address,
             balance.grottoBalance,
             balance.deployerBalance,
             balance.playerBalance,
-            betAmount,
+            LOTTO_BETS[1] + "",
         );
 
         const pots = await potReader.getAll(false);
@@ -237,7 +234,8 @@ describe("Grotto: Play Pot Tests", () => {
         expect(completed.map((c: BigNumber) => c.toNumber())).to.contain(potId);
 
         const pot = await potReader.getById(potId);
-        expect(+ethers.utils.formatEther(pot.lotto.stakes)).to.eq(potSize * 0.9);
+        const potSizeMinusPlatformShares = potSize - getPercentage(potSize, PLATFORM_PERCENTAGE);
+        expect(+ethers.utils.formatEther(pot.lotto.stakes)).to.eq(potSizeMinusPlatformShares);
 
         return potId;
     };
@@ -304,7 +302,7 @@ describe("Grotto: Play Pot Tests", () => {
             const player1 = await grotto.connect(accounts[1]);
 
             const overrides = {
-                value: ethers.utils.parseEther(potAmount),
+                value: ethers.utils.parseEther(POT_VALUES[1] + ""),
             };
 
             await expect(
@@ -312,7 +310,7 @@ describe("Grotto: Play Pot Tests", () => {
                     0,
                     0,
                     10,
-                    ethers.utils.parseEther(betAmount),
+                    ethers.utils.parseEther(LOTTO_BETS[1] + ""),
                     WinningType.NUMBER_OF_PLAYERS,
                     [3, 6, 9, 3],
                     PotGuessType.ORDER,
@@ -326,7 +324,7 @@ describe("Grotto: Play Pot Tests", () => {
                 grottoBalance,
                 deployerBalance,
                 playerBalance,
-                potAmount,
+                POT_VALUES[1] + "",
                 false,
                 true,
             );
@@ -345,7 +343,7 @@ describe("Grotto: Play Pot Tests", () => {
             const player2 = await grotto.connect(accounts[2]);
 
             const overrides = {
-                value: ethers.utils.parseEther(betAmount),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             const guesses = [3, 6, 9, 1];
@@ -360,7 +358,7 @@ describe("Grotto: Play Pot Tests", () => {
                 grottoBalance,
                 deployerBalance,
                 playerBalance,
-                betAmount,
+                LOTTO_BETS[1] + "",
             );
         } catch (error) {
             console.log(error);
@@ -372,7 +370,7 @@ describe("Grotto: Play Pot Tests", () => {
         try {
             const player1 = await grotto.connect(accounts[1]);
             const overrides = {
-                value: ethers.utils.parseEther("11"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
             const guesses = [3, 6, 9, 1];
             await expect(player1.playPot(potIds.length, guesses, overrides)).to.be.revertedWith(

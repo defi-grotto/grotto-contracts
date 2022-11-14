@@ -4,16 +4,15 @@ import { expect } from "chai";
 import { WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
+import { CREATOR_PERCENTAGE, getPercentage, LOTTO_BETS, PLATFORM_PERCENTAGE } from "./constants";
 
-describe("Grotto: Play Lotto Tests", () => {
+describe.only("Grotto: Play Lotto Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
     let lottoReader: Contract;
 
     const lottoIds: Array<number> = [];
-
-    let betAmount = "1";
 
     const getBalances = async (player: string) => {
         const grottoBalance = ethers.utils.formatEther(
@@ -42,21 +41,18 @@ describe("Grotto: Play Lotto Tests", () => {
         } else {
             const { grottoBalance, deployerBalance, playerBalance } = await getBalances(player);
 
-            let deployerPercentage = +betAmount * 0.1;
-            let grottoPercentage = +betAmount * 0.9;
-
-            // if (isCreateCall) {
-            //     deployerPercentage = +betAmount * 0.09;
-            //     grottoPercentage = +betAmount - deployerPercentage;
-            // }
+            let platformPercentage = getPercentage(LOTTO_BETS[1], PLATFORM_PERCENTAGE);
+            let grottoPercentage = LOTTO_BETS[1] - platformPercentage;
 
             expect((+grottoBalance).toFixed(4)).to.eq(
                 (+grottoBalanceBefore + grottoPercentage).toFixed(4),
             );
             expect((+deployerBalance).toFixed(4)).to.eq(
-                (+deployerBalanceBefore + deployerPercentage).toFixed(4),
+                (+deployerBalanceBefore + platformPercentage).toFixed(4),
             );
-            expect(Math.round(+playerBalance)).to.eq(Math.round(+playerBalanceBefore - +betAmount));
+            expect(Math.round(+playerBalance)).to.eq(
+                Math.round(+playerBalanceBefore - LOTTO_BETS[1]),
+            );
         }
     };
 
@@ -114,7 +110,7 @@ describe("Grotto: Play Lotto Tests", () => {
 
         try {
             const overrides = {
-                value: ethers.utils.parseEther(betAmount),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             await expect(
@@ -143,7 +139,7 @@ describe("Grotto: Play Lotto Tests", () => {
             );
 
             const overrides = {
-                value: ethers.utils.parseEther(betAmount),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
             const player1 = await grotto.connect(accounts[1]);
             await expect(player1.playLotto(lottoIds.length, overrides)).to.emit(
@@ -166,7 +162,7 @@ describe("Grotto: Play Lotto Tests", () => {
                 accounts[10].address,
             );
             const overrides = {
-                value: ethers.utils.parseEther(betAmount),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
             await expect(player0.playLotto(lottoIds.length, overrides)).to.be.revertedWith(
                 "Creator can not play",
@@ -222,7 +218,7 @@ describe("Grotto: Play Lotto Tests", () => {
     it("should not play lotto if max number of players reached", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther(betAmount),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
             const player2 = await grotto.connect(accounts[2]);
             await expect(player2.playLotto(lottoIds.length, overrides)).to.emit(
@@ -255,7 +251,7 @@ describe("Grotto: Play Lotto Tests", () => {
     it("should find winner after max number of players reached", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.01"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             // create lotto
@@ -291,17 +287,17 @@ describe("Grotto: Play Lotto Tests", () => {
                 accounts[3].address,
             ]);
 
-            const totalStaked = ethers.utils
-                .parseEther("0.009")
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"));
-            const winnerShare = totalStaked.mul(80).div(100);
+            const totalBetAmounts = LOTTO_BETS[1] * 4;
+            const minusPlatformPercentages = ethers.utils.parseEther(
+                totalBetAmounts - getPercentage(totalBetAmounts, PLATFORM_PERCENTAGE) + "",
+            );
+
+            const winnerShare = minusPlatformPercentages.mul(100 - CREATOR_PERCENTAGE).div(100);
             expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
                 ethers.utils.formatEther(lotto.winning),
             );
 
-            const creatorShares = totalStaked.mul(20).div(100);
+            const creatorShares = minusPlatformPercentages.mul(20).div(100);
             expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
                 ethers.utils.formatEther(lotto.creatorShares),
             );
@@ -335,7 +331,7 @@ describe("Grotto: Play Lotto Tests", () => {
     it("should claim winnings by creator", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.01"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             // create lotto
@@ -371,17 +367,18 @@ describe("Grotto: Play Lotto Tests", () => {
                 accounts[3].address,
             ]);
 
-            const totalStaked = ethers.utils
-                .parseEther("0.009")
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"));
-            const winnerShare = totalStaked.mul(80).div(100);
+            const totalBetAmounts = LOTTO_BETS[1] * 4;
+            const minusPlatformPercentages = ethers.utils.parseEther(
+                totalBetAmounts - getPercentage(totalBetAmounts, PLATFORM_PERCENTAGE) + "",
+            );
+
+
+            const creatorShares = minusPlatformPercentages.mul(CREATOR_PERCENTAGE).div(100);
+            const winnerShare = minusPlatformPercentages.sub(creatorShares);
+
             expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
                 ethers.utils.formatEther(lotto.winning),
             );
-
-            const creatorShares = totalStaked.mul(20).div(100);
             expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
                 ethers.utils.formatEther(lotto.creatorShares),
             );
@@ -499,7 +496,7 @@ describe("Grotto: Play Lotto Tests", () => {
     it("should find winner after end time has reached", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.01"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             // create lotto
@@ -547,17 +544,18 @@ describe("Grotto: Play Lotto Tests", () => {
                 accounts[3].address,
             ]);
 
-            const totalStaked = ethers.utils
-                .parseEther("0.009")
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"))
-                .add(ethers.utils.parseEther("0.009"));
-            const winnerShare = totalStaked.mul(80).div(100);
-            expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
-                ethers.utils.formatEther(lotto.winning),
+            const totalBetAmounts = LOTTO_BETS[1] * 4;
+            const minusPlatformPercentages = ethers.utils.parseEther(
+                totalBetAmounts - getPercentage(totalBetAmounts, PLATFORM_PERCENTAGE) + "",
             );
 
-            const creatorShares = totalStaked.mul(20).div(100);
+            const creatorShares = minusPlatformPercentages.mul(CREATOR_PERCENTAGE).div(100);
+            const winnerShare = minusPlatformPercentages.sub(creatorShares);
+
+
+            expect(ethers.utils.formatEther(winnerShare.toString())).to.equal(
+                ethers.utils.formatEther(lotto.winning),
+            );        
             expect(ethers.utils.formatEther(creatorShares.toString())).to.equal(
                 ethers.utils.formatEther(lotto.creatorShares),
             );
@@ -585,7 +583,7 @@ describe("Grotto: Play Lotto Tests", () => {
     it("should play time based lotto and call findWinner when time has passed", async () => {
         //create time based lotto
         const overrides = {
-            value: ethers.utils.parseEther("10"),
+            value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
         };
 
         const _startTime = Math.floor(new Date().getTime() / 1000);
@@ -604,43 +602,12 @@ describe("Grotto: Play Lotto Tests", () => {
 
         await grotto.findWinner(lottoIds.length);
 
+        const winnings = LOTTO_BETS[1] - getPercentage(LOTTO_BETS[1], PLATFORM_PERCENTAGE);
+
         const balanceBefore = await ethers.provider.getBalance(accounts[1].address);
         await expect(player1.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
         const balanceAfter = await ethers.provider.getBalance(accounts[1].address);
-        expect((+ethers.utils.formatEther(balanceBefore) + 9).toFixed(2)).to.be.eq(
-            (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
-        );
-    });
-
-    it("should withdraw time based lotto by creator", async () => {
-        // create lotto
-        let overrides = {
-            value: ethers.utils.parseEther("10"),
-        };
-
-        // create lotto
-        const player1 = await grotto.connect(accounts[1]);
-        const _startTime = Math.floor(new Date().getTime() / 1000);
-        const _endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours
-        await expect(
-            player1.createLotto(_startTime, _endTime, 0, WinningType.TIME_BASED, overrides),
-        ).to.emit(grotto, "LottoCreated");
-        lottoIds.push(lottoIds.length);
-
-        await expect(player1.claimCreator(lottoIds.length)).to.be.revertedWith(
-            "Lotto is not finished",
-        );
-
-        await grotto.forceEnd(lottoIds.length);
-
-        // creator must call findWinner before anyone can withdraw
-        await expect(player1.findWinner(lottoIds.length));
-
-        // then withdraw
-        const balanceBefore = await ethers.provider.getBalance(accounts[1].address);
-        await expect(player1.claimCreator(lottoIds.length)).to.emit(grotto, "CreatorClaimed");
-        const balanceAfter = await ethers.provider.getBalance(accounts[1].address);
-        expect((+ethers.utils.formatEther(balanceBefore) + 9).toFixed(2)).to.be.eq(
+        expect((+ethers.utils.formatEther(balanceBefore) + winnings).toFixed(2)).to.be.eq(
             (+ethers.utils.formatEther(balanceAfter)).toFixed(2),
         );
     });
@@ -648,7 +615,7 @@ describe("Grotto: Play Lotto Tests", () => {
     it("should withdraw by player even if only 1 player", async () => {
         // create lotto
         let overrides = {
-            value: ethers.utils.parseEther("10"),
+            value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
         };
 
         // create lotto

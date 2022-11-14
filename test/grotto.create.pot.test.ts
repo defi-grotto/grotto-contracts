@@ -302,7 +302,6 @@ describe("Grotto: Create Pot Tests", () => {
       const lotto = pot.lotto;
       const creatorAmount = getPercentage(POT_VALUES[1], PLATFORM_PERCENTAGE);
       const stakes = POT_VALUES[1] - creatorAmount;
-
       const betAmount = LOTTO_BETS[1] - getPercentage(LOTTO_BETS[1], PLATFORM_PERCENTAGE);
       expect(lotto.id.toNumber()).to.be.eq(1);
       expect(lotto.creator).to.be.eq(accounts[0].address);

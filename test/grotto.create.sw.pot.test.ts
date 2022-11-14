@@ -6,8 +6,9 @@ chai.use(waffle.solidity);
 import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
+import { getPercentage, LOTTO_BETS, PLATFORM_PERCENTAGE, POT_VALUES } from "./constants";
 
-describe("Grotto: Create Pot Tests", () => {
+describe.only("Grotto: Create Pot Tests", () => {
   let accounts: SignerWithAddress[];
   const address0 = "0x0000000000000000000000000000000000000000";
   let grotto: Contract;
@@ -78,10 +79,10 @@ describe("Grotto: Create Pot Tests", () => {
   it("should create a pot", async () => {
     try {
       const overrides = {
-        value: ethers.utils.parseEther("1"),
+        value: ethers.utils.parseEther(POT_VALUES[1] + ""),
       };
 
-      const betAmount = ethers.utils.parseEther("0.01");
+      const betAmount = ethers.utils.parseEther(LOTTO_BETS[1] + "");
       await expect(
         grotto.createPot(
           0,
@@ -234,10 +235,10 @@ describe("Grotto: Create Pot Tests", () => {
   it("should create a pot with winning type = time based", async () => {
     try {
       const overrides = {
-        value: ethers.utils.parseEther("0.01"),
+        value: ethers.utils.parseEther(POT_VALUES[2] + ""),
       };
 
-      const betAmount = ethers.utils.parseEther("0.01");
+      const betAmount = ethers.utils.parseEther(LOTTO_BETS[2] + "");
       const endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours;
       const startTime = Math.floor(new Date().getTime() / 1000);
       await expect(
@@ -293,6 +294,17 @@ describe("Grotto: Create Pot Tests", () => {
       const pot = await potReader.getById(1);
       expect(pot.lotto.id.toNumber()).to.be.eq(1);
       expect(pot.lotto.creator).to.be.eq(accounts[0].address);
+
+      const lotto = pot.lotto;
+      const creatorAmount = getPercentage(POT_VALUES[1], PLATFORM_PERCENTAGE);
+      const stakes = POT_VALUES[1] - creatorAmount;
+      const betAmount = LOTTO_BETS[1] - getPercentage(LOTTO_BETS[1], PLATFORM_PERCENTAGE);
+      expect(lotto.id.toNumber()).to.be.eq(1);
+      expect(lotto.creator).to.be.eq(accounts[0].address);
+      expect(Number(ethers.utils.formatEther(lotto.betAmount))).to.be.eq(betAmount);
+      expect(Number(ethers.utils.formatEther(lotto.stakes))).to.be.eq(stakes);
+      expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);
+
     } catch (error) {
       console.log(error);
       expect(error).to.equal(undefined);

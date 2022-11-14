@@ -3,11 +3,12 @@ import { ethers, waffle, upgrades } from "hardhat";
 import chai from "chai";
 import { expect } from "chai";
 chai.use(waffle.solidity);
-import { platformOwner, WinningType } from "./models";
+import {  WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
+import { getPercentage, LOTTO_BETS, PLATFORM_PERCENTAGE } from "./constants";
 
-describe("Grotto: Create Lotto Tests", () => {
+describe.only("Grotto: Create Lotto Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
@@ -67,7 +68,7 @@ describe("Grotto: Create Lotto Tests", () => {
     it("should create a lotto", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.01"),
+                value: ethers.utils.parseEther(LOTTO_BETS[1] + ""),
             };
 
             // uint256 _startTime,
@@ -128,7 +129,7 @@ describe("Grotto: Create Lotto Tests", () => {
     it("should not create a lotto if winning type is time based and end time is not in future", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.01"),
+                value: ethers.utils.parseEther("200"),
             };
 
             await expect(
@@ -143,7 +144,7 @@ describe("Grotto: Create Lotto Tests", () => {
     it("should create a lotto with winning type = time based", async () => {
         try {
             const overrides = {
-                value: ethers.utils.parseEther("0.1"),
+                value: ethers.utils.parseEther(LOTTO_BETS[2] + ""),
             };
 
             const endTime = Math.floor((new Date().getTime() + 8.64e7) / 1000); // + 24 hours;
@@ -161,16 +162,22 @@ describe("Grotto: Create Lotto Tests", () => {
     it("should get running lottos", async () => {
         try {
             const lotto = await lottoReader.getById(1);
+            let creatorAmount = getPercentage(LOTTO_BETS[1], PLATFORM_PERCENTAGE);
+            let stakes = LOTTO_BETS[1] - creatorAmount;
             expect(lotto.id.toNumber()).to.be.eq(1);
             expect(lotto.creator).to.be.eq(accounts[0].address);
-            expect(ethers.utils.formatEther(lotto.betAmount)).to.be.eq("0.009");
-            expect(ethers.utils.formatEther(lotto.stakes)).to.be.eq("0.009");
+            expect(Number(ethers.utils.formatEther(lotto.betAmount))).to.be.eq(stakes);
+            expect(Number(ethers.utils.formatEther(lotto.stakes))).to.be.eq(stakes);
             expect(lotto.winningType).to.be.eq(WinningType.NUMBER_OF_PLAYERS);
+
             const lotto2 = await lottoReader.getById(2);
+            creatorAmount = getPercentage(LOTTO_BETS[2], PLATFORM_PERCENTAGE);
+            stakes = LOTTO_BETS[2] - creatorAmount;
+
             expect(lotto2.id.toNumber()).to.be.eq(2);
             expect(lotto2.creator).to.be.eq(accounts[0].address);
-            expect(ethers.utils.formatEther(lotto2.betAmount)).to.be.eq("0.09");
-            expect(ethers.utils.formatEther(lotto2.stakes)).to.be.eq("0.09");
+            expect(Number(ethers.utils.formatEther(lotto2.betAmount))).to.be.eq(stakes);
+            expect(Number(ethers.utils.formatEther(lotto2.stakes))).to.be.eq(stakes);
             expect(lotto2.winningType).to.be.eq(WinningType.TIME_BASED);
 
             const allLottos: Array<BigNumber> = await lottoReader.getAll();

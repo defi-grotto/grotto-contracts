@@ -44,7 +44,7 @@ contract Storage is StorageInterface, AccessControl {
     Statistics private stats;
 
     constructor() {
-        platformSharePercentage = 10;
+        platformSharePercentage = 1;
         creatorSharesPercentage = 20;
         stats = Statistics({
             totalPlayed: 0,

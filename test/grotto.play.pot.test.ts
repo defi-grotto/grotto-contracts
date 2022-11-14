@@ -6,8 +6,9 @@ chai.use(waffle.solidity);
 import { PotGuessType, PotType, WinningType } from "./models";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
+import { getPercentage, PLATFORM_PERCENTAGE } from "./constants";
 
-describe.only("Grotto: Play Pot Tests", () => {
+describe("Grotto: Play Pot Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;
@@ -43,8 +44,8 @@ describe.only("Grotto: Play Pot Tests", () => {
         } else {
             const { grottoBalance, deployerBalance, playerBalance } = await getBalances(player);
 
-            let deployerPercentage = +amount * 0.1;
-            let grottoPercentage = +amount * 0.9;
+            let deployerPercentage = getPercentage(+amount, PLATFORM_PERCENTAGE);
+            let grottoPercentage = +amount - deployerPercentage;
 
             // if (isCreateCall) {
             //     deployerPercentage = +amount * 0.09;

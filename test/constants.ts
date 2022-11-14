@@ -6,3 +6,5 @@ export const getPercentage = (amount: number, percentage: number) => {
 };
 
 export const LOTTO_BETS: Array<number> = [0, 100, 200];
+
+export const POT_VALUES: Array<number> = [0, 1000, 2000];

@@ -8,7 +8,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "@ethersproject/bignumber";
 import { getPercentage, LOTTO_BETS, PLATFORM_PERCENTAGE } from "./constants";
 
-describe.only("Grotto: Create Lotto Tests", () => {
+describe("Grotto: Create Lotto Tests", () => {
     let accounts: SignerWithAddress[];
     const address0 = "0x0000000000000000000000000000000000000000";
     let grotto: Contract;

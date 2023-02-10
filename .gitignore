@@ -6,3 +6,4 @@ soljson*
 node_modules
 .openzeppelin/
 bin
+hardhat.config.js
